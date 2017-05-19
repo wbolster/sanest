@@ -55,6 +55,11 @@ class Mapping(collections.abc.Mapping):
         # lookup() calls.
         raise TypeError("invalid key: {!r}".format(key))
 
+    def get(self, key, default=None, *, type=None):
+        if type is not None:
+            raise NotImplementedError
+        return super().get(key, default)
+
     def __len__(self):
         return len(self._data)
 
