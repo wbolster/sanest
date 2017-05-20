@@ -59,6 +59,9 @@ def lookup(obj, *, path, value_type):
 
 
 class Mapping(collections.abc.Mapping):
+    def __init__(self):
+        self._data = {}
+
     def __getitem__(self, key):
         if isinstance(key, str):  # trivial lookup
             return self._data[key]
@@ -89,9 +92,4 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
         del self._data[key]
 
 
-class Dict(MutableMapping):
-    def __init__(self):
-        self._data = {}
-
-
-dict = Dict
+dict = MutableMapping
