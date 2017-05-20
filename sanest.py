@@ -37,6 +37,13 @@ def parse_key(key):
     return path, value_type
 
 
+def check_type(x, expected_type):
+    if not isinstance(x, expected_type):
+        raise ValueError(
+            "requested {.__name__}, got {.__name__}: {!r}"
+            .format(expected_type, type(x), x))
+
+
 def lookup(obj, *, path, value_type):
     if not path:
         raise ValueError("empty path")
@@ -51,10 +58,8 @@ def lookup(obj, *, path, value_type):
         elif isinstance(component, int):
             raise NotImplementedError('lists')
         obj = obj[component]
-    if value_type is not None and not isinstance(obj, value_type):
-        raise ValueError(
-            "requested {.__name__}, got {.__name__}: {!r}"
-            .format(value_type, type(obj), obj))
+    if value_type is not None:
+        check_type(obj, value_type)
     return obj
 
 
