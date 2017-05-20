@@ -8,32 +8,28 @@ TYPES = [bool, float, int, str]
 
 
 def parse_key(key):
-    # basic lookup, e.g. d['a']
+    path = []
+    if isinstance(key, (tuple, list)):
+        # nested lookup and typed nested lookup,
+        # e.g. d['a','b'] and  d['a','b':str]
+        if not key:
+            raise TypeError("invalid key: empty path")
+        *path, tail = key
+        if any(not isinstance(h, (str, int)) for h in path):
+            raise TypeError("invalid key: {!r}".format(key))
+        key = tail
     if isinstance(key, str):
-        path = [key]
+        # basic lookup, e.g. d['a']
         value_type = None
-
-    # typed lookup, e.g. d['a':str]
     elif isinstance(key, slice):
+        # typed lookup, e.g. d['a':str]
         if key.step is not None:
             raise TypeError("invalid key: slice cannot contain step value")
-        path = [key.start]
         value_type = key.stop
-
-    # nested lookup and typed nested lookup,
-    # e.g. d['a','b'] and  d['a','b':str]
-    elif isinstance(key, tuple):
-        if not key:
-            raise TypeError("empty path")
-        *heads, tail = key
-        if any(not isinstance(h, (str, int)) for h in heads):
-            raise TypeError("invalid key: {!r}".format(key))
-        # todo: maybe include full key in error when recursive parse_key
-        # raises an exception?
-        tail_path, value_type = parse_key(tail)
-        path = heads + tail_path
+        key = key.start
     else:
         raise TypeError("invalid key: {!r}".format(key))
+    path.append(key)
     return path, value_type
 
 
@@ -45,8 +41,6 @@ def check_type(x, expected_type):
 
 
 def lookup(obj, *, path, value_type):
-    if not path:
-        raise ValueError("empty path")
     if value_type is not None and value_type not in TYPES:
         raise TypeError(
             "type must be one of {}"
