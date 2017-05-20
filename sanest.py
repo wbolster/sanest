@@ -76,9 +76,10 @@ class Mapping(collections.abc.Mapping):
         return lookup(self, path=path, value_type=value_type)
 
     def get(self, key, default=None, *, type=None):
-        if type is not None:
-            raise NotImplementedError
-        return super().get(key, default)
+        value = super().get(key, default)
+        if type is not None and value is not default:
+            check_type(value, type)
+        return value
 
     def __len__(self):
         return len(self._data)
