@@ -7,16 +7,37 @@ import collections.abc
 TYPES = [bool, float, int, str]
 
 
-def normalise_path(path):
-    if isinstance(path, str):
-        return [path]
-    if isinstance(path, (tuple, list)):
-        return path
-    raise TypeError("invalid path")
+def parse_key(key):
+    # basic lookup, e.g. d['a']
+    if isinstance(key, str):
+        path = [key]
+        value_type = None
+
+    # typed lookup, e.g. d['a':str]
+    elif isinstance(key, slice):
+        if key.step is not None:
+            raise TypeError("invalid key: slice cannot contain step value")
+        path = [key.start]
+        value_type = key.stop
+
+    # nested lookup and typed nested lookup,
+    # e.g. d['a','b'] and  d['a','b':str]
+    elif isinstance(key, tuple):
+        if not key:
+            raise TypeError("empty path")
+        *heads, tail = key
+        if any(not isinstance(h, (str, int)) for h in heads):
+            raise TypeError("invalid key: {!r}".format(key))
+        # todo: maybe include full key in error when recursive parse_key
+        # raises an exception?
+        tail_path, value_type = parse_key(tail)
+        path = heads + tail_path
+    else:
+        raise TypeError("invalid key: {!r}".format(key))
+    return path, value_type
 
 
-def lookup(obj, *, path, value_type=None):
-    path = normalise_path(path)
+def lookup(obj, *, path, value_type):
     if not path:
         raise ValueError("empty path")
     if value_type is not None and value_type not in TYPES:
@@ -39,21 +60,10 @@ def lookup(obj, *, path, value_type=None):
 
 class Mapping(collections.abc.Mapping):
     def __getitem__(self, key):
-        if isinstance(key, str):  # basic lookup
+        if isinstance(key, str):  # trivial lookup
             return self._data[key]
-        if isinstance(key, slice):  # typed lookup
-            if key.step is not None:
-                raise TypeError("invalid key: slice cannot contain step value")
-            value_type = key.stop
-            key = key.start
-            return lookup(
-                self, path=normalise_path(key), value_type=value_type)
-        if isinstance(key, tuple):  # nested lookup
-            return lookup(self, path=key)
-        # todo: factor out slice parsing and path normalisation so that
-        # things like d['a','b','c':str] do not depend on recursive
-        # lookup() calls.
-        raise TypeError("invalid key: {!r}".format(key))
+        path, value_type = parse_key(key)
+        return lookup(self, path=path, value_type=value_type)
 
     def get(self, key, default=None, *, type=None):
         if type is not None:
