@@ -59,6 +59,8 @@ def lookup(obj, *, path, value_type):
 
 
 class Mapping(collections.abc.Mapping):
+    __slots__ = ('_data',)
+
     def __init__(self):
         self._data = {}
 
@@ -81,6 +83,8 @@ class Mapping(collections.abc.Mapping):
 
 
 class MutableMapping(Mapping, collections.abc.MutableMapping):
+    __slots__ = ()
+
     def __setitem__(self, key, value):
         if not isinstance(key, str):
             raise TypeError("invalid key: {!r}".format(key))
