@@ -81,6 +81,10 @@ class Mapping(collections.abc.Mapping):
     def __iter__(self):
         return iter(self._data)
 
+    # todo: typed __contains__(). maybe .contains() with type= arg?
+    #       maybe something like "('a', 'b', str) in d"?
+    # todo: type checking views? (how?)
+
 
 class MutableMapping(Mapping, collections.abc.MutableMapping):
     __slots__ = ()
@@ -88,12 +92,32 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
     def __setitem__(self, key, value):
         if not isinstance(key, str):
             raise TypeError("invalid key: {!r}".format(key))
+        # todo: convert dict/list values into own mapping types
+        # todo: nested setitem
+        # todo: typed setitem
         self._data[key] = value
 
     def __delitem__(self, key):
         if not isinstance(key, str):
             raise TypeError("invalid key: {!r}".format(key))
+        # todo: nested delitem
+        # todo: typed delitem
         del self._data[key]
+
+    def clear(self):
+        self._data.clear()
+
+    # todo: clean api for building nested structures
+    # todo: autovivification
+    # todo: .setdefault() with type= arg
+    # todo: .pop() with type= arg
+    # todo: .popitem() with type= arg
+    # todo: support for copy.copy() and copy.deepcopy()
+    # todo: .copy(deep=True)
+    # todo: pickle support
+    # todo: disallow None values. "d['x'] = None" means "del d['x']"?
 
 
 dict = MutableMapping
+
+# todo: list/Sequence/MutableSequence support
