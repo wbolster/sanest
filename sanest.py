@@ -59,16 +59,20 @@ def validate_type(type):
 def parse(pathspec):
     path = []
     if isinstance(pathspec, (tuple, list)):
-        # nested lookup and typed nested lookup,
-        # e.g. d['a','b'] and  d['a','b':str]
+        # e.g. d['a', 'b'] and  d['a', 'b':str]
         try:
             *path, key = pathspec
         except ValueError:
             raise InvalidKeyError("empty path: {!r}".format(pathspec))
     else:
         key = pathspec
-    if isinstance(key, (int, str)):
-        # basic lookup, e.g. d['a'] and d[2]
+    if isinstance(key, str):
+        # e.g. d['a']
+        if not key:
+            raise InvalidKeyError("empty path: {!r}".format(pathspec))
+        value_type = None
+    elif isinstance(key, int) and not isinstance(key, bool):
+        # e.g. d[2]
         value_type = None
     elif isinstance(key, slice):
         # typed lookup, e.g. d['a':str] and d[path_as_list:str]
@@ -77,7 +81,7 @@ def parse(pathspec):
                 "slice cannot contain step value: {!r}".format(pathspec))
         value_type = key.stop
         if not key.start:
-            raise InvalidKeyError("key is empty: {!r}".format(pathspec))
+            raise InvalidKeyError("empty path: {!r}".format(pathspec))
         elif isinstance(key.start, (tuple, list)):
             # e.g. d[path_as_list:str]
             if path:
@@ -127,6 +131,8 @@ class Mapping(collections.abc.Mapping):
 
     def __getitem__(self, key):
         if isinstance(key, str):
+            if not key:
+                raise InvalidKeyError("empty path: {!r}".format(key))
             return self._data[key]
         path, type = parse(key)
         obj = resolve_path(self, path)
