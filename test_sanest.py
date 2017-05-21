@@ -53,7 +53,9 @@ def test_dict_typed_lookup():
 
     with pytest.raises(sanest.InvalidValueTypeError) as excinfo:
         d['nonexistent':bytes]
-    assert str(excinfo.value) == "type must be one of bool, float, int, str"
+    assert str(excinfo.value) == (
+        "type must be one of dict, list, bool, float, int, str: "
+        "<class 'bytes'>")
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
         d['a':int:str]

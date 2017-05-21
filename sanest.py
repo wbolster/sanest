@@ -4,7 +4,7 @@ sanest, sane nested dictionaries and lists
 
 import collections.abc
 
-TYPES = [bool, float, int, str]
+TYPES = [dict, list, bool, float, int, str]
 
 
 class InvalidKeyError(TypeError):
@@ -69,7 +69,13 @@ def parse(key):
 
 
 def check_type(x, expected_type):
-    if not isinstance(x, expected_type):
+    if expected_type is dict:
+        real_expected_type = Mapping
+    elif expected_type is list:
+        real_expected_type = Sequence
+    else:
+        real_expected_type = expected_type
+    if not isinstance(x, real_expected_type):
         raise InvalidValueError(
             "requested {.__name__}, got {.__name__}: {!r}"
             .format(expected_type, type(x), x))
