@@ -166,6 +166,8 @@ class Sequence(collections.Sequence):
     # todo: implement
 
     def __getitem__(self, index):
+        if isinstance(index, int):
+            return self._data[index]
         raise NotImplementedError
 
     def __len__(self):
