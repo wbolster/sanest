@@ -112,13 +112,15 @@ def check_type(x, expected_type):
 
 
 def resolve_path(obj, path):
-    for n, key_or_index in enumerate(path, 1):
+    for n, key_or_index in enumerate(path):
         if isinstance(key_or_index, str) and not isinstance(obj, Mapping):
             raise InvalidValueError(
-                "(sub)path does not contain a dict: {!r}", path[:n])
+                "expected dict, got {.__name__} at subpath {!r} of {!r}"
+                .format(type(obj), path[:n], path))
         if isinstance(key_or_index, int) and not isinstance(obj, Sequence):
             raise InvalidValueError(
-                "(sub)path does not contain a list: {!r}", path[:n])
+                "expected list, got {.__name__} at subpath {!r} of {!r}"
+                .format(type(obj), path[:n], path))
         obj = obj[key_or_index]
     return obj
 
