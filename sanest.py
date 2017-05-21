@@ -50,8 +50,8 @@ def parse(key):
             *path, key = key
         except ValueError:
             raise InvalidKeyError("empty path: {!r}".format(key))
-    if isinstance(key, str):
-        # basic lookup, e.g. d['a']
+    if isinstance(key, (int, str)):
+        # basic lookup, e.g. d['a'] and d[2]
         value_type = None
     elif isinstance(key, slice):
         # typed lookup, e.g. d['a':str]
