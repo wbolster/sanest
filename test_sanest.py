@@ -11,7 +11,7 @@ import pytest
     'key',
     [123, None, b"foo", True, []])
 def test_dict_string_keys_only(key):
-    d = sanest.dict()
+    d = sanest.Dict()
     with pytest.raises(sanest.InvalidKeyError):
         d[key]
     with pytest.raises(sanest.InvalidKeyError):
@@ -27,7 +27,7 @@ def test_dict_string_keys_only(key):
 
 
 def test_dict_basics():
-    d = sanest.dict()
+    d = sanest.Dict()
     d['a'] = 1
     assert d['a'] == 1
     d.setdefault('a', 2)
@@ -37,7 +37,7 @@ def test_dict_basics():
 
 
 def test_dict_typed_lookup():
-    d = sanest.dict()
+    d = sanest.Dict()
     d['a'] = 'aaa'
     d['b'] = 2
 
@@ -62,8 +62,8 @@ def test_dict_typed_lookup():
 
 def test_dict_nested_lookup():
     # todo: nice way to constructed nested dicts
-    d = sanest.dict()
-    d['a'] = sanest.dict()
+    d = sanest.Dict()
+    d['a'] = sanest.Dict()
     d['a']['b'] = 123
 
     assert d['a', 'b'] == 123

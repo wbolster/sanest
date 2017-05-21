@@ -46,13 +46,10 @@ def parse(key):
     if isinstance(key, (tuple, list)):
         # nested lookup and typed nested lookup,
         # e.g. d['a','b'] and  d['a','b':str]
-        if not key:
+        try:
+            *path, key = key
+        except ValueError:
             raise InvalidKeyError("empty path: {!r}".format(key))
-        *path, tail = key
-        if any(not isinstance(h, (str, int)) for h in path):
-            raise InvalidKeyError(
-                "path must contain only str or int: {!r}".format(key))
-        key = tail
     if isinstance(key, str):
         # basic lookup, e.g. d['a']
         value_type = None
@@ -67,7 +64,8 @@ def parse(key):
         key = key.start
     else:
         raise InvalidKeyError("unknown type: {!r}".format(key))
-    return key, path, value_type
+    path.append(key)
+    return path, value_type
 
 
 def check_type(x, expected_type):
@@ -77,18 +75,25 @@ def check_type(x, expected_type):
             .format(expected_type, type(x), x))
 
 
-def lookup(obj, *, key, path, value_type):
+def resolve_path(obj, path):
+    for n, key_or_index in enumerate(path, 1):
+        if not isinstance(key_or_index, (str, int)):
+            raise InvalidKeyError(
+                "path must contain only str or int: {!r}".format(path))
+        if isinstance(key_or_index, str) and not isinstance(obj, Mapping):
+            raise InvalidValueError("subpath is not a dict: {!r}", path[:n])
+        if isinstance(key_or_index, int) and not isinstance(obj, Sequence):
+            raise InvalidValueError("subpath is not a list: {!r}", path[:n])
+        obj = obj[key_or_index]
+    return obj
+
+
+def lookup(obj, *, path, value_type):
     if value_type is not None and value_type not in TYPES:
         raise InvalidValueTypeError(
             "type must be one of {}"
             .format(', '.join(t.__name__ for t in TYPES)))
-    for component in path + [key]:
-        if isinstance(component, str):
-            if not isinstance(obj, Mapping):
-                raise NotImplementedError
-        elif isinstance(component, int):
-            raise NotImplementedError('lists')
-        obj = obj[component]
+    obj = resolve_path(obj, path)
     if value_type is not None:
         check_type(obj, value_type)
     return obj
@@ -103,8 +108,8 @@ class Mapping(collections.abc.Mapping):
     def __getitem__(self, key):
         if isinstance(key, str):  # trivial lookup
             return self._data[key]
-        key, path, value_type = parse(key)
-        return lookup(self, key=key, path=path, value_type=value_type)
+        path, value_type = parse(key)
+        return lookup(self, path=path, value_type=value_type)
 
     def get(self, key, default=None, *, type=None):
         value = super().get(key, default)
@@ -181,5 +186,7 @@ class MutableSequence(Sequence, collections.abc.MutableSequence):
 
 
 # friendly names
-dict = MutableMapping
-list = MutableSequence
+# todo: lowercase names? must not mask built-names 'dict' and
+# 'list' since those are used elsewhere in this module.
+Dict = MutableMapping
+List = MutableSequence
