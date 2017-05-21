@@ -7,16 +7,51 @@ import collections.abc
 TYPES = [bool, float, int, str]
 
 
-def parse_key(key):
+class InvalidKeyError(TypeError):
+    """
+    Exception indicating that an invalid key is passed.
+
+    This is a subclass of the built-in ``TypeError``, since this
+    indicates problematic code that uses an incorrect API.
+
+    Despite the name, it does not indicate absence of an item in a
+    dictionary (which is what ``KeyError``) would indicate.
+    """
+    pass
+
+
+class InvalidValueTypeError(TypeError):
+    """
+    Exception indicating that the requested type is invalid.
+
+    This is a subclass of the built-in ``TypeError``, since this
+    indicates problematic code that uses an incorrect API.
+    """
+    pass
+
+
+class InvalidValueError(ValueError):
+    """
+    Exception indicating that the data structure does not match what the
+    code expects.
+
+    This is a subclass of the built-in ``ValueError``, since this
+    indicates malformed data.
+    """
+    pass
+
+
+def parse(key):
     path = []
     if isinstance(key, (tuple, list)):
         # nested lookup and typed nested lookup,
         # e.g. d['a','b'] and  d['a','b':str]
         if not key:
-            raise TypeError("invalid key: empty path")
+            raise InvalidKeyError("empty path: {!r}".format(key))
         *path, tail = key
         if any(not isinstance(h, (str, int)) for h in path):
-            raise TypeError("invalid key: {!r}".format(key))
+            raise InvalidKeyError(
+                "path must contain only str or int: {!r}".format(key))
         key = tail
     if isinstance(key, str):
         # basic lookup, e.g. d['a']
@@ -24,24 +59,27 @@ def parse_key(key):
     elif isinstance(key, slice):
         # typed lookup, e.g. d['a':str]
         if key.step is not None:
-            raise TypeError("invalid key: slice cannot contain step value")
+            raise InvalidKeyError(
+                "slice cannot contain step value: {!r}".format(key))
+        if not key.start:
+            raise InvalidKeyError("key is empty: {!r}".format(key))
         value_type = key.stop
         key = key.start
     else:
-        raise TypeError("invalid key: {!r}".format(key))
+        raise InvalidKeyError("unknown type: {!r}".format(key))
     return key, path, value_type
 
 
 def check_type(x, expected_type):
     if not isinstance(x, expected_type):
-        raise ValueError(
+        raise InvalidValueError(
             "requested {.__name__}, got {.__name__}: {!r}"
             .format(expected_type, type(x), x))
 
 
 def lookup(obj, *, key, path, value_type):
     if value_type is not None and value_type not in TYPES:
-        raise TypeError(
+        raise InvalidValueTypeError(
             "type must be one of {}"
             .format(', '.join(t.__name__ for t in TYPES)))
     for component in path + [key]:
@@ -65,7 +103,7 @@ class Mapping(collections.abc.Mapping):
     def __getitem__(self, key):
         if isinstance(key, str):  # trivial lookup
             return self._data[key]
-        key, path, value_type = parse_key(key)
+        key, path, value_type = parse(key)
         return lookup(self, key=key, path=path, value_type=value_type)
 
     def get(self, key, default=None, *, type=None):
@@ -90,7 +128,7 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
 
     def __setitem__(self, key, value):
         if not isinstance(key, str):
-            raise TypeError("invalid key: {!r}".format(key))
+            raise InvalidKeyError("invalid key: {!r}".format(key))
         # todo: convert dict/list values into own mapping types
         # todo: nested setitem
         # todo: typed setitem
@@ -98,7 +136,7 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
 
     def __delitem__(self, key):
         if not isinstance(key, str):
-            raise TypeError("invalid key: {!r}".format(key))
+            raise InvalidKeyError("invalid key: {!r}".format(key))
         # todo: nested delitem
         # todo: typed delitem
         del self._data[key]

@@ -9,25 +9,21 @@ import pytest
 
 @pytest.mark.parametrize(
     'key',
-    [123, None, b"foo", True])
+    [123, None, b"foo", True, []])
 def test_dict_string_keys_only(key):
     d = sanest.dict()
-
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(sanest.InvalidKeyError):
         d[key]
-    assert str(excinfo.value).startswith("invalid key: ")
-
-    with pytest.raises(TypeError) as excinfo:
-        d[key] = key
-    assert str(excinfo.value).startswith("invalid key: ")
-
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(sanest.InvalidKeyError):
         d.get(key)
-    assert str(excinfo.value).startswith("invalid key: ")
-
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(sanest.InvalidKeyError):
         key in d
-    assert str(excinfo.value).startswith("invalid key: ")
+    with pytest.raises(sanest.InvalidKeyError):
+        d[key] = key
+    with pytest.raises(sanest.InvalidKeyError):
+        del d[key]
+    with pytest.raises(sanest.InvalidKeyError):
+        d.pop(key)
 
 
 def test_dict_basics():
@@ -51,17 +47,17 @@ def test_dict_typed_lookup():
     assert d.get('c', type=str) is None
     assert d.get('c', default=123, type=str) == 123
 
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
         d['a':int]
     assert str(excinfo.value) == "requested int, got str: 'aaa'"
 
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(sanest.InvalidValueTypeError) as excinfo:
         d['nonexistent':bytes]
     assert str(excinfo.value) == "type must be one of bool, float, int, str"
 
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
         d['a':int:str]
-    assert str(excinfo.value) == "invalid key: slice cannot contain step value"
+    assert str(excinfo.value).startswith("slice cannot contain step value: ")
 
 
 def test_dict_nested_lookup():
@@ -77,10 +73,9 @@ def test_dict_nested_lookup():
     assert ['c', 'd'] not in d
     assert d.get(('a', 'b')) == 123
 
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
         d['a', 123, True]
-    assert str(excinfo.value).startswith("invalid key: ")
 
-    with pytest.raises(TypeError) as excinfo:
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
         d.get([])
-    assert str(excinfo.value) == "invalid key: empty path"
+    assert str(excinfo.value).startswith("empty path: ")
