@@ -143,8 +143,11 @@ class Mapping(collections.abc.Mapping):
     def get(self, key, default=None, *, type=None):
         if type is not None:
             validate_type(type)
-        value = super().get(key, default)
-        if type is not None and value is not default:
+        try:
+            value = self[key]
+        except KeyError:
+            return default
+        if type is not None:
             check_type(value, type)
         return value
 
