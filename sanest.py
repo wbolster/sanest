@@ -77,8 +77,6 @@ def parse(key):
             raise InvalidKeyError("key is empty: {!r}".format(key))
         value_type = key.stop
         key = key.start
-    else:
-        raise InvalidKeyError("not a path of str/int: {!r}".format(key))
     path.append(key)
     validate_path(path)
     if value_type is not None:
