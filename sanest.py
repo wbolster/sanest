@@ -155,6 +155,31 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
     # todo: disallow None values. "d['x'] = None" means "del d['x']"?
 
 
-dict = MutableMapping
+# todo: support for lists
 
-# todo: list/Sequence/MutableSequence support
+class Sequence(collections.Sequence):
+    # todo: implement
+
+    def __getitem__(self, index):
+        raise NotImplementedError
+
+    def __len__(self):
+        raise NotImplementedError
+
+
+class MutableSequence(Sequence, collections.abc.MutableSequence):
+    # todo: implement
+
+    def __setitem__(self, index, value):
+        raise NotImplementedError
+
+    def insert(self, index, value):
+        raise NotImplementedError
+
+    def __delitem__(self, index):
+        raise NotImplementedError
+
+
+# friendly names
+dict = MutableMapping
+list = MutableSequence
