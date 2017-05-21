@@ -29,8 +29,7 @@ def parse_key(key):
         key = key.start
     else:
         raise TypeError("invalid key: {!r}".format(key))
-    path.append(key)
-    return path, value_type
+    return key, path, value_type
 
 
 def check_type(x, expected_type):
@@ -40,12 +39,12 @@ def check_type(x, expected_type):
             .format(expected_type, type(x), x))
 
 
-def lookup(obj, *, path, value_type):
+def lookup(obj, *, key, path, value_type):
     if value_type is not None and value_type not in TYPES:
         raise TypeError(
             "type must be one of {}"
             .format(', '.join(t.__name__ for t in TYPES)))
-    for component in path:
+    for component in path + [key]:
         if isinstance(component, str):
             if not isinstance(obj, Mapping):
                 raise NotImplementedError
@@ -66,8 +65,8 @@ class Mapping(collections.abc.Mapping):
     def __getitem__(self, key):
         if isinstance(key, str):  # trivial lookup
             return self._data[key]
-        path, value_type = parse_key(key)
-        return lookup(self, path=path, value_type=value_type)
+        key, path, value_type = parse_key(key)
+        return lookup(self, key=key, path=path, value_type=value_type)
 
     def get(self, key, default=None, *, type=None):
         value = super().get(key, default)
