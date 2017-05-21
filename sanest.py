@@ -41,6 +41,21 @@ class InvalidValueError(ValueError):
     pass
 
 
+def validate_path(path):
+    # explicitly check for booleans, since bool is a subclass of int.
+    for k in path:
+        if isinstance(k, bool) or not isinstance(k, (int, str)):
+            raise InvalidKeyError(
+                "path must contain only str or int: {!r}".format(path))
+
+
+def validate_type(type):
+    if type not in TYPES:
+        raise InvalidValueTypeError(
+            "type must be one of {}: {!r}"
+            .format(', '.join(t.__name__ for t in TYPES), type))
+
+
 def parse(key):
     path = []
     if isinstance(key, (tuple, list)):
@@ -63,8 +78,11 @@ def parse(key):
         value_type = key.stop
         key = key.start
     else:
-        raise InvalidKeyError("unknown type: {!r}".format(key))
+        raise InvalidKeyError("not a path of str/int: {!r}".format(key))
     path.append(key)
+    validate_path(path)
+    if value_type is not None:
+        validate_type(value_type)
     return path, value_type
 
 
@@ -83,25 +101,13 @@ def check_type(x, expected_type):
 
 def resolve_path(obj, path):
     for n, key_or_index in enumerate(path, 1):
-        if not isinstance(key_or_index, (str, int)):
-            raise InvalidKeyError(
-                "path must contain only str or int: {!r}".format(path))
         if isinstance(key_or_index, str) and not isinstance(obj, Mapping):
-            raise InvalidValueError("subpath is not a dict: {!r}", path[:n])
+            raise InvalidValueError(
+                "(sub)path does not contain a dict: {!r}", path[:n])
         if isinstance(key_or_index, int) and not isinstance(obj, Sequence):
-            raise InvalidValueError("subpath is not a list: {!r}", path[:n])
+            raise InvalidValueError(
+                "(sub)path does not contain a list: {!r}", path[:n])
         obj = obj[key_or_index]
-    return obj
-
-
-def lookup(obj, *, path, value_type):
-    if value_type is not None and value_type not in TYPES:
-        raise InvalidValueTypeError(
-            "type must be one of {}"
-            .format(', '.join(t.__name__ for t in TYPES)))
-    obj = resolve_path(obj, path)
-    if value_type is not None:
-        check_type(obj, value_type)
     return obj
 
 
@@ -112,12 +118,17 @@ class Mapping(collections.abc.Mapping):
         self._data = {}
 
     def __getitem__(self, key):
-        if isinstance(key, str):  # trivial lookup
+        if isinstance(key, str):
             return self._data[key]
-        path, value_type = parse(key)
-        return lookup(self, path=path, value_type=value_type)
+        path, type = parse(key)
+        obj = resolve_path(self, path)
+        if type is not None:
+            check_type(obj, type)
+        return obj
 
     def get(self, key, default=None, *, type=None):
+        if type is not None:
+            validate_type(type)
         value = super().get(key, default)
         if type is not None and value is not default:
             check_type(value, type)

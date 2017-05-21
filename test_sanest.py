@@ -9,7 +9,7 @@ import pytest
 
 @pytest.mark.parametrize(
     'key',
-    [123, None, b"foo", True, []])
+    [123.456, None, b"foo", True, []])
 def test_dict_string_keys_only(key):
     d = sanest.Dict()
     with pytest.raises(sanest.InvalidKeyError):
@@ -51,6 +51,10 @@ def test_dict_typed_lookup():
         d['a':int]
     assert str(excinfo.value) == "requested int, got str: 'aaa'"
 
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.get('a', type=int)
+    assert str(excinfo.value) == "requested int, got str: 'aaa'"
+
     with pytest.raises(sanest.InvalidValueTypeError) as excinfo:
         d['nonexistent':bytes]
     assert str(excinfo.value) == (
@@ -69,10 +73,13 @@ def test_dict_nested_lookup():
     d['a']['b'] = 123
 
     assert d['a', 'b'] == 123
+    assert d['a':dict]
     assert d['a', 'b':int] == 123
+
     assert ('a', 'b') in d
     assert ['a', 'b'] in d
     assert ['c', 'd'] not in d
+
     assert d.get(('a', 'b')) == 123
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
