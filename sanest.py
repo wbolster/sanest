@@ -56,27 +56,37 @@ def validate_type(type):
             .format(', '.join(t.__name__ for t in TYPES), type))
 
 
-def parse(key):
+def parse(pathspec):
     path = []
-    if isinstance(key, (tuple, list)):
+    if isinstance(pathspec, (tuple, list)):
         # nested lookup and typed nested lookup,
         # e.g. d['a','b'] and  d['a','b':str]
         try:
-            *path, key = key
+            *path, key = pathspec
         except ValueError:
-            raise InvalidKeyError("empty path: {!r}".format(key))
+            raise InvalidKeyError("empty path: {!r}".format(pathspec))
+    else:
+        key = pathspec
     if isinstance(key, (int, str)):
         # basic lookup, e.g. d['a'] and d[2]
         value_type = None
     elif isinstance(key, slice):
-        # typed lookup, e.g. d['a':str]
+        # typed lookup, e.g. d['a':str] and d[path_as_list:str]
         if key.step is not None:
             raise InvalidKeyError(
-                "slice cannot contain step value: {!r}".format(key))
-        if not key.start:
-            raise InvalidKeyError("key is empty: {!r}".format(key))
+                "slice cannot contain step value: {!r}".format(pathspec))
         value_type = key.stop
-        key = key.start
+        if not key.start:
+            raise InvalidKeyError("key is empty: {!r}".format(pathspec))
+        elif isinstance(key.start, (tuple, list)):
+            # e.g. d[path_as_list:str]
+            if path:
+                raise InvalidKeyError(
+                    "mixed path syntaxes: {!r}".format(pathspec))
+            *path, key = key.start
+        else:
+            # e.g. d['a':str]
+            key = key.start
     path.append(key)
     validate_path(path)
     if value_type is not None:

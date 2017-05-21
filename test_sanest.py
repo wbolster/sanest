@@ -72,9 +72,14 @@ def test_dict_nested_lookup():
     d['a'] = sanest.Dict()
     d['a']['b'] = 123
 
+    path = ['a', 'b']
+
     assert d['a', 'b'] == 123
+    assert d[path] == 123
+
     assert d['a':dict]
     assert d['a', 'b':int] == 123
+    assert d[path:int] == 123
 
     assert ('a', 'b') in d
     assert ['a', 'b'] in d
@@ -88,3 +93,7 @@ def test_dict_nested_lookup():
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
         d.get([])
     assert str(excinfo.value).startswith("empty path: ")
+
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+        d['a', path:int]
+    assert str(excinfo.value).startswith("mixed path syntaxes: ")
