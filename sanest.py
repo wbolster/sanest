@@ -56,7 +56,7 @@ def validate_type(type):
             .format(', '.join(t.__name__ for t in TYPES), type))
 
 
-def parse(pathspec):
+def parse(pathspec, *, allow_type):
     path = []
     if isinstance(pathspec, (tuple, list)):
         # e.g. d['a', 'b'] and  d['a', 'b':str]
@@ -78,6 +78,9 @@ def parse(pathspec):
         value_type = None
     elif isinstance(key, slice):
         # typed lookup, e.g. d['a':str] and d[path_as_list:str]
+        if not allow_type:
+            raise InvalidKeyError(
+                "path must contain only str or int: {!r}".format(pathspec))
         if key.step is not None:
             raise InvalidKeyError(
                 "slice cannot contain step value: {!r}".format(pathspec))
@@ -85,7 +88,7 @@ def parse(pathspec):
         if not key.start:
             raise InvalidKeyError(
                 "empty path or path component: {!r}".format(pathspec))
-        elif isinstance(key.start, (tuple, list)):
+        if isinstance(key.start, (tuple, list)):
             # e.g. d[path_as_list:str]
             if path:
                 raise InvalidKeyError(
@@ -140,7 +143,7 @@ class Mapping(collections.abc.Mapping):
                 raise InvalidKeyError(
                     "empty path or path component: {!r}".format(key))
             return self._data[key]
-        path, type = parse(key)
+        path, type = parse(key, allow_type=True)
         obj = resolve_path(self, path)
         if type is not None:
             check_type(obj, type)
