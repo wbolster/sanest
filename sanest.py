@@ -2,6 +2,7 @@
 sanest, sane nested dictionaries and lists
 """
 
+import builtins
 import collections.abc
 
 TYPES = [dict, list, bool, float, int, str]
@@ -104,17 +105,17 @@ def parse(pathspec, *, allow_type):
     return path, value_type
 
 
-def check_type(x, expected_type):
-    if expected_type is dict:
-        real_expected_type = Mapping
-    elif expected_type is list:
-        real_expected_type = Sequence
+def check_type(x, *, type):
+    if type is dict:
+        real_type = Mapping
+    elif type is list:
+        real_type = Sequence
     else:
-        real_expected_type = expected_type
-    if not isinstance(x, real_expected_type):
+        real_type = type
+    if not isinstance(x, real_type):
         raise InvalidValueError(
             "requested {.__name__}, got {.__name__}: {!r}"
-            .format(expected_type, type(x), x))
+            .format(type, builtins.type(x), x))
 
 
 def resolve_path(obj, path):
@@ -146,7 +147,7 @@ class Mapping(collections.abc.Mapping):
         path, type = parse(key, allow_type=True)
         obj = resolve_path(self, path)
         if type is not None:
-            check_type(obj, type)
+            check_type(obj, type=type)
         return obj
 
     def get(self, key, default=None, *, type=None):
@@ -157,7 +158,7 @@ class Mapping(collections.abc.Mapping):
         except KeyError:
             return default
         if type is not None:
-            check_type(value, type)
+            check_type(value, type=type)
         return value
 
     def __len__(self):
