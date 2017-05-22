@@ -93,7 +93,7 @@ def test_dict_getitem_with_type():
 
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d['a':int]
-    assert str(excinfo.value) == "requested int, got str: 'aaa'"
+    assert str(excinfo.value) == "requested int, got str at path ['a']: 'aaa'"
 
 
 def test_dict_get_with_type():
@@ -105,7 +105,7 @@ def test_dict_get_with_type():
 
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d.get('a', type=int)
-    assert str(excinfo.value) == "requested int, got str: 'aaa'"
+    assert str(excinfo.value) == "requested int, got str at path ['a']: 'aaa'"
 
 
 def test_dict_get_with_default_and_type():
@@ -123,7 +123,7 @@ def test_dict_get_with_default_and_type():
         # here the default is identical to the actual value. type
         # checking should prevent a non-string return value.
         d.get('a', value, type=str)
-    assert str(excinfo.value) == "requested str, got int: 123"
+    assert str(excinfo.value) == "requested str, got int at path ['a']: 123"
 
 
 def test_dict_getitem_with_invalid_type():

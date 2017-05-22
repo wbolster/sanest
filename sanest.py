@@ -105,7 +105,7 @@ def parse(pathspec, *, allow_type):
     return path, value_type
 
 
-def check_type(x, *, type):
+def check_type(x, *, type, path):
     if type is dict:
         real_type = Mapping
     elif type is list:
@@ -114,8 +114,8 @@ def check_type(x, *, type):
         real_type = type
     if not isinstance(x, real_type):
         raise InvalidValueError(
-            "requested {.__name__}, got {.__name__}: {!r}"
-            .format(type, builtins.type(x), x))
+            "requested {.__name__}, got {.__name__} at path {}: {!r}"
+            .format(type, builtins.type(x), path, x))
 
 
 def resolve_path(obj, path):
@@ -147,7 +147,7 @@ class Mapping(collections.abc.Mapping):
         path, type = parse(key, allow_type=True)
         obj = resolve_path(self, path)
         if type is not None:
-            check_type(obj, type=type)
+            check_type(obj, type=type, path=path)
         return obj
 
     def get(self, key, default=None, *, type=None):
@@ -159,7 +159,7 @@ class Mapping(collections.abc.Mapping):
         except KeyError:
             return default
         if type is not None:
-            check_type(value, type=type)
+            check_type(value, type=type, path=path)
         return value
 
     def __len__(self):
