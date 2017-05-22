@@ -153,8 +153,9 @@ class Mapping(collections.abc.Mapping):
     def get(self, key, default=None, *, type=None):
         if type is not None:
             validate_type(type)
+        path, _ = parse(key, allow_type=False)
         try:
-            value = self[key]
+            value = resolve_path(self, path)
         except KeyError:
             return default
         if type is not None:
