@@ -2,9 +2,11 @@
 tests for sanest
 """
 
-import sanest
+import copy
 
 import pytest
+
+import sanest
 
 
 def test_dict_basics():
@@ -247,3 +249,13 @@ def test_empty_key():
         path = ['a', 'b', '']
         d[path]
     assert str(excinfo.value).startswith("empty path or path component: ")
+
+
+def test_dict_copy():
+    # todo: this "works" only for read-only dicts
+    d = sanest.Dict()
+    d['a'] = 1
+    expected = {'a': 1}
+    assert d.copy() == expected
+    assert copy.copy(d) == expected
+    assert copy.deepcopy(d) == expected

@@ -168,6 +168,15 @@ class Mapping(collections.abc.Mapping):
     def __iter__(self):
         return iter(self._data)
 
+    def copy(self):
+        return self  # immutable
+
+    def __copy__(self):
+        return self.copy()
+
+    def __deepcopy__(self, memo):
+        return self.copy()
+
     # todo: typed __contains__(). maybe .contains() with type= arg?
     #       maybe something like "('a', 'b', str) in d"?
     # todo: type checking views? (how?)
