@@ -5,6 +5,7 @@ sanest, sane nested dictionaries and lists
 import builtins
 import collections.abc
 
+MARKER = object()
 TYPES = [dict, list, bool, float, int, str]
 
 
@@ -161,6 +162,26 @@ class Mapping(collections.abc.Mapping):
         if type is not None:
             check_type(value, type=type, path=path)
         return value
+
+    def contains(self, key, type=None):
+        try:
+            value = self.get(key, MARKER, type=type)
+        except InvalidValueError:
+            return False
+        else:
+            return value is not MARKER
+
+    def __contains__(self, key):
+        if isinstance(key, str):
+            # e.g. 'a' in d
+            return key in self._data
+        if isinstance(key, (tuple, list)) and key and key[-1] in TYPES:
+            # e.g. ['a', 'b', int] in d
+            *key, type = key
+        else:
+            # e.g. ['a', 'b'] in d
+            type = None
+        return self.contains(key, type=type)
 
     def __len__(self):
         return len(self._data)

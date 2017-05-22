@@ -202,6 +202,22 @@ def test_dict_contains_with_path():
     assert ('a', 'b') in d  # tuple
     assert ['a', 'b'] in d  # list
     assert ['c', 'd'] not in d
+    assert d.contains(['a', 'b'])
+    assert not d.contains(['a', 'c'])
+    with pytest.raises(sanest.InvalidKeyError):
+        ['a', None] in d
+
+
+def test_dict_contains_with_path_and_type():
+    d = sanest.Dict()
+    d['a'] = sanest.Dict()
+    d['a']['b'] = 123
+    assert d.contains(['a', 'b'], type=int)
+    assert d.contains(('a', 'b'), type=int)
+    assert not d.contains(('a', 'b'), type=str)
+    assert ['a', 'b', int] in d
+    assert ('a', 'b', int) in d
+    assert ('a', 'b', str) not in d
 
 
 def test_dict_get_with_path():
