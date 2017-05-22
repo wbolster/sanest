@@ -220,6 +220,22 @@ def test_dict_contains_with_path_and_type():
     assert ('a', 'b', str) not in d
 
 
+def test_dict_slice_syntax_limited_use():
+    """
+    Slice syntax is only valid for d[a,b:int], not in other places.
+    """
+    d = sanest.Dict()
+    x = ['a', slice('b', int)]  # this is what d['a', 'b':int)] results in
+    with pytest.raises(sanest.InvalidKeyError):
+        d.get(x)
+    with pytest.raises(sanest.InvalidKeyError):
+        x in d
+    with pytest.raises(sanest.InvalidKeyError):
+        d.contains(x)
+    with pytest.raises(sanest.InvalidKeyError):
+        d.setdefault(x, 123)
+
+
 def test_dict_get_with_path():
     d = sanest.Dict()
     d['a'] = sanest.Dict()
