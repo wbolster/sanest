@@ -211,8 +211,6 @@ class Mapping(collections.abc.Mapping):
     def __deepcopy__(self, memo):
         return self.copy()
 
-    # todo: typed __contains__(). maybe .contains() with type= arg?
-    #       maybe something like "('a', 'b', str) in d"?
     # todo: type checking views? (how?)
 
 
