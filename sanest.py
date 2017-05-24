@@ -44,8 +44,11 @@ class InvalidValueError(ValueError):
 
 
 def validate_path(path):
-    # explicitly check for booleans, since bool is a subclass of int.
+    if not path:
+        raise InvalidKeyError(
+            "empty path or path component: {!r}".format(path))
     for k in path:
+        # explicitly check for booleans, since bool is a subclass of int.
         if isinstance(k, bool) or not isinstance(k, (int, str)):
             raise InvalidKeyError(
                 "path must contain only str or int: {!r}".format(path))
@@ -58,52 +61,58 @@ def validate_type(type):
             .format(', '.join(t.__name__ for t in TYPES), type))
 
 
-def parse(pathspec, *, allow_type):
-    path = []
-    if isinstance(pathspec, (tuple, list)):
-        # e.g. d['a', 'b'] and  d['a', 'b':str]
-        try:
-            *path, key = pathspec
-        except ValueError:
+def parse_slice(sl, pathspec, *, allow_list):
+    if sl.step is not None:
+        raise InvalidKeyError(
+            "slice cannot contain step value: {!r}".format(pathspec))
+    if isinstance(sl.start, str):
+        # e.g. d['a':str]
+        return [sl.start], sl.stop
+    if isinstance(sl.start, int) and not isinstance(sl.start, bool):
+        # e.g. d[2:str]
+        return [sl.start], sl.stop
+    if isinstance(sl.start, (tuple, list)):
+        # e.g. d[path:str]
+        if not allow_list:
             raise InvalidKeyError(
-                "empty path or path component: {!r}".format(pathspec))
-    else:
-        key = pathspec
-    if isinstance(key, str):
+                "mixed path syntaxes: {!r}".format(pathspec))
+        return sl.start, sl.stop
+    raise InvalidKeyError(
+        "path must contain only str or int: {!r}".format(pathspec))
+
+
+def parse_pathspec(pathspec, *, allow_type, allow_empty_string=False):
+    type = None
+    if isinstance(pathspec, str):
         # e.g. d['a']
-        if not key:
-            raise InvalidKeyError(
-                "empty path or path component: {!r}".format(pathspec))
-        value_type = None
-    elif isinstance(key, int) and not isinstance(key, bool):
+        path = [pathspec]
+    elif isinstance(pathspec, int) and not isinstance(pathspec, bool):
         # e.g. d[2]
-        value_type = None
-    elif isinstance(key, slice):
-        # typed lookup, e.g. d['a':str] and d[path_as_list:str]
+        path = [pathspec]
+    elif isinstance(pathspec, slice):
+        # e.g. d['a':str] and d[path:str]
+        path, type = parse_slice(pathspec, pathspec, allow_list=True)
+    elif isinstance(pathspec, (tuple, list)):
+        # e.g. d['a', 'b'] and  d['a', 'b':str]
+        path = list(pathspec)
+        if path and isinstance(path[-1], slice):
+            # e.g. d['a', 'b':str]
+            path_from_slice, type = parse_slice(
+                path[-1], pathspec, allow_list=False)
+            path[-1:] = path_from_slice
+    else:
+        raise InvalidKeyError(
+            "path must contain only str or int: {!r}".format(pathspec))
+    if '' in path and (not allow_empty_string or len(path) > 1):
+        raise InvalidKeyError(
+            "empty path or path component: {!r}".format(pathspec))
+    validate_path(path)
+    if type is not None:
         if not allow_type:
             raise InvalidKeyError(
                 "path must contain only str or int: {!r}".format(pathspec))
-        if key.step is not None:
-            raise InvalidKeyError(
-                "slice cannot contain step value: {!r}".format(pathspec))
-        value_type = key.stop
-        if not key.start:
-            raise InvalidKeyError(
-                "empty path or path component: {!r}".format(pathspec))
-        if isinstance(key.start, (tuple, list)):
-            # e.g. d[path_as_list:str]
-            if path:
-                raise InvalidKeyError(
-                    "mixed path syntaxes: {!r}".format(pathspec))
-            *path, key = key.start
-        else:
-            # e.g. d['a':str]
-            key = key.start
-    path.append(key)
-    validate_path(path)
-    if value_type is not None:
-        validate_type(value_type)
-    return path, value_type
+        validate_type(type)
+    return path, type
 
 
 def check_type(x, *, type, path):
@@ -140,21 +149,23 @@ class Mapping(collections.abc.Mapping):
         self._data = {}
 
     def __getitem__(self, key):
-        if isinstance(key, str):
-            if not key:
-                raise InvalidKeyError(
-                    "empty path or path component: {!r}".format(key))
+        if isinstance(key, str):  # fast path
             return self._data[key]
-        path, type = parse(key, allow_type=True)
+        path, type = parse_pathspec(
+            key, allow_type=True, allow_empty_string=True)
+        if path == ['']:
+            return self._data['']
         obj = resolve_path(self, path)
         if type is not None:
             check_type(obj, type=type, path=path)
         return obj
 
     def get(self, key, default=None, *, type=None):
+        if isinstance(key, str) and type is None:  # fast path
+            return self._data.get(key, default)
         if type is not None:
             validate_type(type)
-        path, _ = parse(key, allow_type=False)
+        path, _ = parse_pathspec(key, allow_type=False)
         try:
             value = resolve_path(self, path)
         except KeyError:

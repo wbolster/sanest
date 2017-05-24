@@ -257,6 +257,18 @@ def test_dict_iteration():
 
 
 def test_empty_key():
+    # though empty keys are invalid and cannot be set, simple string
+    # lookups and containment checks should not raise surprising
+    # exceptions.
+    d = sanest.Dict()
+    with pytest.raises(KeyError):
+        d['']
+    with pytest.raises(KeyError):
+        d['':int]
+    assert '' not in d
+
+
+def test_empty_path():
     d = sanest.Dict()
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
@@ -270,15 +282,12 @@ def test_empty_key():
     assert str(excinfo.value).startswith("empty path or path component: ")
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
-        d['']
-    assert str(excinfo.value) == "empty path or path component: ''"
-
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
-        d['':int]
+        path = ['a', 'b', '']
+        d[path]
     assert str(excinfo.value).startswith("empty path or path component: ")
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
-        path = ['a', 'b', '']
+        path = ['', 'b']
         d[path]
     assert str(excinfo.value).startswith("empty path or path component: ")
 
