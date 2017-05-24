@@ -183,7 +183,7 @@ class Mapping(collections.abc.Mapping):
             return value is not MARKER
 
     def __contains__(self, key):
-        if isinstance(key, str):
+        if isinstance(key, str):  # fast path
             # e.g. 'a' in d
             return key in self._data
         if isinstance(key, (tuple, list)) and key and key[-1] in TYPES:
