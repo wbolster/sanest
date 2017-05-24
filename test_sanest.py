@@ -98,6 +98,14 @@ def test_dict_getitem_with_type():
     assert str(excinfo.value) == "requested int, got str at path ['a']: 'aaa'"
 
 
+def test_dict_get():
+    d = sanest.Dict()
+    d['a'] = 'aaa'
+    assert d.get('a') == 'aaa'
+    assert d.get('b') is None
+    assert d.get('c', 'x') == 'x'
+
+
 def test_dict_get_with_type():
     d = sanest.Dict()
     d['a'] = 'aaa'
