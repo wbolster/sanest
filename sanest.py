@@ -67,16 +67,16 @@ def parse_slice(sl, pathspec, *, allow_list):
             "slice cannot contain step value: {!r}".format(pathspec))
     if isinstance(sl.start, str):
         # e.g. d['a':str]
-        return [sl.start], sl.stop
+        return sl.start, [sl.start], sl.stop
     if isinstance(sl.start, int) and not isinstance(sl.start, bool):
         # e.g. d[2:str]
-        return [sl.start], sl.stop
+        return sl.start, [sl.start], sl.stop
     if isinstance(sl.start, (tuple, list)):
         # e.g. d[path:str]
         if not allow_list:
             raise InvalidKeyError(
                 "mixed path syntaxes: {!r}".format(pathspec))
-        return sl.start, sl.stop
+        return None, sl.start, sl.stop
     raise InvalidKeyError(
         "path must contain only str or int: {!r}".format(pathspec))
 
@@ -85,25 +85,29 @@ def parse_pathspec(pathspec, *, allow_type, allow_empty_string=False):
     type = None
     if isinstance(pathspec, str):
         # e.g. d['a']
+        simple_key = pathspec
         path = [pathspec]
     elif isinstance(pathspec, int) and not isinstance(pathspec, bool):
         # e.g. d[2]
+        simple_key = pathspec
         path = [pathspec]
     elif isinstance(pathspec, slice):
         # e.g. d['a':str] and d[path:str]
-        path, type = parse_slice(pathspec, pathspec, allow_list=True)
+        simple_key, path, type = parse_slice(
+            pathspec, pathspec, allow_list=True)
     elif isinstance(pathspec, (tuple, list)):
         # e.g. d['a', 'b'] and  d['a', 'b':str]
+        simple_key = None
         path = list(pathspec)
         if path and isinstance(path[-1], slice):
             # e.g. d['a', 'b':str]
-            path_from_slice, type = parse_slice(
+            simple_key, _, type = parse_slice(
                 path[-1], pathspec, allow_list=False)
-            path[-1:] = path_from_slice
+            path[-1] = simple_key
     else:
         raise InvalidKeyError(
             "path must contain only str or int: {!r}".format(pathspec))
-    if '' in path and (not allow_empty_string or len(path) > 1):
+    if '' in path and not (simple_key == '' and allow_empty_string):
         raise InvalidKeyError(
             "empty path or path component: {!r}".format(pathspec))
     validate_path(path)
@@ -153,8 +157,6 @@ class Mapping(collections.abc.Mapping):
             return self._data[key]
         path, type = parse_pathspec(
             key, allow_type=True, allow_empty_string=True)
-        if path == ['']:
-            return self._data['']
         obj = resolve_path(self, path)
         if type is not None:
             check_type(obj, type=type, path=path)

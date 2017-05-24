@@ -287,17 +287,30 @@ def test_empty_path():
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
         path = []
         d[path:str]
-    assert str(excinfo.value).startswith("empty path or path component: ")
+    assert str(excinfo.value) == "empty path or path component: []"
+
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+        d.get([], type=str)
+    assert str(excinfo.value) == "empty path or path component: []"
+
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+        path = ['']
+        d[path]
+    assert str(excinfo.value) == "empty path or path component: ['']"
+
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+        d.get([''], type=str)
+    assert str(excinfo.value) == "empty path or path component: ['']"
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
         path = ['a', 'b', '']
         d[path]
-    assert str(excinfo.value).startswith("empty path or path component: ")
+    assert str(excinfo.value) == "empty path or path component: ['a', 'b', '']"
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
         path = ['', 'b']
         d[path]
-    assert str(excinfo.value).startswith("empty path or path component: ")
+    assert str(excinfo.value) == "empty path or path component: ['', 'b']"
 
 
 def test_dict_copy():
