@@ -236,7 +236,6 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
 
     def set(self, key, value, *, type=None):
         # todo: convert dict/list values into own mapping types
-        # todo: disallow None values. "d['x'] = None" means "del d['x']"?
         if isinstance(key, str) and key and type is None:  # fast path
             self._data[key] = value
             return
@@ -246,7 +245,10 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
         if type is not None:
             check_type(value, type=type, path=path)
         obj, tail = resolve_path(self, path, create=True)
-        obj._data[tail] = value
+        if value is None:
+            obj._data.pop(tail, None)
+        else:
+            obj._data[tail] = value
 
     def setdefault(self, key, default=None, type=None):
         value = self.get(key, MARKER, type=type)

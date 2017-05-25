@@ -450,3 +450,11 @@ def test_dict_update():
     d['a'] = 1
     d.update({'a': 2}, b=3)
     assert d == {'a': 2, 'b': 3}
+
+
+def test_dict_none_value_is_delete():
+    d = sanest.Dict()
+    d['a', 'b'] = 1
+    d['a', 'b'] = None
+    assert ['a', 'b'] not in d
+    d['a', 'b'] = None  # idempotent
