@@ -101,9 +101,9 @@ def parse_pathspec(pathspec, *, allow_type, allow_empty_string=False):
         path = list(pathspec)
         if path and isinstance(path[-1], slice):
             # e.g. d['a', 'b':str]
-            simple_key, _, type = parse_slice(
+            key_from_slice, _, type = parse_slice(
                 path[-1], pathspec, allow_list=False)
-            path[-1] = simple_key
+            path[-1] = key_from_slice
     else:
         raise InvalidKeyError(
             "path must contain only str or int: {!r}".format(pathspec))
