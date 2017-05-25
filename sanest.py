@@ -244,6 +244,13 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
         obj = resolve_path(self, path, create=True)
         obj._data[path[-1]] = value
 
+    def setdefault(self, key, default=None, type=None):
+        value = self.get(key, MARKER, type=type)
+        if value is MARKER:
+            self.set(key, default, type=type)
+            value = default
+        return value
+
     def __setitem__(self, key, value):
         simple_key, path, type = parse_pathspec(key, allow_type=True)
         self.set(

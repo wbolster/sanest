@@ -43,15 +43,6 @@ def test_dict_contains():
     assert 'b' not in d
 
 
-def test_dict_setdefault():
-    d = sanest.Dict()
-    d['a'] = 1
-    d.setdefault('a', 2)
-    d.setdefault('b', 3)
-    assert d['a'] == 1
-    assert d['b'] == 3
-
-
 def test_dict_clear():
     d = sanest.Dict()
     d['a'] = 1
@@ -269,9 +260,8 @@ def test_dict_slice_syntax_limited_use():
         x in d
     with pytest.raises(sanest.InvalidKeyError):
         d.contains(x)
-    # todo
-    # with pytest.raises(sanest.InvalidKeyError):
-    #     d.setdefault(x, 123)
+    with pytest.raises(sanest.InvalidKeyError):
+        d.setdefault(x, 123)
 
 
 def test_dict_get_with_path():
@@ -427,10 +417,29 @@ def test_dict_setitem_with_path_and_type():
     d = sanest.Dict()
     d['a', 'b':int] = 123
     assert d == {'a': {'b': 123}}
-    # assert d['a', 'b':int] == 123
+    assert d['a', 'b':int] == 123
 
     path = ['a', 'b', 'c']
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d[path:int] = 'not an int'
     assert str(excinfo.value) == (
         "expected int, got str at path ['a', 'b', 'c']: 'not an int'")
+
+
+def test_dict_setdefault():
+    d = sanest.Dict()
+    d['a'] = 1
+    d.setdefault('a', 2)
+    d.setdefault(['b', 'c'], 'foo', type=str)
+    assert d['a'] == 1
+    assert d['b', 'c'] == 'foo'
+
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.setdefault(['b', 'c'], 'not an int', type=int)
+    assert str(excinfo.value) == (
+        "expected int, got str at path ['b', 'c']: 'foo'")
+
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.setdefault('d', 'not an int', type=int)
+    assert str(excinfo.value) == (
+        "expected int, got str at path ['d']: 'not an int'")
