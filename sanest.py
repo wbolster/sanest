@@ -179,8 +179,9 @@ def resolve_path(obj, path, *, create=False):
 class Mapping(collections.abc.Mapping):
     __slots__ = ('_data',)
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self._data = {}
+        self.update(*args, **kwargs)
 
     def __getitem__(self, key):
         if isinstance(key, str):  # fast path

@@ -28,6 +28,15 @@ def test_dict_comparison():
     assert d1 == d2 == d3
 
 
+def test_dict_constructor():
+    regular_dict = {'a': 1, 'b': 2}
+    d = sanest.Dict(regular_dict)
+    assert d == regular_dict
+    d = sanest.Dict(regular_dict, c=3)
+    regular_dict['c'] = 3
+    assert d == regular_dict
+
+
 def test_dict_length_and_truthiness():
     d = sanest.Dict()
     assert len(d) == 0
