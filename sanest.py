@@ -128,7 +128,7 @@ def check_type(x, *, type, path):
         real_type = type
     if not isinstance(x, real_type):
         raise InvalidValueError(
-            "requested {.__name__}, got {.__name__} at path {}: {!r}"
+            "expected {.__name__}, got {.__name__} at path {}: {!r}"
             .format(type, builtins.type(x), path, x))
 
 
