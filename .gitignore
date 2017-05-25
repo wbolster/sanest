@@ -1,0 +1,5 @@
+*.pyc
+/.cache/
+/.coverage
+/*.egg-info/
+/htmlcov/
