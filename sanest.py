@@ -132,7 +132,7 @@ def check_type(x, *, type, path):
             .format(type, builtins.type(x), path, x))
 
 
-def resolve_path(obj, path):
+def resolve_path(obj, path, *, create=False):
     for n, key_or_index in enumerate(path):
         if isinstance(key_or_index, str) and not isinstance(obj, Mapping):
             raise InvalidValueError(
@@ -144,7 +144,13 @@ def resolve_path(obj, path):
                 .format(type(obj), path[:n], path))
         if len(path) - 1 == n:
             break
-        obj = obj[key_or_index]
+        try:
+            obj = obj[key_or_index]
+        except KeyError:
+            if create and isinstance(obj, Mapping):
+                obj[key_or_index] = obj = MutableMapping()  # autovivification
+            else:
+                raise
     return obj
 
 
@@ -225,6 +231,8 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
     __slots__ = ()
 
     def set(self, key, value, *, type=None):
+        # todo: convert dict/list values into own mapping types
+        # todo: disallow None values. "d['x'] = None" means "del d['x']"?
         if isinstance(key, str) and key and type is None:  # fast path
             self._data[key] = value
             return
@@ -233,16 +241,15 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
         _, path, _ = parse_pathspec(key, allow_type=False)
         if type is not None:
             check_type(value, type=type, path=path)
-        d = resolve_path(self, path)
-        d[path[-1]] = value
+        obj = resolve_path(self, path, create=True)
+        obj._data[path[-1]] = value
 
     def __setitem__(self, key, value):
-        if not isinstance(key, str):
-            raise InvalidKeyError("invalid key: {!r}".format(key))
-        # todo: convert dict/list values into own mapping types
-        # todo: nested setitem
-        # todo: typed setitem
-        self._data[key] = value
+        simple_key, path, type = parse_pathspec(key, allow_type=True)
+        self.set(
+            path if simple_key is None else simple_key,
+            value,
+            type=type)
 
     def __delitem__(self, key):
         if not isinstance(key, str):
@@ -255,14 +262,12 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
         self._data.clear()
 
     # todo: clean api for building nested structures
-    # todo: autovivification
     # todo: .setdefault() with type= arg
     # todo: .pop() with type= arg
     # todo: .popitem() with type= arg
     # todo: support for copy.copy() and copy.deepcopy()
     # todo: .copy(deep=True)
     # todo: pickle support
-    # todo: disallow None values. "d['x'] = None" means "del d['x']"?
 
 
 # todo: support for lists
