@@ -226,6 +226,7 @@ class Mapping(collections.abc.Mapping):
         return self.copy()
 
     # todo: type checking views? (how?)
+    # todo: __str__() and __repr__()
 
 
 class MutableMapping(Mapping, collections.abc.MutableMapping):
