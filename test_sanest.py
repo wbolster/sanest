@@ -452,6 +452,35 @@ def test_dict_update():
     assert d == {'a': 2, 'b': 3}
 
 
+def test_dict_value_atomic_type():
+    d = sanest.Dict()
+    d['a'] = 1
+    d['b'] = 1.23
+    d['c'] = "foo"
+    d['d'] = True
+
+
+def test_dict_value_container_type_conversion():
+    d = sanest.Dict()
+    d['a'] = {'b': 123}
+    d2 = d['a']
+    assert isinstance(d2, sanest.Dict)
+    assert d2 == {'b': 123}
+    assert d2['b':int] == 123
+
+
+def test_dict_value_invalid_type():
+    class MyClass:
+        def __repr__(self):
+            return '<MyClass>'
+
+    d = sanest.Dict()
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d['a'] = MyClass()
+    assert str(excinfo.value) == (
+        "cannot use values of type MyClass: <MyClass>")
+
+
 def test_dict_none_value_is_delete():
     d = sanest.Dict()
     d['a', 'b'] = 1

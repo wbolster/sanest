@@ -63,6 +63,25 @@ def validate_type(type):
             .format(', '.join(t.__name__ for t in TYPES), type))
 
 
+def convert(value):
+    if isinstance(value, ATOMIC_TYPES):
+        return value
+    if isinstance(value, (Mapping, Sequence)):
+        # todo: make copy instead?
+        return value
+    if isinstance(value, dict):
+        obj = Dict()
+        obj.update(value)
+        return obj
+    if isinstance(value, list):
+        obj = List()
+        obj.extend(value)
+        return obj
+    raise InvalidValueError(
+        "cannot use values of type {.__name__}: {!r}"
+        .format(type(value), value))
+
+
 def parse_slice(sl, pathspec, *, allow_list):
     if sl.step is not None:
         raise InvalidKeyError(
@@ -235,8 +254,10 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
     __slots__ = ()
 
     def set(self, key, value, *, type=None):
-        # todo: convert dict/list values into own mapping types
-        if isinstance(key, str) and key and type is None:  # fast path
+        if value is not None:
+            value = convert(value)
+        if isinstance(key, str) and key and value is not None and type is None:
+            # fast path
             self._data[key] = value
             return
         if type is not None:
