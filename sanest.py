@@ -116,7 +116,7 @@ def parse_pathspec(pathspec, *, allow_type, allow_empty_string=False):
             raise InvalidKeyError(
                 "path must contain only str or int: {!r}".format(pathspec))
         validate_type(type)
-    return path, type
+    return simple_key, path, type
 
 
 def check_type(x, *, type, path):
@@ -157,10 +157,13 @@ class Mapping(collections.abc.Mapping):
     def __getitem__(self, key):
         if isinstance(key, str):  # fast path
             return self._data[key]
-        path, type = parse_pathspec(
+        simple_key, path, type = parse_pathspec(
             key, allow_type=True, allow_empty_string=True)
-        obj = resolve_path(self, path)
-        value = obj[path[-1]]
+        try:
+            obj = resolve_path(self, path)
+            value = obj[path[-1]]
+        except KeyError:
+            raise KeyError(path if simple_key is None else simple_key)
         if type is not None:
             check_type(value, type=type, path=path)
         return value
@@ -170,7 +173,7 @@ class Mapping(collections.abc.Mapping):
             return self._data.get(key, default)
         if type is not None:
             validate_type(type)
-        path, _ = parse_pathspec(key, allow_type=False)
+        _, path, _ = parse_pathspec(key, allow_type=False)
         try:
             obj = resolve_path(self, path)
             value = obj[path[-1]]

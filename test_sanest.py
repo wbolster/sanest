@@ -85,6 +85,17 @@ def test_dict_string_keys_only(key):
         d.pop(key)
 
 
+def test_dict_getitem():
+    d = sanest.Dict()
+
+    d['a'] = 1
+    assert d['a'] == 1
+
+    with pytest.raises(KeyError) as excinfo:
+        d['x']
+    assert str(excinfo.value) == "'x'"
+
+
 def test_dict_getitem_with_type():
     d = sanest.Dict()
     d['a'] = 'aaa'
@@ -96,6 +107,10 @@ def test_dict_getitem_with_type():
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d['a':int]
     assert str(excinfo.value) == "requested int, got str at path ['a']: 'aaa'"
+
+    with pytest.raises(KeyError) as excinfo:
+        d['c':int]
+    assert str(excinfo.value) == "'c'"
 
 
 def test_dict_get():
@@ -170,6 +185,16 @@ def test_dict_getitem_with_path():
     path = ['a', 'aa']
     assert d[path] == 123
 
+    with pytest.raises(KeyError) as excinfo:
+        path = ['x']
+        d[path]
+    assert str(excinfo.value) == "['x']"
+
+    with pytest.raises(KeyError) as excinfo:
+        path = ['x', 'y']
+        d[path]
+    assert str(excinfo.value) == "['x', 'y']"
+
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
         d['a', 123, True]
     assert str(excinfo.value) == (
@@ -191,6 +216,10 @@ def test_dict_getitem_with_path_and_type():
     assert d['a':dict]
     path = ['a']
     assert d[path:dict]
+
+    with pytest.raises(KeyError) as excinfo:
+        d['x', 'y']
+    assert str(excinfo.value) == "['x', 'y']"
 
     path = ['b', 'c']
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
