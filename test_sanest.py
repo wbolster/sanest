@@ -443,3 +443,10 @@ def test_dict_setdefault():
         d.setdefault('d', 'not an int', type=int)
     assert str(excinfo.value) == (
         "expected int, got str at path ['d']: 'not an int'")
+
+
+def test_dict_update():
+    d = sanest.Dict()
+    d['a'] = 1
+    d.update({'a': 2}, b=3)
+    assert d == {'a': 2, 'b': 3}
