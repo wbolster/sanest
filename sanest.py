@@ -151,7 +151,8 @@ def resolve_path(obj, path, *, create=False):
                 obj[key_or_index] = obj = MutableMapping()  # autovivification
             else:
                 raise
-    return obj
+    tail = path[-1]
+    return obj, tail
 
 
 class Mapping(collections.abc.Mapping):
@@ -166,8 +167,8 @@ class Mapping(collections.abc.Mapping):
         simple_key, path, type = parse_pathspec(
             key, allow_type=True, allow_empty_string=True)
         try:
-            obj = resolve_path(self, path)
-            value = obj[path[-1]]
+            obj, tail = resolve_path(self, path)
+            value = obj[tail]
         except KeyError:
             raise KeyError(path if simple_key is None else simple_key)
         if type is not None:
@@ -181,8 +182,8 @@ class Mapping(collections.abc.Mapping):
             validate_type(type)
         _, path, _ = parse_pathspec(key, allow_type=False)
         try:
-            obj = resolve_path(self, path)
-            value = obj[path[-1]]
+            obj, tail = resolve_path(self, path)
+            value = obj[tail]
         except KeyError:
             return default
         if type is not None:
@@ -241,8 +242,8 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
         _, path, _ = parse_pathspec(key, allow_type=False)
         if type is not None:
             check_type(value, type=type, path=path)
-        obj = resolve_path(self, path, create=True)
-        obj._data[path[-1]] = value
+        obj, tail = resolve_path(self, path, create=True)
+        obj._data[tail] = value
 
     def setdefault(self, key, default=None, type=None):
         value = self.get(key, MARKER, type=type)
