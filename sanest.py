@@ -6,7 +6,9 @@ import builtins
 import collections.abc
 
 MARKER = object()
-TYPES = [dict, list, bool, float, int, str]
+CONTAINER_TYPES = (dict, list)
+ATOMIC_TYPES = (bool, float, int, str)
+TYPES = CONTAINER_TYPES + ATOMIC_TYPES
 
 
 class InvalidKeyError(TypeError):
