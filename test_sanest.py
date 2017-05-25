@@ -350,3 +350,29 @@ def test_dict_copy():
     assert d.copy() == expected
     assert copy.copy(d) == expected
     assert copy.deepcopy(d) == expected
+
+
+def test_dict_set():
+    d = sanest.Dict()
+    d.set('a', 'b')
+    assert d['a'] == 'b'
+
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+        d.set('', 'foo')
+    assert str(excinfo.value) == "empty path or path component: ''"
+
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+        path = ['', 'b']
+        d.set(path, 'foo')
+    assert str(excinfo.value) == "empty path or path component: ['', 'b']"
+
+
+def test_dict_set_with_type():
+    d = sanest.Dict()
+    d.set('a', 'b', type=str)
+    assert d['a'] == 'b'
+
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.set('a', 'not an int', type=int)
+    assert str(excinfo.value) == (
+        "expected int, got str at path ['a']: 'not an int'")

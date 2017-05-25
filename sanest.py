@@ -224,6 +224,18 @@ class Mapping(collections.abc.Mapping):
 class MutableMapping(Mapping, collections.abc.MutableMapping):
     __slots__ = ()
 
+    def set(self, key, value, *, type=None):
+        if isinstance(key, str) and key and type is None:  # fast path
+            self._data[key] = value
+            return
+        if type is not None:
+            validate_type(type)
+        _, path, _ = parse_pathspec(key, allow_type=False)
+        if type is not None:
+            check_type(value, type=type, path=path)
+        d = resolve_path(self, path)
+        d[path[-1]] = value
+
     def __setitem__(self, key, value):
         if not isinstance(key, str):
             raise InvalidKeyError("invalid key: {!r}".format(key))
