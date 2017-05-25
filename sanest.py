@@ -142,6 +142,8 @@ def resolve_path(obj, path):
             raise InvalidValueError(
                 "expected list, got {.__name__} at subpath {!r} of {!r}"
                 .format(type(obj), path[:n], path))
+        if len(path) - 1 == n:
+            break
         obj = obj[key_or_index]
     return obj
 
@@ -158,9 +160,10 @@ class Mapping(collections.abc.Mapping):
         path, type = parse_pathspec(
             key, allow_type=True, allow_empty_string=True)
         obj = resolve_path(self, path)
+        value = obj[path[-1]]
         if type is not None:
-            check_type(obj, type=type, path=path)
-        return obj
+            check_type(value, type=type, path=path)
+        return value
 
     def get(self, key, default=None, *, type=None):
         if isinstance(key, str) and type is None:  # fast path
@@ -169,7 +172,8 @@ class Mapping(collections.abc.Mapping):
             validate_type(type)
         path, _ = parse_pathspec(key, allow_type=False)
         try:
-            value = resolve_path(self, path)
+            obj = resolve_path(self, path)
+            value = obj[path[-1]]
         except KeyError:
             return default
         if type is not None:
