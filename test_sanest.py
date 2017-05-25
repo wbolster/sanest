@@ -19,6 +19,15 @@ def test_dict_basics():
     assert d['b'] == 3
 
 
+def test_dict_comparison():
+    d1 = sanest.Dict()
+    d1['a'] = 1
+    d2 = sanest.Dict()
+    d2['a'] = 1
+    d3 = {'a': 1}
+    assert d1 == d2 == d3
+
+
 def test_dict_length_and_truthiness():
     d = sanest.Dict()
     assert len(d) == 0
