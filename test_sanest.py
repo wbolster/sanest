@@ -313,7 +313,9 @@ def test_empty_key():
     with pytest.raises(KeyError) as excinfo:
         d['':int]
     assert str(excinfo.value) == "''"
+    assert d.get('', 123) == 123
     assert '' not in d
+    assert not d.contains('')
 
 
 def test_empty_path():
