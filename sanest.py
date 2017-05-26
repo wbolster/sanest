@@ -6,9 +6,10 @@ import builtins
 import collections.abc
 
 MARKER = object()
-CONTAINER_TYPES = (dict, list)
 ATOMIC_TYPES = (bool, float, int, str)
+CONTAINER_TYPES = (builtins.dict, builtins.list)
 TYPES = CONTAINER_TYPES + ATOMIC_TYPES
+PATH_SYNTAX_TYPES = (builtins.tuple, builtins.list)
 
 
 class InvalidKeyError(TypeError):
@@ -66,14 +67,14 @@ def validate_type(type):
 def convert(value):
     if isinstance(value, ATOMIC_TYPES):
         return value
-    if isinstance(value, (Mapping, Sequence)):
+    if isinstance(value, (sanest_dict, sanest_list)):
         return value
-    if isinstance(value, dict):
-        obj = Dict()
+    if isinstance(value, (builtins.dict, sanest_read_only_dict)):
+        obj = sanest_dict()
         obj.update(value)
         return obj
-    if isinstance(value, list):
-        obj = List()
+    if isinstance(value, (builtins.list, sanest_read_only_list)):
+        obj = sanest_list()
         obj.extend(value)
         return obj
     raise InvalidValueError(
@@ -82,9 +83,9 @@ def convert(value):
 
 
 def as_built_in(obj):
-    if isinstance(obj, Mapping):
+    if isinstance(obj, sanest_read_only_dict):
         return obj.as_dict()
-    if isinstance(obj, Sequence):
+    if isinstance(obj, sanest_read_only_list):
         return obj.as_list()
     raise TypeError(
         "cannot convert {.__name__} to built-in type: {!r}"
@@ -101,7 +102,7 @@ def parse_slice(sl, pathspec, *, allow_list):
     if isinstance(sl.start, int) and not isinstance(sl.start, bool):
         # e.g. d[2:str]
         return sl.start, [sl.start], sl.stop
-    if isinstance(sl.start, (tuple, list)):
+    if isinstance(sl.start, PATH_SYNTAX_TYPES):
         # e.g. d[path:str]
         if not allow_list:
             raise InvalidKeyError(
@@ -125,10 +126,10 @@ def parse_pathspec(pathspec, *, allow_type, allow_empty_string):
         # e.g. d['a':str] and d[path:str]
         simple_key, path, type = parse_slice(
             pathspec, pathspec, allow_list=True)
-    elif isinstance(pathspec, (tuple, list)):
+    elif isinstance(pathspec, PATH_SYNTAX_TYPES):
         # e.g. d['a', 'b'] and  d['a', 'b':str]
         simple_key = None
-        path = list(pathspec)
+        path = builtins.list(pathspec)
         if path and isinstance(path[-1], slice):
             # e.g. d['a', 'b':str]
             key_from_slice, _, type = parse_slice(
@@ -150,10 +151,10 @@ def parse_pathspec(pathspec, *, allow_type, allow_empty_string):
 
 
 def check_type(x, *, type, path):
-    if type is dict:
-        real_type = Mapping
-    elif type is list:
-        real_type = Sequence
+    if type is builtins.dict:
+        real_type = sanest_read_only_dict
+    elif type is builtins.list:
+        real_type = sanest_read_only_list
     else:
         real_type = type
     if not isinstance(x, real_type):
@@ -164,11 +165,13 @@ def check_type(x, *, type, path):
 
 def resolve_path(obj, path, *, create=False):
     for n, key_or_index in enumerate(path):
-        if isinstance(key_or_index, str) and not isinstance(obj, Mapping):
+        if isinstance(key_or_index, str) and not isinstance(
+                obj, sanest_read_only_dict):
             raise InvalidValueError(
                 "expected dict, got {.__name__} at subpath {!r} of {!r}"
                 .format(type(obj), path[:n], path))
-        if isinstance(key_or_index, int) and not isinstance(obj, Sequence):
+        if isinstance(key_or_index, int) and not isinstance(
+                obj, sanest_read_only_list):
             raise InvalidValueError(
                 "expected list, got {.__name__} at subpath {!r} of {!r}"
                 .format(type(obj), path[:n], path))
@@ -177,15 +180,15 @@ def resolve_path(obj, path, *, create=False):
         try:
             obj = obj[key_or_index]
         except KeyError:
-            if create and isinstance(obj, Mapping):
-                obj[key_or_index] = obj = MutableMapping()  # autovivification
+            if create and isinstance(obj, sanest_dict):
+                obj[key_or_index] = obj = sanest_dict()  # autovivification
             else:
                 raise
     tail = path[-1]
     return obj, tail
 
 
-class Mapping(collections.abc.Mapping):
+class rodict(collections.abc.Mapping):
     __slots__ = ('_data',)
 
     def __init__(self, *args, **kwargs):
@@ -231,7 +234,7 @@ class Mapping(collections.abc.Mapping):
         if isinstance(key, str):  # fast path
             # e.g. 'a' in d
             return key in self._data
-        if isinstance(key, (tuple, list)) and key and key[-1] in TYPES:
+        if (isinstance(key, PATH_SYNTAX_TYPES) and key and key[-1] in TYPES):
             # e.g. ['a', 'b', int] in d
             *key, type = key
         else:
@@ -262,12 +265,13 @@ class Mapping(collections.abc.Mapping):
         }
 
     def __repr__(self):
-        return 'sanest.Dict({!r})'.format(self.as_dict())
+        return '{}.{.__name__}({!r})'.format(
+            __name__, type(self), self.as_dict())
 
     # todo: type checking views? (how?)
 
 
-class MutableMapping(Mapping, collections.abc.MutableMapping):
+class dict(rodict, collections.abc.MutableMapping):
     __slots__ = ()
 
     def set(self, key, value, *, type=None):
@@ -323,7 +327,7 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
 
 # todo: support for lists
 
-class Sequence(collections.Sequence):
+class rolist(collections.abc.Sequence):
     # todo: implement
 
     def __getitem__(self, index):
@@ -342,10 +346,11 @@ class Sequence(collections.Sequence):
         ]
 
     def __repr__(self):
-        return 'sanest.List({!r})'.format(self.as_list())
+        return '{}.{.__name__}({!r})'.format(
+            __name__, type(self), self.as_list())
 
 
-class MutableSequence(Sequence, collections.abc.MutableSequence):
+class list(rolist, collections.abc.MutableSequence):
     # todo: implement
 
     def __setitem__(self, index, value):
@@ -358,8 +363,8 @@ class MutableSequence(Sequence, collections.abc.MutableSequence):
         raise NotImplementedError
 
 
-# friendly names
-# todo: lowercase names? must not mask built-names 'dict' and
-# 'list' since those are used elsewhere in this module.
-Dict = MutableMapping
-List = MutableSequence
+# internal aliases to make the code above less confusing
+sanest_dict = dict
+sanest_read_only_dict = rodict
+sanest_list = list
+sanest_read_only_list = rolist

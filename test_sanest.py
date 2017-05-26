@@ -10,7 +10,7 @@ import sanest
 
 
 def test_dict_basics():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = 1
     assert d['a'] == 1
     d['a'] = 2
@@ -20,9 +20,9 @@ def test_dict_basics():
 
 
 def test_dict_comparison():
-    d1 = sanest.Dict()
+    d1 = sanest.dict()
     d1['a'] = 1
-    d2 = sanest.Dict()
+    d2 = sanest.dict()
     d2['a'] = 1
     d3 = {'a': 1}
     assert d1 == d2 == d3
@@ -30,15 +30,15 @@ def test_dict_comparison():
 
 def test_dict_constructor():
     regular_dict = {'a': 1, 'b': 2}
-    d = sanest.Dict(regular_dict)
+    d = sanest.dict(regular_dict)
     assert d == regular_dict
-    d = sanest.Dict(regular_dict, c=3)
+    d = sanest.dict(regular_dict, c=3)
     regular_dict['c'] = 3
     assert d == regular_dict
 
 
 def test_dict_length_and_truthiness():
-    d = sanest.Dict()
+    d = sanest.dict()
     assert len(d) == 0
     assert not d
     assert not bool(d)
@@ -55,14 +55,14 @@ def test_dict_length_and_truthiness():
 
 
 def test_dict_contains():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = 1
     assert 'a' in d
     assert 'b' not in d
 
 
 def test_dict_clear():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = 1
     assert len(d) == 1
     d.clear()
@@ -79,7 +79,7 @@ def test_dict_clear():
     [],
 ])
 def test_dict_string_keys_only(key):
-    d = sanest.Dict()
+    d = sanest.dict()
     with pytest.raises(sanest.InvalidKeyError):
         d[key]
     with pytest.raises(sanest.InvalidKeyError):
@@ -95,7 +95,7 @@ def test_dict_string_keys_only(key):
 
 
 def test_dict_getitem():
-    d = sanest.Dict()
+    d = sanest.dict()
 
     d['a'] = 1
     assert d['a'] == 1
@@ -106,7 +106,7 @@ def test_dict_getitem():
 
 
 def test_dict_getitem_with_type():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = 'aaa'
     d['b'] = 2
 
@@ -123,7 +123,7 @@ def test_dict_getitem_with_type():
 
 
 def test_dict_get():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = 'aaa'
     assert d.get('a') == 'aaa'
     assert d.get('b') is None
@@ -131,7 +131,7 @@ def test_dict_get():
 
 
 def test_dict_get_with_type():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = 'aaa'
 
     assert d.get('a', type=str) == 'aaa'
@@ -143,7 +143,7 @@ def test_dict_get_with_type():
 
 
 def test_dict_get_with_default_and_type():
-    d = sanest.Dict()
+    d = sanest.dict()
     value = 123
     d['a'] = value
     assert d.get('a', type=int) is value
@@ -161,7 +161,7 @@ def test_dict_get_with_default_and_type():
 
 
 def test_dict_getitem_with_invalid_type():
-    d = sanest.Dict()
+    d = sanest.dict()
     with pytest.raises(sanest.InvalidValueTypeError) as excinfo:
         d['nonexistent':bytes]
     assert str(excinfo.value) == (
@@ -170,7 +170,7 @@ def test_dict_getitem_with_invalid_type():
 
 
 def test_dict_get_with_invalid_type():
-    d = sanest.Dict()
+    d = sanest.dict()
     with pytest.raises(sanest.InvalidValueTypeError) as excinfo:
         d.get('nonexistent', type=bytes)
     assert str(excinfo.value) == (
@@ -179,15 +179,15 @@ def test_dict_get_with_invalid_type():
 
 
 def test_dict_typed_getitem_with_invalid_slice():
-    d = sanest.Dict()
+    d = sanest.dict()
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
         d['a':int:str]
     assert str(excinfo.value).startswith("slice cannot contain step value: ")
 
 
 def test_dict_getitem_with_path():
-    d = sanest.Dict()
-    d['a'] = sanest.Dict()
+    d = sanest.dict()
+    d['a'] = sanest.dict()
     d['a']['aa'] = 123
     d['b'] = 456
     assert d['a', 'aa'] == 123
@@ -216,8 +216,8 @@ def test_dict_getitem_with_path():
 
 
 def test_dict_getitem_with_path_and_type():
-    d = sanest.Dict()
-    d['a'] = sanest.Dict()
+    d = sanest.dict()
+    d['a'] = sanest.dict()
     d['a']['b'] = 123
     assert d['a', 'b':int] == 123
     path = ['a', 'b']
@@ -242,8 +242,8 @@ def test_dict_getitem_with_path_and_type():
 
 
 def test_dict_contains_with_path():
-    d = sanest.Dict()
-    d['a'] = sanest.Dict()
+    d = sanest.dict()
+    d['a'] = sanest.dict()
     d['a']['b'] = 123
     assert ('a', 'b') in d  # tuple
     assert ['a', 'b'] in d  # list
@@ -255,8 +255,8 @@ def test_dict_contains_with_path():
 
 
 def test_dict_contains_with_path_and_type():
-    d = sanest.Dict()
-    d['a'] = sanest.Dict()
+    d = sanest.dict()
+    d['a'] = sanest.dict()
     d['a']['b'] = 123
     assert d.contains(['a', 'b'], type=int)
     assert d.contains(('a', 'b'), type=int)
@@ -270,7 +270,7 @@ def test_dict_slice_syntax_limited_use():
     """
     Slice syntax is only valid for d[a,b:int], not in other places.
     """
-    d = sanest.Dict()
+    d = sanest.dict()
     x = ['a', slice('b', int)]  # this is what d['a', 'b':int)] results in
     with pytest.raises(sanest.InvalidKeyError):
         d.get(x)
@@ -283,8 +283,8 @@ def test_dict_slice_syntax_limited_use():
 
 
 def test_dict_get_with_path():
-    d = sanest.Dict()
-    d['a'] = sanest.Dict()
+    d = sanest.dict()
+    d['a'] = sanest.dict()
     d['a']['b'] = 123
     assert d.get(('a', 'b')) == 123
     assert d.get(['a', 'c']) is None
@@ -296,7 +296,7 @@ def test_dict_get_with_path():
 
 
 def test_dict_iteration():
-    d = sanest.Dict()
+    d = sanest.dict()
     assert list(iter(d)) == []
     d['a'] = 1
     assert list(iter(d)) == ['a']
@@ -306,7 +306,7 @@ def test_dict_empty_key():
     # though empty keys are invalid and cannot be set, simple string
     # lookups and containment checks should not raise surprising
     # exceptions.
-    d = sanest.Dict()
+    d = sanest.dict()
     with pytest.raises(KeyError) as excinfo:
         d['']
     assert str(excinfo.value) == "''"
@@ -319,7 +319,7 @@ def test_dict_empty_key():
 
 
 def test_dict_empty_path():
-    d = sanest.Dict()
+    d = sanest.dict()
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
         path = []
@@ -357,7 +357,7 @@ def test_dict_empty_path():
 
 def test_dict_copy():
     # todo: this "works" only for read-only dicts
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = 1
     expected = {'a': 1}
     assert d.copy() == expected
@@ -366,7 +366,7 @@ def test_dict_copy():
 
 
 def test_dict_set():
-    d = sanest.Dict()
+    d = sanest.dict()
     d.set('a', 'b')
     assert d['a'] == 'b'
 
@@ -381,7 +381,7 @@ def test_dict_set():
 
 
 def test_dict_set_with_type():
-    d = sanest.Dict()
+    d = sanest.dict()
     d.set('a', 'b', type=str)
     assert d['a'] == 'b'
 
@@ -392,7 +392,7 @@ def test_dict_set_with_type():
 
 
 def test_dict_set_with_path():
-    d = sanest.Dict()
+    d = sanest.dict()
     path = ['a', 'b', 'c', 'd1']
     d[path] = 123
     assert d[path] == 123
@@ -409,7 +409,7 @@ def test_dict_set_with_path():
 
 
 def test_dict_set_with_path_and_type():
-    d = sanest.Dict()
+    d = sanest.dict()
     path = ['a', 'b', 'c']
     d.set(path, 123, type=int)
     assert d[path] == 123
@@ -421,13 +421,13 @@ def test_dict_set_with_path_and_type():
 
 
 def test_dict_setitem_with_type():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a':int] = 123
     assert d['a'] == 123
 
 
 def test_dict_setitem_with_path():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a', 'b'] = 123
     assert d['a', 'b'] == 123
     path = ['a', 'b']
@@ -436,7 +436,7 @@ def test_dict_setitem_with_path():
 
 
 def test_dict_setitem_with_path_and_type():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a', 'b':int] = 123
     assert d == {'a': {'b': 123}}
     assert d['a', 'b':int] == 123
@@ -449,7 +449,7 @@ def test_dict_setitem_with_path_and_type():
 
 
 def test_dict_setdefault():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = 1
     d.setdefault('a', 2)
     d.setdefault(['b', 'c'], 'foo', type=str)
@@ -468,14 +468,14 @@ def test_dict_setdefault():
 
 
 def test_dict_update():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = 1
     d.update({'a': 2}, b=3)
     assert d == {'a': 2, 'b': 3}
 
 
 def test_dict_value_atomic_type():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = 1
     d['b'] = 1.23
     d['c'] = "foo"
@@ -483,10 +483,10 @@ def test_dict_value_atomic_type():
 
 
 def test_dict_value_container_type_conversion():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a'] = {'b': 123}
     d2 = d['a']
-    assert isinstance(d2, sanest.Dict)
+    assert isinstance(d2, sanest.dict)
     assert d2 == {'b': 123}
     assert d2['b':int] == 123
 
@@ -496,7 +496,7 @@ def test_dict_value_invalid_type():
         def __repr__(self):
             return '<MyClass>'
 
-    d = sanest.Dict()
+    d = sanest.dict()
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d['a'] = MyClass()
     assert str(excinfo.value) == (
@@ -504,7 +504,7 @@ def test_dict_value_invalid_type():
 
 
 def test_dict_none_value_is_delete():
-    d = sanest.Dict()
+    d = sanest.dict()
     d['a', 'b'] = 1
     d['a', 'b'] = None
     assert ['a', 'b'] not in d
@@ -513,12 +513,12 @@ def test_dict_none_value_is_delete():
 
 def test_dict_convert_to_regular_dict():
     original = {'a': {'b': 123}, "c": True}
-    d = sanest.Dict(original)
+    d = sanest.dict(original)
     as_dict = d.as_dict()
     assert type(as_dict) is dict
     assert as_dict == original
 
 
 def test_dict_repr():
-    d = sanest.Dict({'a': {'b': {'c': 123}}})
-    assert repr(d) == "sanest.Dict({'a': {'b': {'c': 123}}})"
+    d = sanest.dict({'a': {'b': {'c': 123}}})
+    assert repr(d) == "sanest.dict({'a': {'b': {'c': 123}}})"
