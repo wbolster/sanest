@@ -81,6 +81,16 @@ def convert(value):
         .format(type(value), value))
 
 
+def as_built_in(obj):
+    if isinstance(obj, Mapping):
+        return obj.as_dict()
+    if isinstance(obj, Sequence):
+        return obj.as_list()
+    raise TypeError(
+        "cannot convert {.__name__} to built-in type: {!r}"
+        .format(type(obj), obj))
+
+
 def parse_slice(sl, pathspec, *, allow_list):
     if sl.step is not None:
         raise InvalidKeyError(
@@ -246,6 +256,13 @@ class Mapping(collections.abc.Mapping):
     def __deepcopy__(self, memo):
         return self.copy()
 
+    def as_dict(self):
+        """Convert to a regular (nested) dict/list structure."""
+        return {
+            k: v if isinstance(v, ATOMIC_TYPES) else as_built_in(v)
+            for k, v in self.items()
+        }
+
     # todo: type checking views? (how?)
     # todo: __str__() and __repr__()
 
@@ -316,6 +333,13 @@ class Sequence(collections.Sequence):
 
     def __len__(self):
         raise NotImplementedError
+
+    def as_list(self):
+        """Convert to a regular (nested) list/dict structure."""
+        return [
+            v if isinstance(v, ATOMIC_TYPES) else as_built_in(v)
+            for v in self
+        ]
 
 
 class MutableSequence(Sequence, collections.abc.MutableSequence):

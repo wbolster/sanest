@@ -505,3 +505,11 @@ def test_dict_none_value_is_delete():
     d['a', 'b'] = None
     assert ['a', 'b'] not in d
     d['a', 'b'] = None  # idempotent
+
+
+def test_dict_convert_to_regular_dict():
+    original = {'a': {'b': 123}, "c": True}
+    d = sanest.Dict(original)
+    as_dict = d.as_dict()
+    assert type(as_dict) is dict
+    assert as_dict == original
