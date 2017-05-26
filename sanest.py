@@ -316,7 +316,6 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
         self._data.clear()
 
     # todo: clean api for building nested structures
-    # todo: .setdefault() with type= arg
     # todo: .pop() with type= arg
     # todo: .popitem() with type= arg
     # todo: support for copy.copy() and copy.deepcopy()
