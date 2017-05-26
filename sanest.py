@@ -67,7 +67,6 @@ def convert(value):
     if isinstance(value, ATOMIC_TYPES):
         return value
     if isinstance(value, (Mapping, Sequence)):
-        # todo: make copy instead?
         return value
     if isinstance(value, dict):
         obj = Dict()
