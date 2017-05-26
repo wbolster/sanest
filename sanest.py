@@ -193,6 +193,7 @@ class Mapping(collections.abc.Mapping):
         self.update(*args, **kwargs)
 
     def __getitem__(self, key):
+        # todo: try to implement using .get(), just like .__setitem__()
         if isinstance(key, str):  # fast path
             return self._data[key]
         simple_key, path, type = parse_pathspec(
