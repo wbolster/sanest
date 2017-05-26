@@ -511,6 +511,20 @@ def test_dict_none_value_is_delete():
     d['a', 'b'] = None  # idempotent
 
 
+def test_dict_delitem():
+    d = sanest.dict()
+    with pytest.raises(KeyError) as excinfo:
+        del d['a']
+    assert str(excinfo.value) == "'a'"
+    d['a'] = 3
+    assert 'a' in d
+    del d['a']
+    assert 'a' not in d
+    with pytest.raises(KeyError) as excinfo:
+        del d['a']
+    assert str(excinfo.value) == "'a'"
+
+
 def test_dict_convert_to_regular_dict():
     original = {'a': {'b': 123}, "c": True}
     d = sanest.dict(original)
