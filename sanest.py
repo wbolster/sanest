@@ -193,18 +193,14 @@ class Mapping(collections.abc.Mapping):
         self.update(*args, **kwargs)
 
     def __getitem__(self, key):
-        # todo: try to implement using .get(), just like .__setitem__()
         if isinstance(key, str):  # fast path
             return self._data[key]
         simple_key, path, type = parse_pathspec(
             key, allow_type=True, allow_empty_string=True)
-        try:
-            obj, tail = resolve_path(self, path)
-            value = obj[tail]
-        except KeyError:
-            raise KeyError(path if simple_key is None else simple_key)
-        if type is not None:
-            check_type(value, type=type, path=path)
+        key = path if simple_key is None else simple_key
+        value = self.get(key, MARKER, type=type)
+        if value is MARKER:
+            raise KeyError(key)
         return value
 
     def get(self, key, default=None, *, type=None):
@@ -212,7 +208,8 @@ class Mapping(collections.abc.Mapping):
             return self._data.get(key, default)
         if type is not None:
             validate_type(type)
-        _, path, _ = parse_pathspec(key, allow_type=False)
+        _, path, _ = parse_pathspec(
+            key, allow_type=False, allow_empty_string=True)
         try:
             obj, tail = resolve_path(self, path)
             value = obj[tail]
