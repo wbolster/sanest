@@ -302,7 +302,7 @@ def test_dict_iteration():
     assert list(iter(d)) == ['a']
 
 
-def test_empty_key():
+def test_dict_empty_key():
     # though empty keys are invalid and cannot be set, simple string
     # lookups and containment checks should not raise surprising
     # exceptions.
@@ -318,7 +318,7 @@ def test_empty_key():
     assert not d.contains('')
 
 
-def test_empty_path():
+def test_dict_empty_path():
     d = sanest.Dict()
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
