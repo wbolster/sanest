@@ -307,10 +307,12 @@ def test_empty_key():
     # lookups and containment checks should not raise surprising
     # exceptions.
     d = sanest.Dict()
-    with pytest.raises(KeyError):
+    with pytest.raises(KeyError) as excinfo:
         d['']
-    with pytest.raises(KeyError):
+    assert str(excinfo.value) == "''"
+    with pytest.raises(KeyError) as excinfo:
         d['':int]
+    assert str(excinfo.value) == "''"
     assert '' not in d
 
 
