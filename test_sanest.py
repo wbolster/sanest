@@ -513,3 +513,8 @@ def test_dict_convert_to_regular_dict():
     as_dict = d.as_dict()
     assert type(as_dict) is dict
     assert as_dict == original
+
+
+def test_dict_repr():
+    d = sanest.Dict({'a': {'b': {'c': 123}}})
+    assert repr(d) == "sanest.Dict({'a': {'b': {'c': 123}}})"

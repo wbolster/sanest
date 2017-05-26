@@ -263,8 +263,10 @@ class Mapping(collections.abc.Mapping):
             for k, v in self.items()
         }
 
+    def __repr__(self):
+        return 'sanest.Dict({!r})'.format(self.as_dict())
+
     # todo: type checking views? (how?)
-    # todo: __str__() and __repr__()
 
 
 class MutableMapping(Mapping, collections.abc.MutableMapping):
@@ -340,6 +342,9 @@ class Sequence(collections.Sequence):
             v if isinstance(v, ATOMIC_TYPES) else as_built_in(v)
             for v in self
         ]
+
+    def __repr__(self):
+        return 'sanest.List({!r})'.format(self.as_list())
 
 
 class MutableSequence(Sequence, collections.abc.MutableSequence):
