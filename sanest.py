@@ -111,7 +111,7 @@ def parse_slice(sl, pathspec, *, allow_list):
         "path must contain only str or int: {!r}".format(pathspec))
 
 
-def parse_pathspec(pathspec, *, allow_type, allow_empty_string=False):
+def parse_pathspec(pathspec, *, allow_type, allow_empty_string):
     type = None
     if isinstance(pathspec, str):
         # e.g. d['a']
@@ -279,7 +279,8 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
             return
         if type is not None:
             validate_type(type)
-        _, path, _ = parse_pathspec(key, allow_type=False)
+        _, path, _ = parse_pathspec(
+            key, allow_type=False, allow_empty_string=False)
         if type is not None:
             check_type(value, type=type, path=path)
         obj, tail = resolve_path(self, path, create=True)
@@ -296,7 +297,8 @@ class MutableMapping(Mapping, collections.abc.MutableMapping):
         return value
 
     def __setitem__(self, key, value):
-        simple_key, path, type = parse_pathspec(key, allow_type=True)
+        simple_key, path, type = parse_pathspec(
+            key, allow_type=True, allow_empty_string=False)
         self.set(
             path if simple_key is None else simple_key,
             value,
