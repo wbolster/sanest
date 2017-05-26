@@ -272,6 +272,9 @@ class rodict(collections.abc.Mapping):
 
 
 class dict(rodict, collections.abc.MutableMapping):
+    """
+    dict-like container with support for nested lookups and type checking.
+    """
     __slots__ = ()
 
     def set(self, key, value, *, type=None):
@@ -351,6 +354,9 @@ class rolist(collections.abc.Sequence):
 
 
 class list(rolist, collections.abc.MutableSequence):
+    """
+    list-like container with support for nested lookups and type checking.
+    """
     # todo: implement
 
     def __setitem__(self, index, value):
