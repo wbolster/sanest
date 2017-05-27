@@ -311,6 +311,29 @@ class dict(rodict, collections.abc.MutableMapping):
             value,
             type=type)
 
+    def pop(self, key, default=MARKER, type=None):
+        if isinstance(key, str) and type is None:  # fast path
+            if default is MARKER:
+                return self._data.pop(key)
+            else:
+                return self._data.pop(key, default)
+        if type is not None:
+            validate_type(type)
+        simple_key, path, _ = parse_pathspec(
+            key, allow_type=False, allow_empty_string=True)
+        try:
+            obj, tail = resolve_path(self, path)
+            value = obj[tail]
+        except KeyError:
+            if default is MARKER:
+                raise KeyError(path if simple_key is None else simple_key)
+            return default
+        else:
+            if type is not None:
+                check_type(value, type=type, path=path)
+            del obj[tail]
+            return value
+
     def __delitem__(self, key):
         if not isinstance(key, str):
             raise InvalidKeyError("invalid key: {!r}".format(key))
@@ -321,7 +344,6 @@ class dict(rodict, collections.abc.MutableMapping):
     def clear(self):
         self._data.clear()
 
-    # todo: .pop() with type= arg
     # todo: .popitem() with type= arg
     # todo: support for copy.copy() and copy.deepcopy()
     # todo: .copy(deep=True)

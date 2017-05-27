@@ -534,6 +534,77 @@ def test_dict_delitem():
     assert str(excinfo.value) == "'a'"
 
 
+def test_dict_pop():
+    d = sanest.dict({'a': 1, 'b': 2})
+
+    # existing key
+    assert d.pop('a') == 1
+    assert 'a' not in d
+
+    # missing key
+    with pytest.raises(KeyError) as excinfo:
+        d.pop('a')
+    assert str(excinfo.value) == "'a'"
+
+    # existing key, with default arg
+    assert d.pop('b', 22) == 2
+    assert not d
+
+    # missing key, with default arg
+    assert d.pop('b', 22) == 22
+
+
+def test_dict_pop_with_type():
+    d = sanest.dict({'a': 1, 'b': 2})
+
+    # existing key, correct type
+    assert d.pop('a', type=int) == 1
+
+    # existing key, wrong type
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.pop('b', type=str)
+    assert str(excinfo.value) == "expected str, got int at path ['b']: 2"
+    assert d['b'] == 2
+
+    # existing key, with default arg, wrong type
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        assert d.pop('b', 22, type=str)
+    assert str(excinfo.value) == "expected str, got int at path ['b']: 2"
+    assert d['b'] == 2
+
+    # existing key, with default arg, correct type
+    assert d.pop('b', 22, type=int) == 2
+
+    # missing key
+    with pytest.raises(KeyError) as excinfo:
+        d.pop('x', type=str)
+    assert str(excinfo.value) == "'x'"
+
+    # missing key, with default arg: not type checked, just like .get()
+    assert d.pop('x', 99, type=int) == 99
+    assert d.pop('x', 'not an int', type=int) == 'not an int'
+
+    assert not d
+
+
+def test_dict_pop_with_path():
+    d = sanest.dict({'a': {'b': 2, 'c': 3}})
+    assert d.pop(['a', 'b']) == 2
+    assert d.pop(['a', 'c'], 33) == 3
+    assert d == {'a': {}}
+    assert d.pop(['a', 'x'], 99, type=str) == 99
+
+
+def test_dict_pop_with_path_and_type():
+    d = sanest.dict({'a': {'b': 2}})
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        assert d.pop(['a', 'b'], type=str)
+    assert str(excinfo.value) == "expected str, got int at path ['a', 'b']: 2"
+    assert d.pop(['a', 'b'], 22, type=int) == 2
+    assert d == {'a': {}}
+    assert d.pop(['a', 'x'], 99, type=str) == 99
+
+
 def test_dict_convert_to_regular_dict():
     original = {'a': {'b': 123}, "c": True}
     d = sanest.dict(original)
