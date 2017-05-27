@@ -335,11 +335,12 @@ class dict(rodict, collections.abc.MutableMapping):
             return value
 
     def __delitem__(self, key):
-        if not isinstance(key, str):
-            raise InvalidKeyError("invalid key: {!r}".format(key))
-        # todo: nested delitem
-        # todo: typed delitem
-        del self._data[key]
+        if isinstance(key, str):  # fast path
+            del self._data[key]
+            return
+        simple_key, path, type = parse_pathspec(
+            key, allow_type=True, allow_empty_string=False)
+        self.pop(path if simple_key is None else simple_key, type=type)
 
     def clear(self):
         self._data.clear()

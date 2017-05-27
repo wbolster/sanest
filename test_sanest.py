@@ -534,6 +534,36 @@ def test_dict_delitem():
     assert str(excinfo.value) == "'a'"
 
 
+def test_dict_delitem_with_type():
+    d = sanest.dict({'a': 1, 'b': 2})
+    del d['a':int]
+    assert 'a' not in d
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        del d['b':str]
+    assert str(excinfo.value) == "expected str, got int at path ['b']: 2"
+    assert d['b'] == 2
+
+
+def test_dict_delitem_with_path():
+    d = sanest.dict({'a': {'b': 2}})
+    with pytest.raises(KeyError) as excinfo:
+        del d['a', 'x']
+    assert str(excinfo.value) == "['a', 'x']"
+    del d['a', 'b']
+    assert d['a'] == {}
+
+
+def test_dict_delitem_with_path_and_type():
+    original = {'a': {'b': 2}}
+    d = sanest.dict(original)
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        del d['a', 'b':str]
+    assert str(excinfo.value) == "expected str, got int at path ['a', 'b']: 2"
+    assert d == original
+    del d['a', 'b':int]
+    assert d['a'] == {}
+
+
 def test_dict_pop():
     d = sanest.dict({'a': 1, 'b': 2})
 
