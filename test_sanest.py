@@ -241,6 +241,15 @@ def test_dict_getitem_with_path_and_type():
     assert str(excinfo.value).startswith("path must contain only str or int: ")
 
 
+def test_dict_contains_with_type():
+    d = sanest.dict()
+    d['a'] = 123
+    assert d.contains('a', type=int)
+    assert not d.contains('a', type=str)
+    assert ['a', int] in d
+    assert ['a', str] not in d
+
+
 def test_dict_contains_with_path():
     d = sanest.dict()
     d['a'] = sanest.dict()
