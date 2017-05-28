@@ -70,12 +70,10 @@ def convert(value):
     if isinstance(value, (sanest_dict, sanest_list)):
         return value
     if isinstance(value, (builtins.dict, sanest_read_only_dict)):
-        obj = sanest_dict()
-        obj.update(value)
+        obj = sanest_dict(value)
         return obj
     if isinstance(value, (builtins.list, sanest_read_only_list)):
-        obj = sanest_list()
-        obj.extend(value)
+        obj = sanest_list(value)
         return obj
     raise InvalidValueError(
         "cannot use values of type {.__name__}: {!r}"
