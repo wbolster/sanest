@@ -3,6 +3,7 @@ tests for sanest
 """
 
 import copy
+import pickle
 
 import pytest
 
@@ -692,3 +693,11 @@ def test_dict_deep_copy():
         # change nested field: copy is unchanged change
         original['b', 'b2'] = 2222
         assert other['b', 'b2'] == 22
+
+
+def test_dict_pickle():
+    d1 = sanest.dict({'a': 1, 'b': {'b1': 21, 'b2': 22}})
+    s = pickle.dumps(d1)
+    d2 = pickle.loads(s)
+    assert d1 == d2
+    assert d2['b', 'b1'] == 21

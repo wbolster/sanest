@@ -371,8 +371,6 @@ class dict(rodict, collections.abc.MutableMapping):
         obj._data = copy.deepcopy(self._data, memo)
         return obj
 
-    # todo: pickle support
-
 
 # todo: support for lists
 
