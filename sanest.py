@@ -222,7 +222,7 @@ class rodict(collections.abc.Mapping):
             check_type(value, type=type, path=path)
         return value
 
-    def contains(self, key, type=None):
+    def contains(self, key, *, type=None):
         try:
             value = self.get(key, MARKER, type=type)
         except InvalidValueError:
@@ -296,7 +296,7 @@ class dict(rodict, collections.abc.MutableMapping):
         else:
             obj._data[tail] = value
 
-    def setdefault(self, key, default=None, type=None):
+    def setdefault(self, key, default=None, *, type=None):
         value = self.get(key, MARKER, type=type)
         if value is MARKER:
             self.set(key, default, type=type)
@@ -311,7 +311,7 @@ class dict(rodict, collections.abc.MutableMapping):
             value,
             type=type)
 
-    def pop(self, key, default=MARKER, type=None):
+    def pop(self, key, default=MARKER, *, type=None):
         if isinstance(key, str) and type is None:  # fast path
             if default is MARKER:
                 return self._data.pop(key)
@@ -334,7 +334,7 @@ class dict(rodict, collections.abc.MutableMapping):
             del obj[tail]
             return value
 
-    def popitem(self, type=None):
+    def popitem(self, *, type=None):
         try:
             key = next(iter(self))
         except StopIteration:
