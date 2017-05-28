@@ -250,10 +250,10 @@ class rodict(collections.abc.Mapping):
         return self  # immutable
 
     def __copy__(self):
-        return self.copy()
+        return self  # immutable
 
     def __deepcopy__(self, memo):
-        return self.copy()
+        return self  # immutable
 
     def as_dict(self):
         """Convert to a regular (nested) dict/list structure."""
