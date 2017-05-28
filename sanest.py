@@ -3,6 +3,7 @@ sanest, sane nested dictionaries and lists
 """
 
 import builtins
+import copy
 import collections.abc
 
 MARKER = object()
@@ -354,8 +355,22 @@ class dict(rodict, collections.abc.MutableMapping):
     def clear(self):
         self._data.clear()
 
-    # todo: support for copy.copy() and copy.deepcopy()
-    # todo: .copy(deep=True)
+    def copy(self, *, deep=False):
+        fn = copy.deepcopy if deep else copy.copy
+        return fn(self)
+
+    def __copy__(self):
+        cls = type(self)
+        obj = cls.__new__(cls)
+        obj._data = self._data.copy()
+        return obj
+
+    def __deepcopy__(self, memo):
+        cls = type(self)
+        obj = cls.__new__(cls)
+        obj._data = copy.deepcopy(self._data, memo)
+        return obj
+
     # todo: pickle support
 
 

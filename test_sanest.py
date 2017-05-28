@@ -364,16 +364,6 @@ def test_dict_empty_path():
     assert str(excinfo.value) == "empty path or path component: ['', 'b']"
 
 
-def test_dict_copy():
-    # todo: this "works" only for read-only dicts
-    d = sanest.dict()
-    d['a'] = 1
-    expected = {'a': 1}
-    assert d.copy() == expected
-    assert copy.copy(d) == expected
-    assert copy.deepcopy(d) == expected
-
-
 def test_dict_set():
     d = sanest.dict()
     d.set('a', 'b')
@@ -666,3 +656,39 @@ def test_dict_convert_to_regular_dict():
 def test_dict_repr():
     d = sanest.dict({'a': {'b': {'c': 123}}})
     assert repr(d) == "sanest.dict({'a': {'b': {'c': 123}}})"
+
+
+def test_dict_shallow_copy():
+    d1 = sanest.dict({'a': 1, 'b': {'b1': 21, 'b2': 22}})
+    d2 = sanest.dict({'a': 1, 'b': {'b1': 21, 'b2': 22}})
+    copies = [
+        (d1, d1.copy()),
+        (d2, copy.copy(d2)),
+    ]
+    for original, other in copies:
+        assert other == original
+        assert other is not original
+        # change shallow field: original is unchanged
+        other['a'] = 111
+        assert original['a'] == 1
+        # change nested field: copy reflects the change
+        original['b', 'b2'] = 2222
+        assert other['b', 'b2'] == 2222
+
+
+def test_dict_deep_copy():
+    d1 = sanest.dict({'a': 1, 'b': {'b1': 21, 'b2': 22}})
+    d2 = sanest.dict({'a': 1, 'b': {'b1': 21, 'b2': 22}})
+    copies = [
+        (d1, d1.copy(deep=True)),
+        (d2, copy.deepcopy(d2)),
+    ]
+    for original, other in copies:
+        assert other == original
+        assert other is not original
+        # change shallow field: original is unchanged
+        other['a'] = 111
+        assert original['a'] == 1
+        # change nested field: copy is unchanged change
+        original['b', 'b2'] = 2222
+        assert other['b', 'b2'] == 22
