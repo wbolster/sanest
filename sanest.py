@@ -334,6 +334,17 @@ class dict(rodict, collections.abc.MutableMapping):
             del obj[tail]
             return value
 
+    def popitem(self, type=None):
+        try:
+            key = next(iter(self))
+        except StopIteration:
+            raise KeyError
+        value = self._data[key]
+        if type is not None:
+            check_type(value, type=type, path=['a'])
+        del self._data[key]
+        return key, value
+
     def __delitem__(self, key):
         if isinstance(key, str):  # fast path
             del self._data[key]
@@ -345,7 +356,6 @@ class dict(rodict, collections.abc.MutableMapping):
     def clear(self):
         self._data.clear()
 
-    # todo: .popitem() with type= arg
     # todo: support for copy.copy() and copy.deepcopy()
     # todo: .copy(deep=True)
     # todo: pickle support

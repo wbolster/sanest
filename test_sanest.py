@@ -635,6 +635,26 @@ def test_dict_pop_with_path_and_type():
     assert d.pop(['a', 'x'], 99, type=str) == 99
 
 
+def test_dict_popitem():
+    d = sanest.dict({'a': 1})
+    assert d.popitem() == ('a', 1)
+    assert d == {}
+    d['b'] = 2
+    assert d.popitem() == ('b', 2)
+    with pytest.raises(KeyError) as excinfo:
+        assert d.popitem()
+    assert str(excinfo.value) == ''
+
+
+def test_dict_popitem_with_type():
+    d = sanest.dict({'a': 1})
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        assert d.popitem(type=str)
+    assert str(excinfo.value) == "expected str, got int at path ['a']: 1"
+    assert d['a'] == 1
+    assert d.popitem(type=int) == ('a', 1)
+
+
 def test_dict_convert_to_regular_dict():
     original = {'a': {'b': 123}, "c": True}
     d = sanest.dict(original)
