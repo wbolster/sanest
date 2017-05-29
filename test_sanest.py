@@ -657,6 +657,7 @@ def test_dict_convert_to_regular_dict():
 def test_dict_repr():
     d = sanest.dict({'a': {'b': {'c': 123}}})
     assert repr(d) == "sanest.dict({'a': {'b': {'c': 123}}})"
+    assert eval(repr(d)) == d
 
 
 def test_dict_shallow_copy():
