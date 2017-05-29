@@ -6,11 +6,18 @@ import builtins
 import copy
 import collections.abc
 
-MARKER = object()
 ATOMIC_TYPES = (bool, float, int, str)
 CONTAINER_TYPES = (builtins.dict, builtins.list)
 TYPES = CONTAINER_TYPES + ATOMIC_TYPES
 PATH_SYNTAX_TYPES = (builtins.tuple, builtins.list)
+
+
+class Missing:
+    def __repr__(self):
+        return '<missing>'
+
+
+MISSING = Missing()
 
 
 class InvalidKeyError(TypeError):
@@ -200,8 +207,8 @@ class rodict(collections.abc.Mapping):
         simple_key, path, type = parse_pathspec(
             key, allow_type=True, allow_empty_string=True)
         key = path if simple_key is None else simple_key
-        value = self.get(key, MARKER, type=type)
-        if value is MARKER:
+        value = self.get(key, MISSING, type=type)
+        if value is MISSING:
             raise KeyError(key)
         return value
 
@@ -223,11 +230,11 @@ class rodict(collections.abc.Mapping):
 
     def contains(self, key, *, type=None):
         try:
-            value = self.get(key, MARKER, type=type)
+            value = self.get(key, MISSING, type=type)
         except InvalidValueError:
             return False
         else:
-            return value is not MARKER
+            return value is not MISSING
 
     def __contains__(self, key):
         if isinstance(key, str):  # fast path
@@ -296,8 +303,8 @@ class dict(rodict, collections.abc.MutableMapping):
             obj._data[tail] = value
 
     def setdefault(self, key, default=None, *, type=None):
-        value = self.get(key, MARKER, type=type)
-        if value is MARKER:
+        value = self.get(key, MISSING, type=type)
+        if value is MISSING:
             self.set(key, default, type=type)
             value = default
         return value
@@ -310,9 +317,9 @@ class dict(rodict, collections.abc.MutableMapping):
             value,
             type=type)
 
-    def pop(self, key, default=MARKER, *, type=None):
+    def pop(self, key, default=MISSING, *, type=None):
         if isinstance(key, str) and type is None:  # fast path
-            if default is MARKER:
+            if default is MISSING:
                 return self._data.pop(key)
             else:
                 return self._data.pop(key, default)
@@ -324,7 +331,7 @@ class dict(rodict, collections.abc.MutableMapping):
             obj, tail = resolve_path(self, path)
             value = obj[tail]
         except KeyError:
-            if default is MARKER:
+            if default is MISSING:
                 raise KeyError(path if simple_key is None else simple_key)
             return default
         else:
