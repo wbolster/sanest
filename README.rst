@@ -61,3 +61,4 @@ todo and ideas
   * create new wrappers on the fly, when retrieving.
   * would influence identity checks. cached weakrefs?
   * __eq__() shortcut can compare ._data identity first
+  * as_dict() may optionally not return a copy (performance)
