@@ -477,11 +477,14 @@ def test_dict_update():
 
 
 def test_dict_value_atomic_type():
-    d = sanest.dict()
-    d['a'] = 1
-    d['b'] = 1.23
-    d['c'] = "foo"
-    d['d'] = True
+    d1 = sanest.dict()
+    d2 = {}
+    for d in [d1, d2]:
+        d['a'] = 1
+        d['b'] = 1.23
+        d['c'] = "foo"
+        d['d'] = True
+    assert d1 == d2
 
 
 def test_dict_value_container_type_conversion():
