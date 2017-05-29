@@ -42,6 +42,7 @@ todo and ideas
   * requires major overhaul
 
 * public api for read-only structures?
+
   * construct-only
   * sanest.dict.readonly()
   * what about mixing?
