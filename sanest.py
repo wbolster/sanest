@@ -341,13 +341,17 @@ class dict(rodict, collections.abc.MutableMapping):
             return value
 
     def popitem(self, *, type=None):
+        if type is None:  # fast path
+            try:
+                return self._data.popitem()
+            except KeyError as exc:
+                raise KeyError("dictionary is empty") from None
         try:
-            key = next(iter(self))
+            key = next(iter(self._data))
         except StopIteration:
-            raise KeyError
+            raise KeyError("dictionary is empty") from None
         value = self._data[key]
-        if type is not None:
-            check_type(value, type=type, path=['a'])
+        check_type(value, type=type, path=['a'])
         del self._data[key]
         return key, value
 
