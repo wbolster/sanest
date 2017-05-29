@@ -22,34 +22,55 @@ MISSING = Missing()
 
 class InvalidKeyError(TypeError):
     """
-    Exception indicating that an invalid key is passed.
+    Exception raised when a key is invalid.
 
     This is a subclass of the built-in ``TypeError``, since this
     indicates problematic code that uses an incorrect API.
 
     Despite the name, it does not indicate absence of an item in a
-    dictionary (which is what ``KeyError``) would indicate.
+    dictionary, which is what ``KeyError`` would indicate.
     """
     pass
 
 
-class InvalidValueTypeError(TypeError):
+class InvalidTypeError(TypeError):
     """
-    Exception indicating that the requested type is invalid.
+    Exception raised when a specified type is invalid.
 
     This is a subclass of the built-in ``TypeError``, since this
     indicates problematic code that uses an incorrect API.
+    """
+    pass
+
+
+class DataError(ValueError):
+    """
+    Exception raised for data errors, such as invalid values and
+    unexpected nesting structures.
+
+    This is the base class for ``InvalidStructureError`` and
+    ``InvalidValueError``.
+
+    This is a subclass of the built-in ``ValueError``.
+    """
+
+
+class InvalidStructureError(ValueError):
+    """
+    Exception raised when a nested structure does not match the request.
+
+    This is a subclass of ``DataError`` and the built-in ``ValueError``,
+    since this indicates malformed data.
     """
     pass
 
 
 class InvalidValueError(ValueError):
     """
-    Exception indicating that the data structure does not match what the
-    code expects.
+    Exception raised when requesting or providing an invalid value.
 
-    This is a subclass of the built-in ``ValueError``, since this
-    indicates malformed data.
+    This is a subclass of ``DataError`` and the built-in ``ValueError``,
+    since this indicates malformed data.
     """
     pass
 
@@ -67,7 +88,7 @@ def validate_path(path):
 
 def validate_type(type):
     if type not in TYPES:
-        raise InvalidValueTypeError(
+        raise InvalidTypeError(
             "type must be one of {}: {!r}"
             .format(', '.join(t.__name__ for t in TYPES), type))
 
@@ -173,12 +194,12 @@ def resolve_path(obj, path, *, create=False):
     for n, key_or_index in enumerate(path):
         if isinstance(key_or_index, str) and not isinstance(
                 obj, sanest_read_only_dict):
-            raise InvalidValueError(
+            raise InvalidStructureError(
                 "expected dict, got {.__name__} at subpath {!r} of {!r}"
                 .format(type(obj), path[:n], path))
         if isinstance(key_or_index, int) and not isinstance(
                 obj, sanest_read_only_list):
-            raise InvalidValueError(
+            raise InvalidStructureError(
                 "expected list, got {.__name__} at subpath {!r} of {!r}"
                 .format(type(obj), path[:n], path))
         if len(path) - 1 == n:
@@ -235,7 +256,7 @@ class rodict(collections.abc.Mapping):
     def contains(self, key, *, type=None):
         try:
             value = self.get(key, MISSING, type=type)
-        except InvalidValueError:
+        except (InvalidStructureError, InvalidValueError):
             return False
         else:
             return value is not MISSING

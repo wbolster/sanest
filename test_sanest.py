@@ -163,7 +163,7 @@ def test_dict_get_with_default_and_type():
 
 def test_dict_getitem_with_invalid_type():
     d = sanest.dict()
-    with pytest.raises(sanest.InvalidValueTypeError) as excinfo:
+    with pytest.raises(sanest.InvalidTypeError) as excinfo:
         d['nonexistent':bytes]
     assert str(excinfo.value) == (
         "type must be one of dict, list, bool, float, int, str: "
@@ -172,7 +172,7 @@ def test_dict_getitem_with_invalid_type():
 
 def test_dict_get_with_invalid_type():
     d = sanest.dict()
-    with pytest.raises(sanest.InvalidValueTypeError) as excinfo:
+    with pytest.raises(sanest.InvalidTypeError) as excinfo:
         d.get('nonexistent', type=bytes)
     assert str(excinfo.value) == (
         "type must be one of dict, list, bool, float, int, str: "
@@ -210,7 +210,7 @@ def test_dict_getitem_with_path():
     assert str(excinfo.value) == (
         "path must contain only str or int: ['a', 123, True]")
 
-    with pytest.raises(sanest.InvalidValueError) as excinfo:
+    with pytest.raises(sanest.InvalidStructureError) as excinfo:
         d['b', 'c', 'd']
     assert str(excinfo.value) == (
         "expected dict, got int at subpath ['b'] of ['b', 'c', 'd']")
@@ -270,10 +270,12 @@ def test_dict_contains_with_path_and_type():
     d['a']['b'] = 123
     assert d.contains(['a', 'b'], type=int)
     assert d.contains(('a', 'b'), type=int)
-    assert not d.contains(('a', 'b'), type=str)
     assert ['a', 'b', int] in d
     assert ('a', 'b', int) in d
+    assert not d.contains(('a', 'b'), type=str)
     assert ('a', 'b', str) not in d
+    assert ('a', 'b', 'c') not in d
+    assert ('a', 'b', 'c', int) not in d
 
 
 def test_dict_slice_syntax_limited_use():
@@ -491,7 +493,7 @@ def test_dict_value_container_type_conversion():
     assert d2['b':int] == 123
 
 
-def test_dict_value_invalid_type():
+def test_dict_value_unsupported_type():
     class MyClass:
         def __repr__(self):
             return '<MyClass>'

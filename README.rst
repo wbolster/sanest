@@ -25,9 +25,6 @@ todo and ideas
 
 * json helpers
 
-* improve exception types: unexpected structure (e.g. path lookup) versus
-  wrong supplied leaf value (e.g. setitem with incorrect value)
-
 * iteration helpers? e.g. dict.iter(type=…) or something like that?
 
 * sanity checks that prevent creating circular references
