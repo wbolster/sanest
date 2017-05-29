@@ -201,6 +201,10 @@ class rodict(collections.abc.Mapping):
         self._data = {}
         self.update(*args, **kwargs)
 
+    @classmethod
+    def fromkeys(cls, iterable, value=None):
+        return cls((key, value) for key in iterable)
+
     def __getitem__(self, key):
         if isinstance(key, str):  # fast path
             return self._data[key]

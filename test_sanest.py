@@ -709,3 +709,11 @@ def test_dict_pickle():
     d2 = pickle.loads(s)
     assert d1 == d2
     assert d2['b', 'b1'] == 21
+
+
+def test_dict_fromkeys():
+    keys = ['a', 'b']
+    d = sanest.dict.fromkeys(keys)
+    assert d == {}  # empty because of None values
+    d = sanest.dict.fromkeys(keys, 123)
+    assert d == {'a': 123, 'b': 123}
