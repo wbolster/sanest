@@ -297,8 +297,6 @@ class rodict(collections.abc.Mapping):
         return '{}.{.__name__}({!r})'.format(
             __name__, type(self), self.as_dict())
 
-    # todo: type checking views? (how?)
-
 
 class dict(rodict, collections.abc.MutableMapping):
     """

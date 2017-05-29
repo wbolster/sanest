@@ -33,6 +33,8 @@ todo and ideas
 
 * maybe allow None values (optionally)
 
+* type checking dict keys/values/items views? how?
+
 * dotted path strings or other separator? is this a good idea at all?
 
 * configurability
