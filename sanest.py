@@ -107,13 +107,13 @@ def convert(value):
         .format(type(value), value))
 
 
-def as_built_in(obj):
+def unwrap(obj):
     if isinstance(obj, sanest_read_only_dict):
         return obj.as_dict()
     if isinstance(obj, sanest_read_only_list):
         return obj.as_list()
     raise TypeError(
-        "cannot convert {.__name__} to built-in type: {!r}"
+        "cannot unwrap {.__name__}: {!r}"
         .format(type(obj), obj))
 
 
@@ -289,8 +289,8 @@ class rodict(collections.abc.Mapping):
     def as_dict(self):
         """Convert to a regular (nested) dict/list structure."""
         return {
-            k: v if isinstance(v, ATOMIC_TYPES) else as_built_in(v)
-            for k, v in self.items()
+            key: value if isinstance(value, ATOMIC_TYPES) else unwrap(value)
+            for key, value in self.items()
         }
 
     def __repr__(self):
@@ -419,10 +419,7 @@ class rolist(collections.abc.Sequence):
 
     def as_list(self):
         """Convert to a regular (nested) list/dict structure."""
-        return [
-            v if isinstance(v, ATOMIC_TYPES) else as_built_in(v)
-            for v in self
-        ]
+        return [v if isinstance(v, ATOMIC_TYPES) else unwrap(v) for v in self]
 
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(
