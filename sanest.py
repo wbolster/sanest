@@ -203,7 +203,8 @@ class rodict(collections.abc.Mapping):
 
     def __init__(self, *args, **kwargs):
         self._data = {}
-        self.update(*args, **kwargs)
+        if args or kwargs:
+            self.update(*args, **kwargs)
 
     @classmethod
     def fromkeys(cls, iterable, value=None):
