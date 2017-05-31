@@ -71,16 +71,8 @@ be good ideas after all and may never make it into this library.
   * sanest.dict.readonly()
   * what about mixing?
 
-* way to ‘infect’ an existing nested structure (which must not be used
-  afterwards anymore) without making full copies.
+* __eq__() shortcut can compare ._data identity first
 
-  * requires recursively applying transformations
-
-* alternative implementation idea: act as a wrapper around a plain
-  data structure:
-
-  * do not convert into sanest.dict/list upon assignment
-  * create new wrappers on the fly, when retrieving.
-  * would influence identity checks. cached weakrefs?
-  * __eq__() shortcut can compare ._data identity first
-  * as_dict() may optionally not return a copy (performance)
+* identity checks fail when repeatedly getting the same container
+  because of the wrapping. keep cached WeakValuesDict for any wrapped
+  structures handed out?

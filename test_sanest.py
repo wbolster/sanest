@@ -507,6 +507,13 @@ def test_dict_value_unsupported_type():
     assert str(excinfo.value) == (
         "cannot use values of type MyClass: <MyClass>")
 
+    d = sanest.dict()
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d['a', 'b'] = MyClass()
+    assert str(excinfo.value) == (
+        "cannot use values of type MyClass: <MyClass>")
+
+
 
 def test_dict_none_value_is_delete():
     d = sanest.dict()
@@ -613,6 +620,12 @@ def test_dict_pop_with_type():
     assert not d
 
 
+def test_dict_pop_default_arg_not_wrapped():
+    default = {'a': 1}
+    d = sanest.dict().pop('foo', default)
+    assert d is default
+
+
 def test_dict_pop_with_path():
     d = sanest.dict({'a': {'b': 2, 'c': 3}})
     assert d.pop(['a', 'b']) == 2
@@ -661,7 +674,7 @@ def test_dict_popitem_with_type():
 def test_dict_convert_to_regular_dict():
     original = {'a': {'b': 123}, "c": True}
     d = sanest.dict(original)
-    as_dict = d.as_dict()
+    as_dict = d.unwrap()
     assert type(as_dict) is dict
     assert as_dict == original
 
