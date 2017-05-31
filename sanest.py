@@ -372,7 +372,7 @@ class dict(rodict, collections.abc.MutableMapping):
         except StopIteration:
             raise KeyError("dictionary is empty") from None
         value = self._data[key]
-        check_type(value, type=type, path=['a'])
+        check_type(value, type=type, path=[key])
         del self._data[key]
         return key, value
 
