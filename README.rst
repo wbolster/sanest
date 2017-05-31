@@ -14,12 +14,34 @@ this is a work-in-progress and you should not use it (for now).
 todo and ideas
 ==============
 
+note: this is just a braindump, not a check list. some ideas may not
+be good ideas after all and may never make it into this library.
+
 * write docs and docstrings
 
 * sensible sanest.list support
 
 * should some_dict[2] raise some other exception because integers are
   not valid keys? (similiar for str indexes and lists)
+
+* extend slicing and type checking logic to peek into container values
+
+  * slice syntax ideas for lists:
+
+    * d['a', 'b':list:int]
+    * d['a', 'b':list, int]
+    * d['a', 'b':[int]]
+
+  * slice syntax ideas for dicts:
+
+    * d['a', 'b':dict:int]
+    * d['a', 'b':dict, int]
+    * d['a', 'b':{str: int}]
+
+* slice syntax to get containers out as built-in (not sanest counterpart) types
+
+  * d['a', 'b'::list] same as d['a', 'b':list].to_list()
+  * d['a', 'b'::dict] same as d['a', 'b':dict].to_dict()
 
 * nested walk helpers dict.walk() and list.walk()
 
