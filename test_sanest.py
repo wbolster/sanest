@@ -735,3 +735,10 @@ def test_dict_fromkeys():
     assert d == {}  # empty because of None values
     d = sanest.dict.fromkeys(keys, 123)
     assert d == {'a': 123, 'b': 123}
+
+
+def test_dict_wrap():
+    original = {'a': {'b': 12}}
+    d = sanest.dict.wrap(original)
+    assert d['a', 'b'] == 12
+    assert d.unwrap() is original
