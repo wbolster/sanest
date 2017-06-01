@@ -492,7 +492,7 @@ def test_dict_value_atomic_type():
     assert d1 == d2
 
 
-def test_dict_value_container_type_conversion():
+def test_dict_value_container_type():
     d = sanest.dict()
     nested = {'b': 123, 'c': {'c1': True, 'c2': False}}
     d['a'] = nested
@@ -503,21 +503,6 @@ def test_dict_value_container_type_conversion():
     d2 = d['a', 'c':dict]
     assert isinstance(d2, sanest.dict)
     assert d2['c1':bool] is True
-
-
-def test_dict_value_unsupported_type():
-    d = sanest.dict()
-    with pytest.raises(sanest.InvalidValueError) as excinfo:
-        d['a'] = MyClass()
-    assert str(excinfo.value) == (
-        "cannot use values of type MyClass: <MyClass>")
-
-    d = sanest.dict()
-    with pytest.raises(sanest.InvalidValueError) as excinfo:
-        d['a', 'b'] = MyClass()
-    assert str(excinfo.value) == (
-        "cannot use values of type MyClass: <MyClass>")
-
 
 
 def test_dict_none_value_is_delete():
@@ -747,3 +732,58 @@ def test_dict_wrap():
     d = sanest.dict.wrap(original)
     assert d['a', 'b'] == 12
     assert d.unwrap() is original
+
+
+def test_dict_wrap_invalid():
+    with pytest.raises(TypeError) as excinfo:
+        sanest.dict.wrap(123)
+    assert str(excinfo.value) == "not a dict"
+
+
+def test_dict_wrap_twice():
+    original = {'a': {'b': 12}}
+    d = sanest.dict.wrap(original)
+    d2 = sanest.dict.wrap(d)
+    assert d is d2
+
+
+def test_dict_constructor_validation():
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+        sanest.dict({True: False})
+    assert str(excinfo.value) == "invalid dict key: True"
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+        sanest.dict({123: 123})
+    assert str(excinfo.value) == "invalid dict key: 123"
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        sanest.dict({'a': MyClass()})
+    assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
+
+
+def test_dict_value_validation():
+    d = sanest.dict()
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d['a'] = MyClass()
+    assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
+
+    d = sanest.dict()
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d['a', 'b'] = MyClass()
+    assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
+
+
+def test_dict_wrap_validation():
+    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+        sanest.wrap({123: True})
+    assert str(excinfo.value) == (
+        "invalid dict key: 123")
+
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        sanest.wrap({"foo": MyClass()})
+    assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
+
+
+def test_dict_wrap_skip_validation():
+    invalid_dict = {True: False}
+    wrapped = sanest.wrap(invalid_dict, check=False)
+    unwrapped = wrapped.unwrap()
+    assert unwrapped is invalid_dict

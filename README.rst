@@ -76,3 +76,6 @@ be good ideas after all and may never make it into this library.
 * identity checks fail when repeatedly getting the same container
   because of the wrapping. keep cached WeakValuesDict for any wrapped
   structures handed out?
+
+* raise KeyError for None values on lookup so that existing dicts with
+  None values can be wrapped without introducing problems.

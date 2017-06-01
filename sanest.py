@@ -93,14 +93,59 @@ def validate_type(type):
             .format(', '.join(t.__name__ for t in TYPES), type))
 
 
-def wrap(value):
+def validate_value(value):
+    if not isinstance(value, TYPES):
+        raise InvalidValueError(
+            "invalid value of type {.__name__}: {!r}"
+            .format(builtins.type(value), value))
+    if isinstance(value, builtins.dict):
+        validate_dict(value)
+    elif isinstance(value, builtins.list):
+        validate_list(value)
+
+
+def validate_dict(d):
+    for key, value in d.items():
+        if not isinstance(key, str) or not key:
+            raise InvalidKeyError("invalid dict key: {!r}".format(key))
+        validate_value(value)
+
+
+def validate_list(l):
+    for value in l:
+        if value is not None:
+            validate_value(value)
+
+
+def pairs(*args, **kwargs):
+    """
+    Yield key/value pairs, handling args like the ``dict()`` does.
+
+    Checks that keys are sane.
+    """
+    if args:
+        other, *rest = args
+        if rest:
+            raise TypeError(
+                "expected at most 1 argument, got {0:d}".format(len(args)))
+        if isinstance(other, collections.abc.Mapping):
+            yield from other.items()
+        elif hasattr(other, "keys"):  # dict-like
+            for key in other.keys():
+                yield key, other[key]
+        else:
+            yield from other  # sequence of pairs
+    yield from kwargs.items()
+
+
+def wrap(value, *, check=True):
     """
     Wrap a container (dict or list) without making a copy.
     """
     if isinstance(value, builtins.dict):
-        return sanest_dict.wrap(value)
+        return sanest_dict.wrap(value, check=check)
     if isinstance(value, builtins.list):
-        return sanest_list.wrap(value)
+        return sanest_list.wrap(value, check=check)
     raise TypeError("not a dict or list: {!r}".format(value))
 
 
@@ -163,11 +208,7 @@ def parse_pathspec(pathspec, *, allow_type, allow_empty_string):
 
 
 def check_type(value, *, type, path):
-    if not isinstance(value, TYPES):
-        raise InvalidValueError(
-            "cannot use values of type {.__name__}: {!r}"
-            .format(builtins.type(value), value))
-    if type is not None and not isinstance(value, type):
+    if not isinstance(value, type):
         raise InvalidValueError(
             "expected {.__name__}, got {.__name__} at path {}: {!r}"
             .format(type, builtins.type(value), path, value))
@@ -211,13 +252,14 @@ class rodict(collections.abc.Mapping):
         return cls((key, value) for key in iterable)
 
     @classmethod
-    def wrap(cls, d):
+    def wrap(cls, d, *, check=True):
         if isinstance(d, cls):
-            return d
+            return d  # already wrapped
         if not isinstance(d, builtins.dict):
             raise TypeError("not a dict")
-        # todo: check validity, maybe add check=True arg
-        obj = cls()
+        if check:
+            validate_dict(d)
+        obj = cls.__new__(cls)
         obj._data = d
         return obj
 
@@ -225,7 +267,7 @@ class rodict(collections.abc.Mapping):
         if isinstance(key, str):  # fast path
             value = self._data[key]
             if isinstance(value, CONTAINER_TYPES):
-                value = wrap(value)
+                value = wrap(value, check=False)
             return value
         simple_key, path, type = parse_pathspec(
             key, allow_type=True, allow_empty_string=True)
@@ -241,7 +283,7 @@ class rodict(collections.abc.Mapping):
             if value is MISSING:
                 return default
             if isinstance(value, CONTAINER_TYPES):
-                value = wrap(value)
+                value = wrap(value, check=False)
             return value
         if type is not None:
             validate_type(type)
@@ -255,7 +297,7 @@ class rodict(collections.abc.Mapping):
         if type is not None:
             check_type(value, type=type, path=path)
         if isinstance(value, CONTAINER_TYPES):
-            value = wrap(value)
+            value = wrap(value, check=False)
         return value
 
     def contains(self, key, *, type=None):
@@ -309,18 +351,19 @@ class dict(rodict, collections.abc.MutableMapping):
     __slots__ = ()
 
     def set(self, key, value, *, type=None):
-        if isinstance(value, (sanest_read_only_dict, sanest_read_only_list)):
-            value = value._data  # same as .unwrap(), but faster
-        if isinstance(key, str) and key and value is not None and type is None:
-            # fast path
-            check_type(value, type=type, path=[key])
-            self._data[key] = value
-            return
         if type is not None:
             validate_type(type)
+        if isinstance(value, (sanest_read_only_dict, sanest_read_only_list)):
+            value = value._data  # same as .unwrap(), but faster
+        elif value is not None:
+            validate_value(value)
+        if isinstance(key, str) and key and value is not None and type is None:
+            # fast path
+            self._data[key] = value
+            return
         _, path, _ = parse_pathspec(
             key, allow_type=False, allow_empty_string=False)
-        if value is not None:
+        if type is not None and value is not None:
             check_type(value, type=type, path=path)
         obj, tail = resolve_path(self._data, path, create=True)
         if value is None:
@@ -343,6 +386,16 @@ class dict(rodict, collections.abc.MutableMapping):
             value,
             type=type)
 
+    def update(self, *args, **kwargs):
+        for key, value in pairs(*args, **kwargs):
+            if not isinstance(key, str) or not key:
+                raise InvalidKeyError("invalid dict key: {!r}".format(key))
+            if value is None:
+                self._data.pop(key, None)
+            else:
+                validate_value(value)
+                self._data[key] = value
+
     def pop(self, key, default=MISSING, *, type=None):
         if isinstance(key, str) and type is None:  # fast path
             value = self._data.pop(key, MISSING)
@@ -351,7 +404,7 @@ class dict(rodict, collections.abc.MutableMapping):
                     raise KeyError(key)
                 return default
             if isinstance(value, CONTAINER_TYPES):
-                value = wrap(value)
+                value = wrap(value, check=False)
             return value
         value = self.get(key, MISSING, type=type)
         if type is not None:
@@ -370,7 +423,7 @@ class dict(rodict, collections.abc.MutableMapping):
                 check_type(value, type=type, path=path)
             del obj[tail]
             if isinstance(value, CONTAINER_TYPES):
-                value = wrap(value)
+                value = wrap(value, check=False)
             return value
 
     def popitem(self, *, type=None):
@@ -416,7 +469,7 @@ class rolist(collections.abc.Sequence):
     # todo: implement
 
     @classmethod
-    def wrap(cls, l):
+    def wrap(cls, l, *, check=True):
         raise NotImplementedError
 
     def __getitem__(self, index):
