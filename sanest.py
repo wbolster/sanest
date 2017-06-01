@@ -55,7 +55,7 @@ class DataError(ValueError):
     """
 
 
-class InvalidStructureError(ValueError):
+class InvalidStructureError(DataError):
     """
     Exception raised when a nested structure does not match the request.
 
@@ -65,7 +65,7 @@ class InvalidStructureError(ValueError):
     pass
 
 
-class InvalidValueError(ValueError):
+class InvalidValueError(DataError):
     """
     Exception raised when requesting or providing an invalid value.
 
