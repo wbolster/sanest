@@ -10,6 +10,11 @@ import pytest
 import sanest
 
 
+class MyClass:
+    def __repr__(self):
+        return '<MyClass>'
+
+
 def test_dict_basics():
     d = sanest.dict()
     d['a'] = 1
@@ -501,10 +506,6 @@ def test_dict_value_container_type_conversion():
 
 
 def test_dict_value_unsupported_type():
-    class MyClass:
-        def __repr__(self):
-            return '<MyClass>'
-
     d = sanest.dict()
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d['a'] = MyClass()
