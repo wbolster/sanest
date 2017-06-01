@@ -353,26 +353,27 @@ class dict(rodict, collections.abc.MutableMapping):
     """
     __slots__ = ()
 
-    def set(self, key, value, *, type=None):
+    def set(self, key_or_path, value, *, type=None):
         if type is not None:
             validate_type(type)
         if isinstance(value, (sanest_read_only_dict, sanest_read_only_list)):
             value = value._data  # same as .unwrap(), but faster
         elif value is not None:
             validate_value(value)
-        if isinstance(key, str) and key and value is not None and type is None:
+        if isinstance(key_or_path, str) and key_or_path and type is None:
             # fast path
-            self._data[key] = value
-            return
-        _, path, _ = parse_pathspec(
-            key, allow_type=False, allow_empty_string=False)
-        if type is not None and value is not None:
-            check_type(value, type=type, path=path)
-        obj, tail = resolve_path(self._data, path, create=True)
-        if value is None:
-            obj.pop(tail, None)
+            d = self._data
+            key = key_or_path
         else:
-            obj[tail] = value
+            _, path, _ = parse_pathspec(
+                key_or_path, allow_type=False, allow_empty_string=False)
+            if type is not None and value is not None:
+                check_type(value, type=type, path=path)
+            d, key = resolve_path(self._data, path, create=True)
+        if value is None:
+            d.pop(key, None)
+        else:
+            d[key] = value
 
     def setdefault(self, key, default=None, *, type=None):
         value = self.get(key, MISSING, type=type)
