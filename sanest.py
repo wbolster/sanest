@@ -254,6 +254,8 @@ class rodict(collections.abc.Mapping):
             return default
         if type is not None:
             check_type(value, type=type, path=path)
+        if isinstance(value, CONTAINER_TYPES):
+            value = wrap(value)
         return value
 
     def contains(self, key, *, type=None):

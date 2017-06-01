@@ -489,11 +489,15 @@ def test_dict_value_atomic_type():
 
 def test_dict_value_container_type_conversion():
     d = sanest.dict()
-    d['a'] = {'b': 123}
-    d2 = d['a']
+    nested = {'b': 123, 'c': {'c1': True, 'c2': False}}
+    d['a'] = nested
+    assert isinstance(d.get('a'), sanest.dict)
+    assert isinstance(d['a'], sanest.dict)
+    assert d['a'] == nested
+    assert d['a']['b':int] == 123
+    d2 = d['a', 'c':dict]
     assert isinstance(d2, sanest.dict)
-    assert d2 == {'b': 123}
-    assert d2['b':int] == 123
+    assert d2['c1':bool] is True
 
 
 def test_dict_value_unsupported_type():
