@@ -3,8 +3,8 @@ sanest, sane nested dictionaries and lists
 """
 
 import builtins
-import copy
 import collections.abc
+import copy
 
 ATOMIC_TYPES = (bool, float, int, str)
 CONTAINER_TYPES = (builtins.dict, builtins.list)
