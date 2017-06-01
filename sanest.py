@@ -3,6 +3,7 @@ sanest, sane nested dictionaries and lists
 """
 
 import builtins
+import collections
 import collections.abc
 import copy
 
@@ -99,16 +100,18 @@ def validate_value(value):
             "invalid value of type {.__name__}: {!r}"
             .format(builtins.type(value), value))
     if isinstance(value, builtins.dict):
-        validate_dict(value)
+        collections.deque(validated_items(value.items()), 0)  # fast looping
     elif isinstance(value, builtins.list):
         validate_list(value)
 
 
-def validate_dict(d):
-    for key, value in d.items():
+def validated_items(iterable):
+    for key, value in iterable:
         if not isinstance(key, str) or not key:
             raise InvalidKeyError("invalid dict key: {!r}".format(key))
-        validate_value(value)
+        if value is not None:
+            validate_value(value)
+        yield key, value
 
 
 def validate_list(l):
@@ -258,7 +261,7 @@ class rodict(collections.abc.Mapping):
         if not isinstance(d, builtins.dict):
             raise TypeError("not a dict")
         if check:
-            validate_dict(d)
+            collections.deque(validated_items(d.items()), 0)  # fast looping
         obj = cls.__new__(cls)
         obj._data = d
         return obj
@@ -387,13 +390,10 @@ class dict(rodict, collections.abc.MutableMapping):
             type=type)
 
     def update(self, *args, **kwargs):
-        for key, value in pairs(*args, **kwargs):
-            if not isinstance(key, str) or not key:
-                raise InvalidKeyError("invalid dict key: {!r}".format(key))
+        for key, value in validated_items(pairs(*args, **kwargs)):
             if value is None:
                 self._data.pop(key, None)
             else:
-                validate_value(value)
                 self._data[key] = value
 
     def pop(self, key, default=MISSING, *, type=None):
