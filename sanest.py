@@ -382,9 +382,9 @@ class dict(rodict, collections.abc.MutableMapping):
             value = default
         return value
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key_or_path, value):
         simple_key, path, type = parse_pathspec(
-            key, allow_type=True, allow_empty_string=False)
+            key_or_path, allow_type=True, allow_empty_string=False)
         self.set(
             path if simple_key is None else simple_key,
             value,
