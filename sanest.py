@@ -397,35 +397,32 @@ class dict(rodict, collections.abc.MutableMapping):
             else:
                 self._data[key] = value
 
-    def pop(self, key, default=MISSING, *, type=None):
-        if isinstance(key, str) and type is None:  # fast path
-            value = self._data.pop(key, MISSING)
-            if value is MISSING:
-                if default is MISSING:
-                    raise KeyError(key)
-                return default
-            if isinstance(value, CONTAINER_TYPES):
-                value = wrap(value, check=False)
-            return value
-        value = self.get(key, MISSING, type=type)
+    def pop(self, key_or_path, default=MISSING, *, type=None):
         if type is not None:
             validate_type(type)
-        simple_key, path, _ = parse_pathspec(
-            key, allow_type=False, allow_empty_string=True)
-        try:
-            obj, tail = resolve_path(self._data, path)
-            value = obj[tail]
-        except KeyError:
-            if default is MISSING:
-                raise KeyError(path if simple_key is None else simple_key)
-            return default
+        if isinstance(key_or_path, str):  # fast path
+            d = self._data
+            key = key_or_path
+            path = [key]
+            value = d.get(key, MISSING)
         else:
-            if type is not None:
-                check_type(value, type=type, path=path)
-            del obj[tail]
-            if isinstance(value, CONTAINER_TYPES):
-                value = wrap(value, check=False)
-            return value
+            _, path, _ = parse_pathspec(
+                key_or_path, allow_type=False, allow_empty_string=True)
+            try:
+                d, key = resolve_path(self._data, path)
+                value = d.get(key, MISSING)
+            except KeyError:
+                value = MISSING
+        if value is MISSING:
+            if default is MISSING:
+                raise KeyError(key_or_path) from None
+            return default
+        if type is not None:
+            check_type(value, type=type, path=path)
+        del d[key]
+        if isinstance(value, CONTAINER_TYPES):
+            value = wrap(value, check=False)
+        return value
 
     def popitem(self, *, type=None):
         try:
