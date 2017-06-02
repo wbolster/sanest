@@ -306,7 +306,7 @@ class rodict(collections.abc.Mapping):
     def contains(self, key_or_path, *, type=None):
         try:
             value = self.get(key_or_path, MISSING, type=type)
-        except (InvalidStructureError, InvalidValueError):
+        except DataError:
             return False
         else:
             return value is not MISSING
