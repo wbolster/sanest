@@ -375,10 +375,10 @@ class dict(rodict, collections.abc.MutableMapping):
         else:
             d[key] = value
 
-    def setdefault(self, key, default=None, *, type=None):
-        value = self.get(key, MISSING, type=type)
+    def setdefault(self, key_or_path, default=None, *, type=None):
+        value = self.get(key_or_path, MISSING, type=type)
         if value is MISSING:
-            self.set(key, default, type=type)
+            self.set(key_or_path, default, type=type)
             value = default
         return value
 
