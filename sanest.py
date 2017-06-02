@@ -266,18 +266,18 @@ class rodict(collections.abc.Mapping):
         obj._data = d
         return obj
 
-    def __getitem__(self, key):
-        if isinstance(key, str):  # fast path
-            value = self._data[key]
+    def __getitem__(self, key_or_path):
+        if isinstance(key_or_path, str):  # fast path
+            value = self._data[key_or_path]
             if isinstance(value, CONTAINER_TYPES):
                 value = wrap(value, check=False)
             return value
-        simple_key, path, type = parse_pathspec(
-            key, allow_type=True, allow_empty_string=True)
-        key = path if simple_key is None else simple_key
-        value = self.get(key, MISSING, type=type)
+        key, path, type = parse_pathspec(
+            key_or_path, allow_type=True, allow_empty_string=True)
+        key_or_path = path if key is None else key  # type stripped off
+        value = self.get(key_or_path, MISSING, type=type)
         if value is MISSING:
-            raise KeyError(key)
+            raise KeyError(key_or_path)
         return value
 
     def get(self, key_or_path, default=None, *, type=None):
