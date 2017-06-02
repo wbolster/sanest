@@ -311,17 +311,18 @@ class rodict(collections.abc.Mapping):
         else:
             return value is not MISSING
 
-    def __contains__(self, key):
-        if isinstance(key, str):  # fast path
+    def __contains__(self, key_or_path):
+        if isinstance(key_or_path, str):  # fast path
             # e.g. 'a' in d
-            return key in self._data
-        if (isinstance(key, PATH_SYNTAX_TYPES) and key and key[-1] in TYPES):
-            # e.g. ['a', 'b', int] in d
-            *key, type = key
+            return key_or_path in self._data
+        path = key_or_path
+        if isinstance(path, PATH_SYNTAX_TYPES) and path and path[-1] in TYPES:
+            # e.g. ['a', 'b', int] in d  (slice syntax not possible)
+            *path, type = path
+            return self.contains(path, type=type)
         else:
             # e.g. ['a', 'b'] in d
-            type = None
-        return self.contains(key, type=type)
+            return self.contains(path)
 
     def __len__(self):
         return len(self._data)
