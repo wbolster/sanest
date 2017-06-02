@@ -280,9 +280,9 @@ class rodict(collections.abc.Mapping):
             raise KeyError(key)
         return value
 
-    def get(self, key, default=None, *, type=None):
-        if isinstance(key, str) and type is None:  # fast path
-            value = self._data.get(key, MISSING)
+    def get(self, key_or_path, default=None, *, type=None):
+        if isinstance(key_or_path, str) and type is None:  # fast path
+            value = self._data.get(key_or_path, MISSING)
             if value is MISSING:
                 return default
             if isinstance(value, CONTAINER_TYPES):
@@ -291,10 +291,10 @@ class rodict(collections.abc.Mapping):
         if type is not None:
             validate_type(type)
         _, path, _ = parse_pathspec(
-            key, allow_type=False, allow_empty_string=True)
+            key_or_path, allow_type=False, allow_empty_string=True)
         try:
-            obj, tail = resolve_path(self._data, path)
-            value = obj[tail]
+            d, key = resolve_path(self._data, path)
+            value = d[key]
         except KeyError:
             return default
         if type is not None:
