@@ -434,13 +434,13 @@ class dict(rodict, collections.abc.MutableMapping):
         del self._data[key]
         return key, value
 
-    def __delitem__(self, key):
-        if isinstance(key, str):  # fast path
-            del self._data[key]
+    def __delitem__(self, key_or_path):
+        if isinstance(key_or_path, str):  # fast path
+            del self._data[key_or_path]
             return
-        simple_key, path, type = parse_pathspec(
-            key, allow_type=True, allow_empty_string=False)
-        self.pop(path if simple_key is None else simple_key, type=type)
+        key, path, type = parse_pathspec(
+            key_or_path, allow_type=True, allow_empty_string=False)
+        self.pop(path if key is None else key, type=type)
 
     def clear(self):
         self._data.clear()
