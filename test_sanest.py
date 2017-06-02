@@ -602,6 +602,8 @@ def test_dict_pop_with_type():
     with pytest.raises(KeyError) as excinfo:
         d.pop('x', type=str)
     assert str(excinfo.value) == "'x'"
+    assert excinfo.value.__cause__ is None
+    assert excinfo.value.__suppress_context__
 
     # missing key, with default arg: not type checked, just like .get()
     assert d.pop('x', 99, type=int) == 99
@@ -622,6 +624,11 @@ def test_dict_pop_with_path():
     assert d.pop(['a', 'c'], 33) == 3
     assert d == {'a': {}}
     assert d.pop(['a', 'x'], 99, type=str) == 99
+    with pytest.raises(KeyError) as excinfo:
+        d.pop(['a', 'x'], type=str)
+    assert str(excinfo.value) == "['a', 'x']"
+    assert excinfo.value.__cause__ is None
+    assert excinfo.value.__suppress_context__
 
 
 def test_dict_pop_with_path_and_type():
