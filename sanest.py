@@ -281,21 +281,22 @@ class rodict(collections.abc.Mapping):
         return value
 
     def get(self, key_or_path, default=None, *, type=None):
-        if isinstance(key_or_path, str) and type is None:  # fast path
-            value = self._data.get(key_or_path, MISSING)
-            if value is MISSING:
-                return default
-            if isinstance(value, CONTAINER_TYPES):
-                value = wrap(value, check=False)
-            return value
         if type is not None:
             validate_type(type)
-        _, path, _ = parse_pathspec(
-            key_or_path, allow_type=False, allow_empty_string=True)
-        try:
-            d, key = resolve_path(self._data, path)
-            value = d[key]
-        except KeyError:
+        if isinstance(key_or_path, str):  # fast path
+            d = self._data
+            key = key_or_path
+            path = [key]
+            value = d.get(key, MISSING)
+        else:
+            _, path, _ = parse_pathspec(
+                key_or_path, allow_type=False, allow_empty_string=True)
+            try:
+                d, key = resolve_path(self._data, path)
+                value = d.get(key, MISSING)
+            except KeyError:
+                value = MISSING
+        if value is MISSING:
             return default
         if type is not None:
             check_type(value, type=type, path=path)
