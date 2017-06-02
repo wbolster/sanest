@@ -50,7 +50,8 @@ class DataError(ValueError):
     unexpected nesting structures.
 
     This is the base class for ``InvalidStructureError`` and
-    ``InvalidValueError``.
+    ``InvalidValueError``, and can be caught instead of the more
+    specific exception types.
 
     This is a subclass of the built-in ``ValueError``.
     """
@@ -70,8 +71,7 @@ class InvalidValueError(DataError):
     """
     Exception raised when requesting or providing an invalid value.
 
-    This is a subclass of ``DataError`` and the built-in ``ValueError``,
-    since this indicates malformed data.
+    This is a subclass of ``DataError`` and the built-in ``ValueError``.
     """
     pass
 
