@@ -488,34 +488,104 @@ class list(SaneCollection, collections.abc.MutableSequence):
     """
     # todo: implement
 
+    def __init__(self, *args):
+        self._data = []
+        if args:
+            iterable, *rest = args
+            if rest:
+                raise TypeError(
+                    "expected at most 1 argument, got {0:d}".format(len(args)))
+            self.extend(iterable)
+
     @classmethod
     def wrap(cls, l, *, check=True):
-        raise NotImplementedError
-
-    def __getitem__(self, index):
-        if isinstance(index, int):
-            return self._data[index]
-        raise NotImplementedError
-
-    def __len__(self):
         raise NotImplementedError
 
     def unwrap(self):
         """Return a regular (nested) list/dict structure."""
         return self._data
 
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
+
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(
             __name__, type(self), self._data)
 
+    def __getitem__(self, index):
+        if isinstance(index, int):
+            return self._data[index]
+        raise NotImplementedError
+
+    def contains(self, value, *, type=None):
+        raise NotImplementedError
+
+    def __contains__(self, value):
+        if (isinstance(value, PATH_SYNTAX_TYPES)
+                and value and value[-1] in TYPES):
+            # e.g. ['a', int] in l  (slice syntax not possible)
+            *value, type = value
+            return self.contains(value, type=type)
+        else:
+            # e.g. 'a' in l
+            return value in self._data
+
+    def index(self, value, start=0, stop=None, *, type=None):
+        if type is None:
+            return self._data.index(value, start, stop)
+        raise NotImplementedError
+
+    def count(self, value, *, type=None):
+        if type is not None:
+            return self._data.count(value)
+        raise NotImplementedError
+
+    def __reversed__(self):
+        return reversed(self._data)
+
     def __setitem__(self, index, value):
         raise NotImplementedError
 
-    def insert(self, index, value):
+    def insert(self, index_or_path, value, *, type=None):
+        if type is not None:
+            validate_type(type)
+        if isinstance(value, (sanest_dict, sanest_list)):
+            value = value.unwrap()
+        if isinstance(index_or_path, int) and type is None:  # fast path
+            self._data.insert(index_or_path, value)
+            return
+        raise NotImplementedError
+
+    def append(self, value, *, type=None):
+        self.insert(len(self), value, type=type)
+
+    def extend(self, iterable, *, type=None):
+        for value in iterable:
+            self.append(value, type=type)
+
+    def pop(self, index=-1, *, type=None):
         raise NotImplementedError
 
     def __delitem__(self, index):
+        if isinstance(index, int):  # fast path
+            del self._data[index]
+        # todo: path support
         raise NotImplementedError
+
+    def remove(self, value, *, type=None):
+        del self[self.index(value, type=type)]
+
+    def clear(self):
+        self._data.clear()
+
+    def reverse(self):
+        self._data.reverse()
+
+    def sort(self, key=None, reverse=False):
+        self._data.sort(key=key, reverse=reverse)
 
 
 # internal aliases to make the code above less confusing
