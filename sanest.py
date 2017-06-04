@@ -260,7 +260,10 @@ class SaneCollection(BaseCollection):
     pass
 
 
-class rodict(SaneCollection, collections.abc.Mapping):
+class dict(SaneCollection, collections.abc.MutableMapping):
+    """
+    dict-like container with support for nested lookups and type checking.
+    """
     __slots__ = ('_data',)
 
     def __init__(self, *args, **kwargs):
@@ -362,18 +365,11 @@ class rodict(SaneCollection, collections.abc.Mapping):
         return '{}.{.__name__}({!r})'.format(
             __name__, type(self), self._data)
 
-
-class dict(rodict, collections.abc.MutableMapping):
-    """
-    dict-like container with support for nested lookups and type checking.
-    """
-    __slots__ = ()
-
     def set(self, key_or_path, value, *, type=None):
         if type is not None:
             validate_type(type)
-        if isinstance(value, (sanest_read_only_dict, sanest_read_only_list)):
-            value = value._data  # same as .unwrap(), but faster
+        if isinstance(value, (sanest_dict, sanest_list)):
+            value = value.unwrap()
         elif value is not None:
             validate_value(value)
         if isinstance(key_or_path, str) and key_or_path and type is None:
@@ -477,9 +473,10 @@ class dict(rodict, collections.abc.MutableMapping):
         return obj
 
 
-# todo: support for lists
-
-class rolist(collections.abc.Sequence):
+class list(SaneCollection, collections.abc.MutableSequence):
+    """
+    list-like container with support for nested lookups and type checking.
+    """
     # todo: implement
 
     @classmethod
@@ -502,13 +499,6 @@ class rolist(collections.abc.Sequence):
         return '{}.{.__name__}({!r})'.format(
             __name__, type(self), self._data)
 
-
-class list(rolist, collections.abc.MutableSequence):
-    """
-    list-like container with support for nested lookups and type checking.
-    """
-    # todo: implement
-
     def __setitem__(self, index, value):
         raise NotImplementedError
 
@@ -521,6 +511,4 @@ class list(rolist, collections.abc.MutableSequence):
 
 # internal aliases to make the code above less confusing
 sanest_dict = dict
-sanest_read_only_dict = rodict
 sanest_list = list
-sanest_read_only_list = rolist
