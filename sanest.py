@@ -266,6 +266,10 @@ class rodict(collections.abc.Mapping):
         obj._data = d
         return obj
 
+    def unwrap(self):
+        """Return a regular (nested) dict/list structure."""
+        return self._data
+
     def __getitem__(self, key_or_path):
         if isinstance(key_or_path, str):  # fast path
             value = self._data[key_or_path]
@@ -330,10 +334,6 @@ class rodict(collections.abc.Mapping):
 
     def __iter__(self):
         return iter(self._data)
-
-    def unwrap(self):
-        """Return a regular (nested) dict/list structure."""
-        return self._data
 
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(
