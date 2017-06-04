@@ -2,6 +2,7 @@
 sanest, sane nested dictionaries and lists
 """
 
+import abc
 import builtins
 import collections
 import collections.abc
@@ -272,6 +273,14 @@ class SaneCollection(BaseCollection):
     def copy(self, *, deep=False):
         fn = copy.deepcopy if deep else copy.copy
         return fn(self)
+
+    @abc.abstractmethod
+    def wrap(cls, data, *, check=True):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def unwrap(self):
+        raise NotImplementedError
 
 
 class dict(SaneCollection, collections.abc.MutableMapping):
