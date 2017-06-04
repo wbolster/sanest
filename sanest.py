@@ -267,7 +267,12 @@ class rodict(collections.abc.Mapping):
         return obj
 
     def unwrap(self):
-        """Return a regular (nested) dict/list structure."""
+        """
+        Return a regular ``dict`` without making a copy.
+
+        This ``sanest.dict`` can be safely used afterwards as long
+        as the return value is treated as read-only.
+        """
         return self._data
 
     def __getitem__(self, key_or_path):
