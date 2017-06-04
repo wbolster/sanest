@@ -296,6 +296,32 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         """
         return self._data
 
+    def __len__(self):
+        return len(self._data)
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __repr__(self):
+        return '{}.{.__name__}({!r})'.format(
+            __name__, type(self), self._data)
+
+    def __copy__(self):
+        cls = type(self)
+        obj = cls.__new__(cls)
+        obj._data = self._data.copy()
+        return obj
+
+    def __deepcopy__(self, memo):
+        cls = type(self)
+        obj = cls.__new__(cls)
+        obj._data = copy.deepcopy(self._data, memo)
+        return obj
+
+    def copy(self, *, deep=False):
+        fn = copy.deepcopy if deep else copy.copy
+        return fn(self)
+
     def __getitem__(self, key_or_path):
         if isinstance(key_or_path, str):  # fast path
             value = self._data[key_or_path]
@@ -354,16 +380,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         else:
             # e.g. ['a', 'b'] in d
             return self.contains(path)
-
-    def __len__(self):
-        return len(self._data)
-
-    def __iter__(self):
-        return iter(self._data)
-
-    def __repr__(self):
-        return '{}.{.__name__}({!r})'.format(
-            __name__, type(self), self._data)
 
     def set(self, key_or_path, value, *, type=None):
         if type is not None:
@@ -455,22 +471,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def clear(self):
         self._data.clear()
-
-    def copy(self, *, deep=False):
-        fn = copy.deepcopy if deep else copy.copy
-        return fn(self)
-
-    def __copy__(self):
-        cls = type(self)
-        obj = cls.__new__(cls)
-        obj._data = self._data.copy()
-        return obj
-
-    def __deepcopy__(self, memo):
-        cls = type(self)
-        obj = cls.__new__(cls)
-        obj._data = copy.deepcopy(self._data, memo)
-        return obj
 
 
 class list(SaneCollection, collections.abc.MutableSequence):
