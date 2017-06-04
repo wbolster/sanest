@@ -7,6 +7,17 @@ import collections
 import collections.abc
 import copy
 
+try:
+    # Python 3.6+
+    from collections.abc import Collection as BaseCollection
+except ImportError:
+    # Python 3.5 and earlier
+    class BaseCollection(
+            collections.abc.Sized,
+            collections.abc.Iterable,
+            collections.abc.Container):
+        pass
+
 ATOMIC_TYPES = (bool, float, int, str)
 CONTAINER_TYPES = (builtins.dict, builtins.list)
 TYPES = CONTAINER_TYPES + ATOMIC_TYPES
@@ -242,7 +253,14 @@ def resolve_path(obj, path, *, create=False):
     return obj, tail
 
 
-class rodict(collections.abc.Mapping):
+class SaneCollection(BaseCollection):
+    """
+    Base class for ``sanest.dict`` and ``sanest.list``.
+    """
+    pass
+
+
+class rodict(SaneCollection, collections.abc.Mapping):
     __slots__ = ('_data',)
 
     def __init__(self, *args, **kwargs):
