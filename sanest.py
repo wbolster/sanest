@@ -282,6 +282,8 @@ class SaneCollection(BaseCollection):
     def unwrap(self):
         raise NotImplementedError
 
+    # todo: generic lookup() function?
+
 
 class dict(SaneCollection, collections.abc.MutableMapping):
     """
