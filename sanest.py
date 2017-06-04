@@ -331,15 +331,6 @@ class rodict(collections.abc.Mapping):
     def __iter__(self):
         return iter(self._data)
 
-    def copy(self):
-        return self  # immutable
-
-    def __copy__(self):
-        return self  # immutable
-
-    def __deepcopy__(self, memo):
-        return self  # immutable
-
     def unwrap(self):
         """Return a regular (nested) dict/list structure."""
         return self._data
