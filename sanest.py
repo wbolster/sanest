@@ -229,7 +229,7 @@ def check_type(value, *, type, path):
             .format(type, builtins.type(value), path, value))
 
 
-def resolve_path(obj, path, *, create=False):
+def resolve_path(obj, path, *, partial=False, create=False):
     for n, key_or_index in enumerate(path):
         if isinstance(key_or_index, str) and not isinstance(
                 obj, builtins.dict):
@@ -241,17 +241,19 @@ def resolve_path(obj, path, *, create=False):
             raise InvalidStructureError(
                 "expected list, got {.__name__} at subpath {!r} of {!r}"
                 .format(type(obj), path[:n], path))
-        if len(path) - 1 == n:
+        if partial and len(path) - 1 == n:
             break
         try:
-            obj = obj[key_or_index]
-        except KeyError:
-            if create and isinstance(obj, builtins.dict):
-                obj[key_or_index] = obj = {}  # autovivification
-            else:
+            obj = obj[key_or_index]  # may raise KeyError or IndexError
+        except KeyError:  # only for dicts
+            if not create:
                 raise
+            obj[key_or_index] = obj = {}  # autovivification
     tail = path[-1]
-    return obj, tail
+    if partial:
+        return obj, tail
+    else:
+        return obj
 
 
 class SaneCollection(BaseCollection):
@@ -366,8 +368,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             _, path, _ = parse_pathspec(
                 key_or_path, allow_type=False, allow_empty_string=True)
             try:
-                d, key_or_index = resolve_path(self._data, path)
-                value = d[key_or_index]
+                value = resolve_path(self._data, path)
             except LookupError:
                 value = MISSING
         if value is MISSING:
@@ -414,7 +415,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             _, path, _ = parse_pathspec(key_or_path, allow_type=False)
             if type is not None and value is not None:
                 check_type(value, type=type, path=path)
-            d, key = resolve_path(self._data, path, create=True)
+            d, key = resolve_path(self._data, path, partial=True, create=True)
         if value is None:
             d.pop(key, None)
         else:
@@ -454,9 +455,9 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             _, path, _ = parse_pathspec(
                 key_or_path, allow_type=False, allow_empty_string=True)
             try:
-                d, key = resolve_path(self._data, path)
-                value = d.get(key, MISSING)
-            except KeyError:
+                d, key = resolve_path(self._data, path, partial=True)
+                value = d[key]
+            except LookupError:
                 value = MISSING
         if value is MISSING:
             if default is MISSING:
@@ -548,9 +549,8 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def __getitem__(self, index_or_path):
         if isinstance(index_or_path, int):  # fast path
             return self._data[index_or_path]
-        key, path, type = parse_pathspec(index_or_path, allow_type=True)
-        l, index = resolve_path(self._data, path)
-        value = l[index]
+        _, path, type = parse_pathspec(index_or_path, allow_type=True)
+        value = resolve_path(self._data, path)
         if type is not None:
             check_type(value, type=type, path=path)
         if isinstance(value, CONTAINER_TYPES):
