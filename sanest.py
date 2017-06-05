@@ -366,9 +366,9 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             _, path, _ = parse_pathspec(
                 key_or_path, allow_type=False, allow_empty_string=True)
             try:
-                d, key = resolve_path(self._data, path)
-                value = d.get(key, MISSING)
-            except KeyError:
+                d, key_or_index = resolve_path(self._data, path)
+                value = d[key_or_index]
+            except LookupError:
                 value = MISSING
         if value is MISSING:
             return default

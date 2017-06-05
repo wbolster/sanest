@@ -881,3 +881,15 @@ def test_list_getitem_with_path_and_type():
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         l[1, 1:bool]
     assert str(excinfo.value) == "expected bool, got str at path [1, 1]: 'b2'"
+
+
+def test_dict_list_mixed_nested_lookup():
+    d = sanest.dict({
+        'a': [
+            {'b': [1]},
+            {'b': [2]},
+        ],
+    })
+    assert d['a', 0] == {'b': [1]}
+    assert d['a', 0, 'b'] == [1]
+    assert d['a', 1, 'b', 0] == 2
