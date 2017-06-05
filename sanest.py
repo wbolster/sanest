@@ -245,10 +245,13 @@ def resolve_path(obj, path, *, partial=False, create=False):
             break
         try:
             obj = obj[key_or_index]  # may raise KeyError or IndexError
-        except KeyError:  # only for dicts
-            if not create:
-                raise
-            obj[key_or_index] = obj = {}  # autovivification
+        except KeyError:  # for dicts
+            if create:
+                obj[key_or_index] = obj = {}  # autovivification
+            else:
+                raise KeyError(path[:n+1]) from None
+        except IndexError:  # for list
+            raise IndexError(path[:n+1]) from None
     tail = path[-1]
     if partial:
         return obj, tail

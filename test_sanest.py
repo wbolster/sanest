@@ -869,8 +869,8 @@ def test_list_getitem_with_path():
     path = [1, 0]
     assert l[path] == 'b1'
     with pytest.raises(IndexError) as excinfo:
-        l[1, 5]
-    assert str(excinfo.value) == "list index out of range"
+        l[1, 2, 3, 4]
+    assert str(excinfo.value) == "[1, 2]"
 
 
 def test_list_getitem_with_path_and_type():
