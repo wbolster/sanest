@@ -184,7 +184,7 @@ def parse_slice(sl, pathspec, *, allow_list):
         "path must contain only str or int: {!r}".format(pathspec))
 
 
-def parse_pathspec(pathspec, *, allow_type, allow_empty_string):
+def parse_pathspec(pathspec, *, allow_type, allow_empty_string=False):
     type = None
     if isinstance(pathspec, str):
         # e.g. d['a']
@@ -411,8 +411,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             d = self._data
             key = key_or_path
         else:
-            _, path, _ = parse_pathspec(
-                key_or_path, allow_type=False, allow_empty_string=False)
+            _, path, _ = parse_pathspec(key_or_path, allow_type=False)
             if type is not None and value is not None:
                 check_type(value, type=type, path=path)
             d, key = resolve_path(self._data, path, create=True)
