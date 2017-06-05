@@ -331,6 +331,15 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return '{}.{.__name__}({!r})'.format(
             __name__, type(self), self._data)
 
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if isinstance(other, sanest_dict):
+            return self._data == other._data
+        if isinstance(other, builtins.dict):
+            return self._data == other
+        return NotImplemented
+
     def __getitem__(self, key_or_path):
         if isinstance(key_or_path, str):  # fast path
             value = self._data[key_or_path]
