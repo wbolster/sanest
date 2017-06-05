@@ -32,6 +32,10 @@ def test_dict_comparison():
     d2['a'] = 1
     d3 = {'a': 1}
     assert d1 == d2 == d3
+    d4 = sanest.dict()
+    d4['b'] = 2
+    assert d4 != d1
+    assert d4 != d3
 
 
 def test_dict_constructor():
