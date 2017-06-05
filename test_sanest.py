@@ -829,3 +829,9 @@ def test_list_comparison():
     assert l1 != [2, 1]
     assert l1 != [3]
     assert l1 != object()
+
+
+def test_list_repr():
+    l = sanest.list([1, 2, [3, 4]])
+    assert repr(l) == "sanest.list([1, 2, [3, 4]])"
+    assert eval(repr(l)) == l
