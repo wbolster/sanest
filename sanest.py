@@ -507,7 +507,15 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     @classmethod
     def wrap(cls, l, *, check=True):
-        raise NotImplementedError
+        if isinstance(l, cls):
+            return l  # already wrapped
+        if not isinstance(l, builtins.list):
+            raise TypeError("not a list")
+        for value in l:
+            validate_value(value)
+        obj = cls.__new__(cls)
+        obj._data = l
+        return obj
 
     def unwrap(self):
         """

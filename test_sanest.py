@@ -837,6 +837,13 @@ def test_list_repr():
     assert eval(repr(l)) == l
 
 
+def test_list_wrap():
+    original = ['a', 'b', ['c1', 'c2']]
+    l = sanest.list.wrap(original)
+    assert l[2, 0] == 'c1'
+    assert l.unwrap() is original
+
+
 def test_list_getitem():
     l = sanest.list(['a', 'b'])
     assert l[0] == 'a'
