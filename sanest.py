@@ -582,9 +582,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
         if isinstance(index_or_path, int):  # fast path
             return self._data[index_or_path]
         _, path, type = parse_pathspec(index_or_path, allow_type=True)
-        value = resolve_path(self._data, path)
-        if type is not None:
-            check_type(value, type=type, path=path)
+        value = lookup(self._data, path, type=type)
         if isinstance(value, CONTAINER_TYPES):
             value = wrap(value, check=False)
         return value
