@@ -835,3 +835,12 @@ def test_list_repr():
     l = sanest.list([1, 2, [3, 4]])
     assert repr(l) == "sanest.list([1, 2, [3, 4]])"
     assert eval(repr(l)) == l
+
+
+def test_list_getitem():
+    l = sanest.list(['a', 'b'])
+    assert l[0] == 'a'
+    assert l[1] == 'b'
+    with pytest.raises(IndexError) as excinfo:
+        l[2]
+    assert str(excinfo.value) == "list index out of range"
