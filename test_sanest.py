@@ -844,3 +844,33 @@ def test_list_getitem():
     with pytest.raises(IndexError) as excinfo:
         l[2]
     assert str(excinfo.value) == "list index out of range"
+
+
+def test_list_getitem_with_type():
+    l = sanest.list(['a'])
+    assert l[0:str] == 'a'
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        assert l[0:bool] == 'a'
+    assert str(excinfo.value) == "expected bool, got str at path [0]: 'a'"
+
+
+def test_list_getitem_with_path():
+    l = sanest.list(['a', ['b1', 'b2']])
+    assert l[1, 0] == 'b1'
+    path = (1, 0)
+    assert l[path] == 'b1'
+    path = [1, 0]
+    assert l[path] == 'b1'
+    with pytest.raises(IndexError) as excinfo:
+        l[1, 5]
+    assert str(excinfo.value) == "list index out of range"
+
+
+def test_list_getitem_with_path_and_type():
+    l = sanest.list(['a', ['b1', 'b2']])
+    assert l[1, 0:str] == "b1"
+    path = [1, 0]
+    assert l[path:str] == "b1"
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l[1, 1:bool]
+    assert str(excinfo.value) == "expected bool, got str at path [1, 1]: 'b2'"

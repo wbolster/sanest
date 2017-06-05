@@ -532,10 +532,17 @@ class list(SaneCollection, collections.abc.MutableSequence):
             return self._data == other
         return NotImplemented
 
-    def __getitem__(self, index):
-        if isinstance(index, int):
-            return self._data[index]
-        raise NotImplementedError
+    def __getitem__(self, index_or_path):
+        if isinstance(index_or_path, int):  # fast path
+            return self._data[index_or_path]
+        key, path, type = parse_pathspec(index_or_path, allow_type=True)
+        l, index = resolve_path(self._data, path)
+        value = l[index]
+        if type is not None:
+            check_type(value, type=type, path=path)
+        if isinstance(value, CONTAINER_TYPES):
+            value = wrap(value, check=False)
+        return value
 
     def contains(self, value, *, type=None):
         raise NotImplementedError
