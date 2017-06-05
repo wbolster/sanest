@@ -510,7 +510,12 @@ class list(SaneCollection, collections.abc.MutableSequence):
         raise NotImplementedError
 
     def unwrap(self):
-        """Return a regular (nested) list/dict structure."""
+        """
+        Return a regular ``list`` without making a copy.
+
+        This ``sanest.list`` can be safely used afterwards as long
+        as the return value is treated as read-only.
+        """
         return self._data
 
     def __iter__(self):
