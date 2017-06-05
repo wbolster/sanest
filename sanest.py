@@ -454,6 +454,8 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         else:
             _, path, _ = parse_pathspec(
                 key_or_path, allow_type=False, allow_empty_string=True)
+            if not isinstance(path[-1], str):
+                raise InvalidKeyError("path must point to a dict key")
             try:
                 d, key = resolve_path(self._data, path, partial=True)
                 value = d[key]
