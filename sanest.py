@@ -259,6 +259,29 @@ def resolve_path(obj, path, *, partial=False, create=False):
         return obj
 
 
+def lookup(collection, x, *, type=None):
+    assert isinstance(collection, CONTAINER_TYPES)
+    if type is not None:
+        validate_type(type)
+    if isinstance(x, str) and isinstance(collection, builtins.dict):
+        # fast path
+        value = collection[x]  # may raise KeyError
+    elif (isinstance(x, int)
+            and not isinstance(x, bool)
+            and isinstance(collection, builtins.list)):
+        # fast path
+        value = collection[x]  # may raise IndexError
+    elif isinstance(x, PATH_SYNTAX_TYPES):
+        path = x
+        validate_path(path)
+        value = resolve_path(collection, path)
+    else:
+        assert False  # fixme
+    if type is not None:
+        check_type(value, type=type, path=x)
+    return value
+
+
 class SaneCollection(BaseCollection):
     """
     Base class for ``sanest.dict`` and ``sanest.list``.
@@ -287,7 +310,11 @@ class SaneCollection(BaseCollection):
     def unwrap(self):
         raise NotImplementedError
 
-    # todo: generic lookup() function?
+    def lookup(self, key_index_or_path, *, type=None):
+        value = lookup(self._data, key_index_or_path, type=type)
+        if isinstance(value, CONTAINER_TYPES):
+            value = wrap(value, check=False)
+        return value
 
 
 class dict(SaneCollection, collections.abc.MutableMapping):
