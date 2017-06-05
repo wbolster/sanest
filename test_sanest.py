@@ -814,7 +814,18 @@ def test_list_constructor():
     regular_list = ['a', 'b']
     l = sanest.list(regular_list)
     assert len(l) == 2
-    # assert l == regular_list  # todo: implement comparsion
     with pytest.raises(TypeError) as excinfo:
         sanest.list([1, 2, 3], [4, 5], [6, 7])
     assert str(excinfo.value) == "expected at most 1 argument, got 3"
+
+
+def test_list_comparison():
+    l1 = sanest.list([1, 2])
+    l2 = sanest.list([1, 2])
+    normal_list = [1, 2]
+    assert l1 == normal_list
+    assert l1 == l2
+    assert l1 == [1, 2]
+    assert l1 != [2, 1]
+    assert l1 != [3]
+    assert l1 != object()

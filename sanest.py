@@ -524,6 +524,15 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return '{}.{.__name__}({!r})'.format(
             __name__, type(self), self._data)
 
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if isinstance(other, sanest_list):
+            return self._data == other._data
+        if isinstance(other, builtins.list):
+            return self._data == other
+        return NotImplemented
+
     def __getitem__(self, index):
         if isinstance(index, int):
             return self._data[index]
