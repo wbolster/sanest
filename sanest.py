@@ -33,15 +33,12 @@ class Missing:
 MISSING = Missing()
 
 
-class InvalidKeyError(TypeError):
+class InvalidPathError(TypeError):
     """
-    Exception raised when a key is invalid.
+    Exception raised when a path is invalid.
 
     This is a subclass of the built-in ``TypeError``, since this
     indicates problematic code that uses an incorrect API.
-
-    Despite the name, it does not indicate absence of an item in a
-    dictionary, which is what ``KeyError`` would indicate.
     """
     pass
 
@@ -90,15 +87,15 @@ class InvalidValueError(DataError):
 
 def validate_path(path):
     if not path:
-        raise InvalidKeyError(
+        raise InvalidPathError(
             "empty path or path component: {!r}".format(path))
     for k in path:
         # explicitly check for booleans, since bool is a subclass of int.
         if isinstance(k, bool) or not isinstance(k, (int, str)):
-            raise InvalidKeyError(
+            raise InvalidPathError(
                 "path must contain only str or int: {!r}".format(path))
         if k == '':
-            raise InvalidKeyError(
+            raise InvalidPathError(
                 "empty path or path component: {!r}".format(path))
 
 
@@ -123,7 +120,7 @@ def validate_value(value):
 def validated_items(iterable):
     for key, value in iterable:
         if not isinstance(key, str) or not key:
-            raise InvalidKeyError("invalid dict key: {!r}".format(key))
+            raise InvalidPathError("invalid dict key: {!r}".format(key))
         if value is not None:
             validate_value(value)
         yield key, value
@@ -169,7 +166,7 @@ def wrap(value, *, check=True):
 
 def parse_slice(sl, pathspec, *, allow_list):
     if sl.step is not None:
-        raise InvalidKeyError(
+        raise InvalidPathError(
             "slice cannot contain step value: {!r}".format(pathspec))
     if isinstance(sl.start, str):
         # e.g. d['a':str]
@@ -180,10 +177,10 @@ def parse_slice(sl, pathspec, *, allow_list):
     if isinstance(sl.start, PATH_SYNTAX_TYPES):
         # e.g. d[path:str]
         if not allow_list:
-            raise InvalidKeyError(
+            raise InvalidPathError(
                 "mixed path syntaxes: {!r}".format(pathspec))
         return None, sl.start, sl.stop
-    raise InvalidKeyError(
+    raise InvalidPathError(
         "path must contain only str or int: {!r}".format(pathspec))
 
 
@@ -211,7 +208,7 @@ def parse_pathspec(pathspec, *, allow_type, allow_empty_string=False):
                 path[-1], pathspec, allow_list=False)
             path[-1] = key_from_slice
     else:
-        raise InvalidKeyError(
+        raise InvalidPathError(
             "path must contain only str or int: {!r}".format(pathspec))
     if simple_key == '' and allow_empty_string:
         pass
@@ -219,7 +216,7 @@ def parse_pathspec(pathspec, *, allow_type, allow_empty_string=False):
         validate_path(path)
     if type is not None:
         if not allow_type:
-            raise InvalidKeyError(
+            raise InvalidPathError(
                 "path must contain only str or int: {!r}".format(pathspec))
         validate_type(type)
     return simple_key, path, type
@@ -235,10 +232,10 @@ def check_type(value, *, type, path):
 def resolve_path(obj, path, *, partial=False, create=False):
     assert isinstance(obj, CONTAINER_TYPES)
     if isinstance(path[0], int) and isinstance(obj, builtins.dict):
-        raise InvalidKeyError(
+        raise InvalidPathError(
             "dict path did not start with str: {!r}".format(path))
     elif isinstance(path[0], str) and isinstance(obj, builtins.list):
-        raise InvalidKeyError(
+        raise InvalidPathError(
             "list path did not start with int: {!r}".format(path))
     for n, key_or_index in enumerate(path):
         if isinstance(key_or_index, str) and not isinstance(
@@ -286,7 +283,7 @@ def lookup(collection, x, *, type=None):
         validate_path(path)
         value = resolve_path(collection, path)  # may raise any LookupError
     else:
-        raise InvalidKeyError(
+        raise InvalidPathError(
             "path must contain only str or int: {!r}".format(x))
     if type is not None:
         check_type(value, type=type, path=path)
@@ -479,7 +476,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             _, path, _ = parse_pathspec(
                 key_or_path, allow_type=False, allow_empty_string=True)
             if not isinstance(path[-1], str):
-                raise InvalidKeyError("path must point to a dict key")
+                raise InvalidPathError("path must point to a dict key")
             try:
                 d, key = resolve_path(self._data, path, partial=True)
                 value = d[key]

@@ -90,17 +90,17 @@ def test_dict_clear():
 ])
 def test_dict_string_keys_only(key):
     d = sanest.dict()
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         d[key]
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         d.get(key)
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         key in d
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         d[key] = key
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         del d[key]
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         d.pop(key)
 
 
@@ -190,7 +190,7 @@ def test_dict_get_with_invalid_type():
 
 def test_dict_typed_getitem_with_invalid_slice():
     d = sanest.dict()
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         d['a':int:str]
     assert str(excinfo.value).startswith("slice cannot contain step value: ")
 
@@ -214,7 +214,7 @@ def test_dict_getitem_with_path():
         d[path]
     assert str(excinfo.value) == "['x', 'y']"
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         d['a', 123, True]
     assert str(excinfo.value) == (
         "path must contain only str or int: ['a', 123, True]")
@@ -241,12 +241,12 @@ def test_dict_getitem_with_path_and_type():
     assert str(excinfo.value) == "['x', 'y']"
 
     path = ['b', 'c']
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         d['a', path:int]
     assert str(excinfo.value).startswith("mixed path syntaxes: ")
 
     path = ['b', 'c']
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         d[path, 'a':int]
     assert str(excinfo.value).startswith("path must contain only str or int: ")
 
@@ -269,7 +269,7 @@ def test_dict_contains_with_path():
     assert ['c', 'd'] not in d
     assert d.contains(['a', 'b'])
     assert not d.contains(['a', 'c'])
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         ['a', None] in d
 
 
@@ -293,13 +293,13 @@ def test_dict_slice_syntax_limited_use():
     """
     d = sanest.dict()
     x = ['a', slice('b', int)]  # this is what d['a', 'b':int)] results in
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         d.get(x)
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         x in d
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         d.contains(x)
-    with pytest.raises(sanest.InvalidKeyError):
+    with pytest.raises(sanest.InvalidPathError):
         d.setdefault(x, 123)
 
 
@@ -311,7 +311,7 @@ def test_dict_get_with_path():
     assert d.get(['a', 'c']) is None
     assert d.get(['b', 'c'], 456) == 456
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         d.get([])
     assert str(excinfo.value) == "empty path or path component: []"
 
@@ -342,35 +342,35 @@ def test_dict_empty_key():
 def test_dict_empty_path():
     d = sanest.dict()
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = []
         d[path]
     assert str(excinfo.value) == "empty path or path component: []"
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = []
         d[path:str]
     assert str(excinfo.value) == "empty path or path component: []"
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         d.get([], type=str)
     assert str(excinfo.value) == "empty path or path component: []"
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['']
         d[path]
     assert str(excinfo.value) == "empty path or path component: ['']"
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         d.get([''], type=str)
     assert str(excinfo.value) == "empty path or path component: ['']"
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['a', 'b', '']
         d[path]
     assert str(excinfo.value) == "empty path or path component: ['a', 'b', '']"
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['', 'b']
         d[path]
     assert str(excinfo.value) == "empty path or path component: ['', 'b']"
@@ -381,11 +381,11 @@ def test_dict_set():
     d.set('a', 'b')
     assert d['a'] == 'b'
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         d.set('', 'foo')
     assert str(excinfo.value) == "empty path or path component: ['']"
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['', 'b']
         d.set(path, 'foo')
     assert str(excinfo.value) == "empty path or path component: ['', 'b']"
@@ -413,7 +413,7 @@ def test_dict_set_with_path():
     d[path] = 234
     assert d == {'a': {'b': {'c': {'d1': 123, 'd2': 234}}}}
 
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['', 'b']
         d.set(path, 'foo')
     assert str(excinfo.value) == "empty path or path component: ['', 'b']"
@@ -759,10 +759,10 @@ def test_dict_wrap_twice():
 
 
 def test_dict_constructor_validation():
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         sanest.dict({True: False})
     assert str(excinfo.value) == "invalid dict key: True"
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         sanest.dict({123: 123})
     assert str(excinfo.value) == "invalid dict key: 123"
     with pytest.raises(sanest.InvalidValueError) as excinfo:
@@ -783,7 +783,7 @@ def test_dict_value_validation():
 
 
 def test_dict_wrap_validation():
-    with pytest.raises(sanest.InvalidKeyError) as excinfo:
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         sanest.wrap({123: True})
     assert str(excinfo.value) == (
         "invalid dict key: 123")
