@@ -164,6 +164,50 @@ def wrap(value, *, check=True):
     raise TypeError("not a dict or list: {!r}".format(value))
 
 
+def parse_path_and_type_slice(x):
+    sl = None
+    if isinstance(x, (int, str)) and not isinstance(x, bool):
+        # e.g. d['a'] and d[2]
+        key_or_index = x
+        path = [key_or_index]
+        type = None
+    elif isinstance(x, slice):
+        sl = x
+        if isinstance(sl.start, PATH_SYNTAX_TYPES):
+            # e.g. d[path:str]
+            key_or_index = None
+            path = sl.start
+            validate_path(path)
+            type = sl.stop
+        else:
+            # e.g. d['a':str] and d[2:str]
+            key_or_index = sl.start
+            path = [key_or_index]
+            type = sl.stop
+    elif isinstance(x, PATH_SYNTAX_TYPES):
+        # e.g. d['a', 'b'] and d[path] and d['a', 'b':str]
+        key_or_index = None
+        path = builtins.list(x)  # makes a copy
+        if path and isinstance(path[-1], slice):
+            # e.g. d['a', 'b':str]
+            *path, sl = path
+            if isinstance(sl.start, PATH_SYNTAX_TYPES):
+                raise InvalidPathError("mixed path syntaxes: {!r}".format(x))
+            path.append(sl.start)
+            type = sl.stop
+        else:
+            type = None
+        validate_path(path)
+    else:
+        raise InvalidPathError("invalid path: {!r}".format(x))
+    if sl is not None and sl.step is not None:
+        raise InvalidPathError(
+            "step value not allowed for slice syntax: {!r}".format(sl))
+    if type is not None:
+        validate_type(type)
+    return key_or_index, path, type
+
+
 def parse_slice(sl, pathspec, *, allow_list):
     if sl.step is not None:
         raise InvalidPathError(

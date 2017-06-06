@@ -15,6 +15,22 @@ class MyClass:
         return '<MyClass>'
 
 
+def test_parse_path_and_type_slice():
+    class WithGetItem:
+        def __getitem__(self, thing):
+            return sanest.parse_path_and_type_slice(thing)
+    x = WithGetItem()
+    path = ['a', 'b']
+    assert x['a'] == ('a', ['a'], None)
+    assert x[2] == (2, [2], None)
+    assert x['a':str] == ('a', ['a'], str)
+    assert x[2:str] == (2, [2], str)
+    assert x[path] == (None, ['a', 'b'], None)
+    assert x[path:str] == (None, ['a', 'b'], str)
+    assert x['a', 'b'] == (None, ['a', 'b'], None)
+    assert x['a', 'b':str] == (None, ['a', 'b'], str)
+
+
 def test_dict_basics():
     d = sanest.dict()
     d['a'] = 1
