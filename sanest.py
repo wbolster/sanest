@@ -398,11 +398,11 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def contains(self, key_or_path, *, type=None):
         try:
-            value = self.get(key_or_path, MISSING, type=type)
-        except DataError:
+            self.lookup(key_or_path, type=type)
+        except (DataError, LookupError):
             return False
         else:
-            return value is not MISSING
+            return True
 
     def __contains__(self, key_or_path):
         if isinstance(key_or_path, str):  # fast path
