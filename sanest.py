@@ -233,6 +233,13 @@ def check_type(value, *, type, path):
 
 
 def resolve_path(obj, path, *, partial=False, create=False):
+    assert isinstance(obj, CONTAINER_TYPES)
+    if isinstance(path[0], int) and isinstance(obj, builtins.dict):
+        raise InvalidKeyError(
+            "dict path did not start with str: {!r}".format(path))
+    elif isinstance(path[0], str) and isinstance(obj, builtins.list):
+        raise InvalidKeyError(
+            "list path did not start with int: {!r}".format(path))
     for n, key_or_index in enumerate(path):
         if isinstance(key_or_index, str) and not isinstance(
                 obj, builtins.dict):
