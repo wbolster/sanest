@@ -97,6 +97,9 @@ def validate_path(path):
         if isinstance(k, bool) or not isinstance(k, (int, str)):
             raise InvalidKeyError(
                 "path must contain only str or int: {!r}".format(path))
+        if k == '':
+            raise InvalidKeyError(
+                "empty path or path component: {!r}".format(path))
 
 
 def validate_type(type):
@@ -210,10 +213,10 @@ def parse_pathspec(pathspec, *, allow_type, allow_empty_string=False):
     else:
         raise InvalidKeyError(
             "path must contain only str or int: {!r}".format(pathspec))
-    if '' in path and not (simple_key == '' and allow_empty_string):
-        raise InvalidKeyError(
-            "empty path or path component: {!r}".format(pathspec))
-    validate_path(path)
+    if simple_key == '' and allow_empty_string:
+        pass
+    else:
+        validate_path(path)
     if type is not None:
         if not allow_type:
             raise InvalidKeyError(
@@ -260,25 +263,26 @@ def resolve_path(obj, path, *, partial=False, create=False):
 
 
 def lookup(collection, x, *, type=None):
-    assert isinstance(collection, CONTAINER_TYPES)
+    assert isinstance(collection, CONTAINER_TYPES)  # fixme
     if type is not None:
         validate_type(type)
     if isinstance(x, str) and isinstance(collection, builtins.dict):
-        # fast path
+        path = [x]
         value = collection[x]  # may raise KeyError
     elif (isinstance(x, int)
             and not isinstance(x, bool)
             and isinstance(collection, builtins.list)):
-        # fast path
+        path = [x]
         value = collection[x]  # may raise IndexError
     elif isinstance(x, PATH_SYNTAX_TYPES):
         path = x
         validate_path(path)
-        value = resolve_path(collection, path)
+        value = resolve_path(collection, path)  # may raise any LookupError
     else:
-        assert False  # fixme
+        raise InvalidKeyError(
+            "path must contain only str or int: {!r}".format(x))
     if type is not None:
-        check_type(value, type=type, path=x)
+        check_type(value, type=type, path=path)
     return value
 
 
@@ -387,27 +391,10 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return value
 
     def get(self, key_or_path, default=None, *, type=None):
-        if type is not None:
-            validate_type(type)
-        if isinstance(key_or_path, str):  # fast path
-            d = self._data
-            key = key_or_path
-            path = [key]
-            value = d.get(key, MISSING)
-        else:
-            _, path, _ = parse_pathspec(
-                key_or_path, allow_type=False, allow_empty_string=True)
-            try:
-                value = resolve_path(self._data, path)
-            except LookupError:
-                value = MISSING
-        if value is MISSING:
+        try:
+            return self.lookup(key_or_path, type=type)
+        except LookupError:
             return default
-        if type is not None:
-            check_type(value, type=type, path=path)
-        if isinstance(value, CONTAINER_TYPES):
-            value = wrap(value, check=False)
-        return value
 
     def contains(self, key_or_path, *, type=None):
         try:

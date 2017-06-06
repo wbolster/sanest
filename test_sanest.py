@@ -383,7 +383,7 @@ def test_dict_set():
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
         d.set('', 'foo')
-    assert str(excinfo.value) == "empty path or path component: ''"
+    assert str(excinfo.value) == "empty path or path component: ['']"
 
     with pytest.raises(sanest.InvalidKeyError) as excinfo:
         path = ['', 'b']
