@@ -164,14 +164,14 @@ def wrap(value, *, check=True):
     raise TypeError("not a dict or list: {!r}".format(value))
 
 
-def parse_path_and_type_slice(x):
+def parse_path_like_with_type(x, *, allow_slice=True):
     sl = None
     if isinstance(x, (int, str)) and not isinstance(x, bool):
         # e.g. d['a'] and d[2]
         key_or_index = x
         path = [key_or_index]
         type = None
-    elif isinstance(x, slice):
+    elif allow_slice and isinstance(x, slice):
         sl = x
         if isinstance(sl.start, PATH_SYNTAX_TYPES):
             # e.g. d[path:str]
@@ -188,15 +188,22 @@ def parse_path_and_type_slice(x):
         # e.g. d['a', 'b'] and d[path] and d['a', 'b':str]
         key_or_index = None
         path = builtins.list(x)  # makes a copy
-        if path and isinstance(path[-1], slice):
-            # e.g. d['a', 'b':str]
-            *path, sl = path
-            if isinstance(sl.start, PATH_SYNTAX_TYPES):
-                raise InvalidPathError("mixed path syntaxes: {!r}".format(x))
-            path.append(sl.start)
-            type = sl.stop
-        else:
-            type = None
+        type = None
+        if path:
+            if allow_slice and isinstance(path[-1], slice):
+                # e.g. d['a', 'b':str]
+                sl = path.pop()
+                if isinstance(sl.start, PATH_SYNTAX_TYPES):
+                    raise InvalidPathError(
+                        "mixed path syntaxes: {!r}".format(x))
+                path.append(sl.start)
+                type = sl.stop
+            elif not allow_slice and path[-1] in TYPES:
+                # e.g. ['a', 'b', str]
+                type = path.pop()
+                if len(path) == 1 and isinstance(path[0], PATH_SYNTAX_TYPES):
+                    # e.g. [path, str]
+                    path = path[0]
         validate_path(path)
     else:
         raise InvalidPathError("invalid path: {!r}".format(x))

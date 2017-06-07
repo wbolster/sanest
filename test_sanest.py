@@ -15,10 +15,10 @@ class MyClass:
         return '<MyClass>'
 
 
-def test_parse_path_and_type_slice():
+def test_parse_path_like_with_type():
     class WithGetItem:
         def __getitem__(self, thing):
-            return sanest.parse_path_and_type_slice(thing)
+            return sanest.parse_path_like_with_type(thing)
     x = WithGetItem()
     path = ['a', 'b']
     assert x['a'] == ('a', ['a'], None)
@@ -29,6 +29,12 @@ def test_parse_path_and_type_slice():
     assert x[path:str] == (None, ['a', 'b'], str)
     assert x['a', 'b'] == (None, ['a', 'b'], None)
     assert x['a', 'b':str] == (None, ['a', 'b'], str)
+    f = sanest.parse_path_like_with_type
+    assert f('a', allow_slice=False) == ('a', ['a'], None)
+    assert f(['a', str], allow_slice=False) == (None, ['a'], str)
+    assert f(['a', 'b'], allow_slice=False) == (None, ['a', 'b'], None)
+    assert f(['a', 'b', str], allow_slice=False) == (None, ['a', 'b'], str)
+    assert f([path, str], allow_slice=False) == (None, ['a', 'b'], str)
 
 
 def test_dict_basics():
