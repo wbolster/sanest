@@ -425,7 +425,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         key, path = parse_path_like(path_like)
         if type is not None:
             validate_type(type)
-        if isinstance(value, (sanest_dict, sanest_list)):
+        if isinstance(value, SANEST_CONTAINER_TYPES):
             value = value.unwrap()
         elif value is not None:
             validate_value(value)
@@ -462,7 +462,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         key, path, type = parse_path_like_with_type(x)
         if type is not None:
             validate_type(type)
-        if isinstance(value, (sanest_dict, sanest_list)):
+        if isinstance(value, SANEST_CONTAINER_TYPES):
             value = value.unwrap()
         elif value is not None:
             validate_value(value)
@@ -641,7 +641,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def insert(self, index_or_path, value, *, type=None):
         if type is not None:
             validate_type(type)
-        if isinstance(value, (sanest_dict, sanest_list)):
+        if isinstance(value, SANEST_CONTAINER_TYPES):
             value = value.unwrap()
         if isinstance(index_or_path, int) and type is None:  # fast path
             self._data.insert(index_or_path, value)
@@ -680,3 +680,5 @@ class list(SaneCollection, collections.abc.MutableSequence):
 # internal aliases to make the code above less confusing
 sanest_dict = dict
 sanest_list = list
+
+SANEST_CONTAINER_TYPES = (sanest_dict, sanest_list)
