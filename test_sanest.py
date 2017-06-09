@@ -944,6 +944,26 @@ def test_list_getitem_with_path_and_type():
     assert str(excinfo.value) == "expected bool, got str at path [1, 1]: 'b2'"
 
 
+def test_list_contains():
+    l = sanest.list([
+        1,
+        'a',
+        [2, 3],
+        {'c': 'd'},
+        None,
+    ])
+    assert 1 in l
+    assert 'a' in l
+    assert [2, 3] in l
+    assert sanest.list([2, 3]) in l
+    assert {'c': 'd'} in l
+    assert sanest.dict({'c': 'd'}) in l
+    assert None in l
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        assert MyClass() in l
+    assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
+
+
 def test_list_iteration_wrapping():
     l = sanest.list([
         {'a': 1},

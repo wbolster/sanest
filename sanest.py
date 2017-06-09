@@ -610,14 +610,11 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return value
 
     def __contains__(self, value):
-        if (isinstance(value, PATH_SYNTAX_TYPES)
-                and value and value[-1] in TYPES):
-            # e.g. ['a', int] in l  (slice syntax not possible)
-            *value, type = value
-            return self.contains(value, type=type)
-        else:
-            # e.g. 'a' in l
-            return value in self._data
+        if isinstance(value, SANEST_CONTAINER_TYPES):
+            value = value.unwrap()  # gives faster comparisons
+        elif value is not None:
+            validate_value(value)
+        return value in self._data
 
     def index(self, value, start=0, stop=None, *, type=None):
         if type is None:
