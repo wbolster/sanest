@@ -497,8 +497,8 @@ def test_dict_setitem_with_path_and_type():
 def test_dict_setdefault():
     d = sanest.dict()
     d['a'] = 1
-    d.setdefault('a', 2)
-    d.setdefault(['b', 'c'], 'foo', type=str)
+    assert d.setdefault('a', 2) == 1
+    assert d.setdefault(['b', 'c'], 'foo', type=str) == 'foo'
     assert d['a'] == 1
     assert d['b', 'c'] == 'foo'
 
@@ -511,6 +511,18 @@ def test_dict_setdefault():
         d.setdefault('d', 'not an int', type=int)
     assert str(excinfo.value) == (
         "expected int, got str at path ['d']: 'not an int'")
+
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.setdefault('x')
+    assert str(excinfo.value) == "setdefault() requires a default value"
+
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.setdefault('x', None)
+    assert str(excinfo.value) == "setdefault() requires a default value"
+
+    d2 = d.setdefault('d', {'x': 'y'})
+    assert isinstance(d2, sanest.dict)
+    assert d2 == {'x': 'y'}
 
 
 def test_dict_update():
