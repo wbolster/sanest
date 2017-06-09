@@ -78,3 +78,6 @@ be good ideas after all and may never make it into this library.
   structures handed out?
 
 * add wrapping of containers returned by dict.values() and dict.items()
+
+* have a ``check=False`` everywhere values can be set, not just in
+  ``.wrap()``
