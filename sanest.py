@@ -556,8 +556,9 @@ class list(SaneCollection, collections.abc.MutableSequence):
             return l  # already wrapped
         if not isinstance(l, builtins.list):
             raise TypeError("not a list")
-        for value in l:
-            validate_value(value)
+        if check:
+            for value in l:
+                validate_value(value)
         obj = cls.__new__(cls)
         obj._data = l
         return obj
