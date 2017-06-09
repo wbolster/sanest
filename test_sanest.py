@@ -37,6 +37,10 @@ def test_parse_path_like_with_type():
     assert f([path, str], allow_slice=False) == (None, ['a', 'b'], str)
 
 
+#
+# dicts
+#
+
 def test_dict_basics():
     d = sanest.dict()
     d['a'] = 1
@@ -831,6 +835,10 @@ def test_dict_wrap_skip_validation():
     assert unwrapped is invalid_dict
 
 
+#
+# lists
+#
+
 def test_list_basics():
     d = sanest.list()
     d.append('a')
@@ -893,7 +901,6 @@ def test_list_wrap_validation():
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         sanest.list.wrap(original)
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
-
     l = sanest.list.wrap(original, check=False)
     assert len(l) == 2
 
@@ -948,6 +955,10 @@ def test_list_iteration_wrapping():
     assert isinstance(second, sanest.list)
     assert second == [2, 3]
 
+
+#
+# mixed dicts and lists
+#
 
 def test_dict_list_mixed_nested_lookup():
     d = sanest.dict({
