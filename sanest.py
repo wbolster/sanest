@@ -558,7 +558,8 @@ class list(SaneCollection, collections.abc.MutableSequence):
             raise TypeError("not a list")
         if check:
             for value in l:
-                validate_value(value)
+                if value is not None:
+                    validate_value(value)
         obj = cls.__new__(cls)
         obj._data = l
         return obj

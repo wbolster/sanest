@@ -877,7 +877,7 @@ def test_list_repr():
 
 
 def test_list_wrap():
-    original = ['a', 'b', ['c1', 'c2']]
+    original = ['a', 'b', ['c1', 'c2'], None]
     l = sanest.list.wrap(original)
     assert l[2, 0] == 'c1'
     assert l.unwrap() is original
