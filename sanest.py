@@ -573,7 +573,10 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return self._data
 
     def __iter__(self):
-        return iter(self._data)
+        for value in self._data:
+            if isinstance(value, CONTAINER_TYPES):
+                value = wrap(value, check=False)
+            yield value
 
     def __len__(self):
         return len(self._data)

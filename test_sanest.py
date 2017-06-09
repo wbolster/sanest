@@ -914,6 +914,18 @@ def test_list_getitem_with_path_and_type():
     assert str(excinfo.value) == "expected bool, got str at path [1, 1]: 'b2'"
 
 
+def test_list_iteration_wrapping():
+    l = sanest.list([
+        {'a': 1},
+        [2, 3],
+    ])
+    first, second = l
+    assert isinstance(first, sanest.dict)
+    assert first == {'a': 1}
+    assert isinstance(second, sanest.list)
+    assert second == [2, 3]
+
+
 def test_dict_list_mixed_nested_lookup():
     d = sanest.dict({
         'a': [
