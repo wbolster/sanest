@@ -239,11 +239,12 @@ def parse_path_like_with_type(x, *, allow_slice=True):
     return key_or_index, path, type
 
 
-def check_type(value, *, type, path):
+def check_type(value, *, type, path=None):
     if not isinstance(value, type):
+        at_path = '' if path is None else ' at path {}'.format(path)
         raise InvalidValueError(
-            "expected {.__name__}, got {.__name__} at path {}: {!r}"
-            .format(type, builtins.type(value), path, value))
+            "expected {.__name__}, got {.__name__}{}: {!r}"
+            .format(type, builtins.type(value), at_path, value))
 
 
 def resolve_path(obj, path, *, partial=False, create=False):
