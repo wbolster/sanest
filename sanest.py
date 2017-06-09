@@ -609,9 +609,6 @@ class list(SaneCollection, collections.abc.MutableSequence):
             value = wrap(value, check=False)
         return value
 
-    def contains(self, value, *, type=None):
-        raise NotImplementedError
-
     def __contains__(self, value):
         if (isinstance(value, PATH_SYNTAX_TYPES)
                 and value and value[-1] in TYPES):
