@@ -880,8 +880,8 @@ def test_list_comparison():
     l2 = sanest.list([1, 2])
     normal_list = [1, 2]
     assert l1 == normal_list
+    assert l1 == l1
     assert l1 == l2
-    assert l1 == [1, 2]
     assert l1 != [2, 1]
     assert l1 != [3]
     assert l1 != object()
