@@ -77,7 +77,4 @@ be good ideas after all and may never make it into this library.
   because of the wrapping. keep cached WeakValuesDict for any wrapped
   structures handed out?
 
-* raise KeyError for None values on lookup so that existing dicts with
-  None values can be wrapped without introducing problems.
-
 * add wrapping of containers returned by dict.values() and dict.items()
