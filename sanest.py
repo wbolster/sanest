@@ -164,6 +164,17 @@ def wrap(value, *, check=True):
     raise TypeError("not a dict or list: {!r}".format(value))
 
 
+def parse_path_like(path, allow_empty_string=False):
+    if type(path) in (str, int):
+        if path == '' and not allow_empty_string:
+            raise InvalidPathError("invalid path: {!r}".format(['']))
+        return path, [path]
+    if isinstance(path, PATH_SYNTAX_TYPES):
+        validate_path(path)
+        return None, path
+    raise InvalidPathError("invalid path: {!r}".format(path))
+
+
 def parse_path_like_with_type(x, *, allow_slice=True):
     sl = None
     if isinstance(x, (int, str)) and not isinstance(x, bool):
