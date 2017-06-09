@@ -875,6 +875,29 @@ def test_list_wrap():
     assert l.unwrap() is original
 
 
+def test_list_wrap_invalid():
+    with pytest.raises(TypeError) as excinfo:
+        sanest.list.wrap(123)
+    assert str(excinfo.value) == "not a list"
+
+
+def test_list_wrap_twice():
+    original = [1, 2, 3]
+    l1 = sanest.list.wrap(original)
+    l2 = sanest.list.wrap(l1)
+    assert l1 is l2
+
+
+def test_list_wrap_validation():
+    original = [MyClass(), MyClass()]
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        sanest.list.wrap(original)
+    assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
+
+    l = sanest.list.wrap(original, check=False)
+    assert len(l) == 2
+
+
 def test_list_getitem():
     l = sanest.list(['a', 'b'])
     assert l[0] == 'a'
