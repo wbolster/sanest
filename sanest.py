@@ -311,12 +311,6 @@ class SaneCollection(BaseCollection):
     def unwrap(self):
         raise NotImplementedError
 
-    def lookup(self, key_index_or_path, *, type=None):
-        value = lookup(self._data, key_index_or_path, type=type)
-        if isinstance(value, CONTAINER_TYPES):
-            value = wrap(value, check=False)
-        return value
-
 
 class dict(SaneCollection, collections.abc.MutableMapping):
     """
