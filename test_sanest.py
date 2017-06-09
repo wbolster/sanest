@@ -134,7 +134,7 @@ def test_dict_getitem():
 
     with pytest.raises(KeyError) as excinfo:
         d['x']
-    assert str(excinfo.value) == "'x'"
+    assert str(excinfo.value) == "['x']"
 
 
 def test_dict_getitem_with_type():
@@ -151,7 +151,7 @@ def test_dict_getitem_with_type():
 
     with pytest.raises(KeyError) as excinfo:
         d['c':int]
-    assert str(excinfo.value) == "'c'"
+    assert str(excinfo.value) == "['c']"
 
 
 def test_dict_get():
@@ -214,7 +214,8 @@ def test_dict_typed_getitem_with_invalid_slice():
     d = sanest.dict()
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         d['a':int:str]
-    assert str(excinfo.value).startswith("slice cannot contain step value: ")
+    assert str(excinfo.value).startswith(
+        "step value not allowed for slice syntax: ")
 
 
 def test_dict_getitem_with_path():
@@ -227,14 +228,22 @@ def test_dict_getitem_with_path():
     assert d[path] == 123
 
     with pytest.raises(KeyError) as excinfo:
+        d['a', 'x']  # a exists, but x does not
+    assert str(excinfo.value) == "['a', 'x']"
+
+    with pytest.raises(KeyError) as excinfo:
+        d['x', 'y', 'z']  # x does not exist
+    assert str(excinfo.value) == "['x']"
+
+    with pytest.raises(KeyError) as excinfo:
         path = ['x']
         d[path]
     assert str(excinfo.value) == "['x']"
 
     with pytest.raises(KeyError) as excinfo:
-        path = ['x', 'y']
+        path = ['x', 'y', 'z']
         d[path]
-    assert str(excinfo.value) == "['x', 'y']"
+    assert str(excinfo.value) == "['x']"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         d['a', 123, True]
@@ -260,7 +269,7 @@ def test_dict_getitem_with_path_and_type():
 
     with pytest.raises(KeyError) as excinfo:
         d['x', 'y']
-    assert str(excinfo.value) == "['x', 'y']"
+    assert str(excinfo.value) == "['x']"
 
     path = ['b', 'c']
     with pytest.raises(sanest.InvalidPathError) as excinfo:
@@ -335,7 +344,7 @@ def test_dict_get_with_path():
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         d.get([])
-    assert str(excinfo.value) == "empty path or path component: []"
+    assert str(excinfo.value) == "invalid path: []"
 
 
 def test_dict_iteration():
@@ -352,10 +361,10 @@ def test_dict_empty_key():
     d = sanest.dict()
     with pytest.raises(KeyError) as excinfo:
         d['']
-    assert str(excinfo.value) == "''"
+    assert str(excinfo.value) == "['']"
     with pytest.raises(KeyError) as excinfo:
         d['':int]
-    assert str(excinfo.value) == "''"
+    assert str(excinfo.value) == "['']"
     assert d.get('', 123) == 123
     assert '' not in d
     assert not d.contains('')
@@ -367,50 +376,50 @@ def test_dict_empty_path():
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = []
         d[path]
-    assert str(excinfo.value) == "empty path or path component: []"
+    assert str(excinfo.value) == "invalid path: []"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = []
         d[path:str]
-    assert str(excinfo.value) == "empty path or path component: []"
+    assert str(excinfo.value) == "invalid path: []"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         d.get([], type=str)
-    assert str(excinfo.value) == "empty path or path component: []"
+    assert str(excinfo.value) == "invalid path: []"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['']
         d[path]
-    assert str(excinfo.value) == "empty path or path component: ['']"
+    assert str(excinfo.value) == "invalid path: ['']"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         d.get([''], type=str)
-    assert str(excinfo.value) == "empty path or path component: ['']"
+    assert str(excinfo.value) == "invalid path: ['']"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['a', 'b', '']
         d[path]
-    assert str(excinfo.value) == "empty path or path component: ['a', 'b', '']"
+    assert str(excinfo.value) == "invalid path: ['a', 'b', '']"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['', 'b']
         d[path]
-    assert str(excinfo.value) == "empty path or path component: ['', 'b']"
+    assert str(excinfo.value) == "invalid path: ['', 'b']"
+
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        d.set('', 'foo')
+    assert str(excinfo.value) == "invalid path: ['']"
+
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        path = ['', 'b']
+        d.set(path, 'foo')
+    assert str(excinfo.value) == "invalid path: ['', 'b']"
 
 
 def test_dict_set():
     d = sanest.dict()
     d.set('a', 'b')
     assert d['a'] == 'b'
-
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        d.set('', 'foo')
-    assert str(excinfo.value) == "empty path or path component: ['']"
-
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        path = ['', 'b']
-        d.set(path, 'foo')
-    assert str(excinfo.value) == "empty path or path component: ['', 'b']"
 
 
 def test_dict_set_with_type():
@@ -438,7 +447,7 @@ def test_dict_set_with_path():
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['', 'b']
         d.set(path, 'foo')
-    assert str(excinfo.value) == "empty path or path component: ['', 'b']"
+    assert str(excinfo.value) == "invalid path: ['', 'b']"
 
 
 def test_dict_set_with_path_and_type():
@@ -543,14 +552,14 @@ def test_dict_delitem():
     d = sanest.dict()
     with pytest.raises(KeyError) as excinfo:
         del d['a']
-    assert str(excinfo.value) == "'a'"
+    assert str(excinfo.value) == "['a']"
     d['a'] = 3
     assert 'a' in d
     del d['a']
     assert 'a' not in d
     with pytest.raises(KeyError) as excinfo:
         del d['a']
-    assert str(excinfo.value) == "'a'"
+    assert str(excinfo.value) == "['a']"
 
 
 def test_dict_delitem_with_type():
@@ -593,7 +602,7 @@ def test_dict_pop():
     # missing key
     with pytest.raises(KeyError) as excinfo:
         d.pop('a')
-    assert str(excinfo.value) == "'a'"
+    assert str(excinfo.value) == "['a']"
 
     # existing key, with default arg
     assert d.pop('b', 22) == 2
@@ -627,7 +636,7 @@ def test_dict_pop_with_type():
     # missing key
     with pytest.raises(KeyError) as excinfo:
         d.pop('x', type=str)
-    assert str(excinfo.value) == "'x'"
+    assert str(excinfo.value) == "['x']"
     assert excinfo.value.__cause__ is None
     assert excinfo.value.__suppress_context__
 
@@ -872,7 +881,7 @@ def test_list_getitem():
     assert l[1] == 'b'
     with pytest.raises(IndexError) as excinfo:
         l[2]
-    assert str(excinfo.value) == "list index out of range"
+    assert str(excinfo.value) == "[2]"
 
 
 def test_list_getitem_with_type():

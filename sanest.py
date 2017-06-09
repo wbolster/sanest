@@ -86,17 +86,18 @@ class InvalidValueError(DataError):
 
 
 def validate_path(path):
-    if not path:
+    if not isinstance(path, PATH_SYNTAX_TYPES):
         raise InvalidPathError(
-            "empty path or path component: {!r}".format(path))
+            "path must contain only str or int: {!r}".format(path))
+    if not path:
+        raise InvalidPathError("invalid path: {!r}".format(path))
     for k in path:
         # explicitly check for booleans, since bool is a subclass of int.
         if isinstance(k, bool) or not isinstance(k, (int, str)):
             raise InvalidPathError(
                 "path must contain only str or int: {!r}".format(path))
         if k == '':
-            raise InvalidPathError(
-                "empty path or path component: {!r}".format(path))
+            raise InvalidPathError("invalid path: {!r}".format(path))
 
 
 def validate_type(type):
@@ -226,64 +227,6 @@ def parse_path_like_with_type(x, *, allow_slice=True):
     return key_or_index, path, type
 
 
-def parse_slice(sl, pathspec, *, allow_list):
-    if sl.step is not None:
-        raise InvalidPathError(
-            "slice cannot contain step value: {!r}".format(pathspec))
-    if isinstance(sl.start, str):
-        # e.g. d['a':str]
-        return sl.start, [sl.start], sl.stop
-    if isinstance(sl.start, int) and not isinstance(sl.start, bool):
-        # e.g. d[2:str]
-        return sl.start, [sl.start], sl.stop
-    if isinstance(sl.start, PATH_SYNTAX_TYPES):
-        # e.g. d[path:str]
-        if not allow_list:
-            raise InvalidPathError(
-                "mixed path syntaxes: {!r}".format(pathspec))
-        return None, sl.start, sl.stop
-    raise InvalidPathError(
-        "path must contain only str or int: {!r}".format(pathspec))
-
-
-def parse_pathspec(pathspec, *, allow_type, allow_empty_string=False):
-    type = None
-    if isinstance(pathspec, str):
-        # e.g. d['a']
-        simple_key = pathspec
-        path = [pathspec]
-    elif isinstance(pathspec, int) and not isinstance(pathspec, bool):
-        # e.g. d[2]
-        simple_key = pathspec
-        path = [pathspec]
-    elif isinstance(pathspec, slice):
-        # e.g. d['a':str] and d[path:str]
-        simple_key, path, type = parse_slice(
-            pathspec, pathspec, allow_list=True)
-    elif isinstance(pathspec, PATH_SYNTAX_TYPES):
-        # e.g. d['a', 'b'] and  d['a', 'b':str]
-        simple_key = None
-        path = builtins.list(pathspec)
-        if path and isinstance(path[-1], slice):
-            # e.g. d['a', 'b':str]
-            key_from_slice, _, type = parse_slice(
-                path[-1], pathspec, allow_list=False)
-            path[-1] = key_from_slice
-    else:
-        raise InvalidPathError(
-            "path must contain only str or int: {!r}".format(pathspec))
-    if simple_key == '' and allow_empty_string:
-        pass
-    else:
-        validate_path(path)
-    if type is not None:
-        if not allow_type:
-            raise InvalidPathError(
-                "path must contain only str or int: {!r}".format(pathspec))
-        validate_type(type)
-    return simple_key, path, type
-
-
 def check_type(value, *, type, path):
     if not isinstance(value, type):
         raise InvalidValueError(
@@ -326,30 +269,6 @@ def resolve_path(obj, path, *, partial=False, create=False):
         return obj, tail
     else:
         return obj
-
-
-def lookup(collection, x, *, type=None):
-    assert isinstance(collection, CONTAINER_TYPES)  # fixme
-    if type is not None:
-        validate_type(type)
-    if isinstance(x, str) and isinstance(collection, builtins.dict):
-        path = [x]
-        value = collection[x]  # may raise KeyError
-    elif (isinstance(x, int)
-            and not isinstance(x, bool)
-            and isinstance(collection, builtins.list)):
-        path = [x]
-        value = collection[x]  # may raise IndexError
-    elif isinstance(x, PATH_SYNTAX_TYPES):
-        path = x
-        validate_path(path)
-        value = resolve_path(collection, path)  # may raise any LookupError
-    else:
-        raise InvalidPathError(
-            "path must contain only str or int: {!r}".format(x))
-    if type is not None:
-        check_type(value, type=type, path=path)
-    return value
 
 
 class SaneCollection(BaseCollection):
@@ -442,82 +361,115 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             return self._data == other
         return NotImplemented
 
-    def __getitem__(self, key_or_path):
-        if isinstance(key_or_path, str):  # fast path
-            value = self._data[key_or_path]
-            if isinstance(value, CONTAINER_TYPES):
-                value = wrap(value, check=False)
-            return value
-        key, path, type = parse_pathspec(
-            key_or_path, allow_type=True, allow_empty_string=True)
-        key_or_path = path if key is None else key  # type stripped off
-        value = self.get(key_or_path, MISSING, type=type)
-        if value is MISSING:
-            raise KeyError(key_or_path)
+    def __getitem__(self, path_and_type_slice):
+        key, path, type = parse_path_like_with_type(path_and_type_slice)
+        if isinstance(key, str):
+            try:
+                value = self._data[key]
+            except KeyError:
+                raise KeyError(path) from None
+        else:
+            value = resolve_path(self._data, path)
+        if type is not None:
+            check_type(value, type=type, path=path)
+        if isinstance(value, CONTAINER_TYPES):
+            value = wrap(value, check=False)
         return value
 
-    def get(self, key_or_path, default=None, *, type=None):
+    def get(self, path_like, default=None, *, type=None):
+        if type is not None:
+            validate_type(type)
+        key, path = parse_path_like(path_like, allow_empty_string=True)
+        if key == '':
+            return default
+        assert isinstance(path[-1], str)
         try:
-            return self.lookup(key_or_path, type=type)
+            if isinstance(key, str):
+                value = self._data[key]
+            else:
+                value = resolve_path(self._data, path)
         except LookupError:
             return default
+        if type is not None:
+            check_type(value, type=type, path=path)
+        if isinstance(value, CONTAINER_TYPES):
+            value = wrap(value, check=False)
+        return value
 
-    def contains(self, key_or_path, *, type=None):
+    def contains(self, path_like, *, type=None):
+        key, path = parse_path_like(path_like, allow_empty_string=True)
+        if key == '':
+            return False
         try:
-            self.lookup(key_or_path, type=type)
-        except (DataError, LookupError):
+            value = self.get(path, MISSING, type=type)
+        except DataError:
             return False
         else:
-            return True
+            return value is not MISSING
 
-    def __contains__(self, key_or_path):
-        if isinstance(key_or_path, str):  # fast path
+    def __contains__(self, path_like):
+        if isinstance(path_like, str):  # fast path
             # e.g. 'a' in d
-            return key_or_path in self._data
-        path = key_or_path
-        if isinstance(path, PATH_SYNTAX_TYPES) and path and path[-1] in TYPES:
-            # e.g. ['a', 'b', int] in d  (slice syntax not possible)
-            *path, type = path
-            return self.contains(path, type=type)
-        else:
-            # e.g. ['a', 'b'] in d
-            return self.contains(path)
+            return path_like in self._data
+        # e.g. ['a', 'b'] and ['a', 'b', int] (slice syntax not possible)
+        _, path, type = parse_path_like_with_type(path_like, allow_slice=False)
+        return self.contains(path, type=type)
 
-    def set(self, key_or_path, value, *, type=None):
+    def set(self, path_like, value, *, type=None):
+        key, path = parse_path_like(path_like)
         if type is not None:
             validate_type(type)
         if isinstance(value, (sanest_dict, sanest_list)):
             value = value.unwrap()
         elif value is not None:
             validate_value(value)
-        if isinstance(key_or_path, str) and key_or_path and type is None:
-            # fast path
+        if type is not None:
+            check_type(value, type=type, path=path)
+        if isinstance(key, str):
             d = self._data
-            key = key_or_path
         else:
-            _, path, _ = parse_pathspec(key_or_path, allow_type=False)
-            if type is not None and value is not None:
-                check_type(value, type=type, path=path)
+            d, key = resolve_path(self._data, path, partial=True, create=True)
+        if value is None:
+            # fixme: resolve_path creates leading paths even when
+            # value is None which is supposed to remove values only.
+            d.pop(key, None)
+        else:
+            d[key] = value
+
+    def setdefault(self, path_like, default=MISSING, *, type=None):
+        if default is MISSING:
+            raise InvalidValueError("setdefault() requires a default value")
+        value = self.get(path_like, MISSING, type=type)
+        if value is MISSING:
+            self.set(path_like, default, type=type)
+            # fixme: maybe wrap() if isinstance(default, CONTAINER_TYPES)?
+            return default
+        # check default value anyway so that this method is
+        # strict regardless of what self._data contains.
+        validate_value(default)
+        if type is not None:
+            _, path = parse_path_like(path_like)
+            check_type(default, type=type, path=path)
+        return value
+
+    def __setitem__(self, x, value):
+        key, path, type = parse_path_like_with_type(x)
+        if type is not None:
+            validate_type(type)
+        if isinstance(value, (sanest_dict, sanest_list)):
+            value = value.unwrap()
+        elif value is not None:
+            validate_value(value)
+        if type is not None:
+            check_type(value, type=type, path=path)
+        if isinstance(key, str):
+            d = self._data
+        else:
             d, key = resolve_path(self._data, path, partial=True, create=True)
         if value is None:
             d.pop(key, None)
         else:
             d[key] = value
-
-    def setdefault(self, key_or_path, default=None, *, type=None):
-        value = self.get(key_or_path, MISSING, type=type)
-        if value is MISSING:
-            self.set(key_or_path, default, type=type)
-            value = default
-        return value
-
-    def __setitem__(self, key_or_path, value):
-        simple_key, path, type = parse_pathspec(
-            key_or_path, allow_type=True, allow_empty_string=False)
-        self.set(
-            path if simple_key is None else simple_key,
-            value,
-            type=type)
 
     def update(self, *args, **kwargs):
         for key, value in validated_items(pairs(*args, **kwargs)):
@@ -526,27 +478,27 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             else:
                 self._data[key] = value
 
-    def pop(self, key_or_path, default=MISSING, *, type=None):
+    def pop(self, path_like, default=MISSING, *, type=None):
         if type is not None:
             validate_type(type)
-        if isinstance(key_or_path, str):  # fast path
+        if isinstance(path_like, str):  # fast path
             d = self._data
-            key = key_or_path
+            key = path_like
             path = [key]
             value = d.get(key, MISSING)
         else:
-            _, path, _ = parse_pathspec(
-                key_or_path, allow_type=False, allow_empty_string=True)
+            _, path = parse_path_like(path_like)
             if not isinstance(path[-1], str):
                 raise InvalidPathError("path must point to a dict key")
             try:
                 d, key = resolve_path(self._data, path, partial=True)
-                value = d[key]
             except LookupError:
                 value = MISSING
+            else:
+                value = d.get(key, MISSING)
         if value is MISSING:
             if default is MISSING:
-                raise KeyError(key_or_path) from None
+                raise KeyError(path) from None
             return default
         if type is not None:
             check_type(value, type=type, path=path)
@@ -560,17 +512,18 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             key = next(iter(self._data))
         except StopIteration:
             raise KeyError("dictionary is empty") from None
-        value = self.get(key, type=type)
-        del self._data[key]
+        value = self.pop(key, type=type)
         return key, value
 
-    def __delitem__(self, key_or_path):
-        if isinstance(key_or_path, str):  # fast path
-            del self._data[key_or_path]
-            return
-        key, path, type = parse_pathspec(
-            key_or_path, allow_type=True, allow_empty_string=False)
-        self.pop(path if key is None else key, type=type)
+    def __delitem__(self, x):
+        if isinstance(x, str):
+            try:
+                del self._data[x]
+                return
+            except KeyError:
+                raise KeyError([x]) from None
+        key, path, type = parse_path_like_with_type(x)
+        self.pop(path, type=type)
 
     def clear(self):
         self._data.clear()
@@ -631,11 +584,17 @@ class list(SaneCollection, collections.abc.MutableSequence):
             return self._data == other
         return NotImplemented
 
-    def __getitem__(self, index_or_path):
-        if isinstance(index_or_path, int):  # fast path
-            return self._data[index_or_path]
-        _, path, type = parse_pathspec(index_or_path, allow_type=True)
-        value = lookup(self._data, path, type=type)
+    def __getitem__(self, path_and_type_slice):
+        index, path, type = parse_path_like_with_type(path_and_type_slice)
+        if isinstance(index, int):
+            try:
+                value = self._data[index]
+            except IndexError:
+                raise IndexError(path) from None
+        else:
+            value = resolve_path(self._data, path)
+        if type is not None:
+            check_type(value, type=type, path=path)
         if isinstance(value, CONTAINER_TYPES):
             value = wrap(value, check=False)
         return value
