@@ -457,8 +457,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         # so that this method is strict regardless of dict contents.
         validate_value(default)
         if type is not None:
-            _, path = parse_path_like(path_like)
-            check_type(default, type=type, path=path)
+            check_type(default, type=type)
         return value
 
     def __setitem__(self, x, value):

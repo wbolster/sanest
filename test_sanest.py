@@ -513,6 +513,11 @@ def test_dict_setdefault():
         "expected int, got str at path ['d']: 'not an int'")
 
     with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.setdefault('a', 'not an int', type=int)
+    assert str(excinfo.value) == (
+        "expected int, got str: 'not an int'")
+
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
         d.setdefault('x')
     assert str(excinfo.value) == "setdefault() requires a default value"
 
