@@ -993,6 +993,36 @@ def test_list_iteration_wrapping():
     assert second == [2, 3]
 
 
+def test_list_index():
+    l = sanest.list([
+        'a',         # 0
+        {'b': 'c'},  # 1
+        None,        # 2
+        None,        # 3
+        'a',         # 4
+        None,        # 5
+        None,        # 6
+    ])
+    assert l.index('a') == 0
+    assert l.index('a', type=str) == 0
+    assert l.index('a', 2) == 4
+    assert l.index('a', 2, type=str) == 4
+    assert l.index('a', 2, 6) == 4
+    assert l.index(None, 2) == 2
+    assert l.index(None, 4) == 5
+    assert l.index({'b': 'c'}) == 1
+    assert l.index(sanest.dict({'b': 'c'})) == 1
+    with pytest.raises(ValueError) as excinfo:
+        l.index('a', 5)
+    assert str(excinfo.value) == "'a' is not in list"
+    with pytest.raises(ValueError) as excinfo:
+        l.index('a', 2, 3)
+    assert str(excinfo.value) == "'a' is not in list"
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l.index(2, type=str)
+    assert str(excinfo.value) == "expected str, got int: 2"
+
+
 #
 # mixed dicts and lists
 #

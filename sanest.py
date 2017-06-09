@@ -7,6 +7,7 @@ import builtins
 import collections
 import collections.abc
 import copy
+import sys
 
 try:
     # Python 3.6+
@@ -618,9 +619,15 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return value in self._data
 
     def index(self, value, start=0, stop=None, *, type=None):
-        if type is None:
-            return self._data.index(value, start, stop)
-        raise NotImplementedError
+        if stop is None:
+            stop = sys.maxsize
+        if isinstance(value, SANEST_CONTAINER_TYPES):
+            value = value.unwrap()  # gives faster comparisons
+        else:
+            validate_value(value)
+        if type is not None:
+            check_type(value, type=type)
+        return self._data.index(value, start, stop)
 
     def count(self, value, *, type=None):
         if type is not None:
