@@ -81,3 +81,6 @@ be good ideas after all and may never make it into this library.
 
 * have a ``check=False`` everywhere values can be set, not just in
   ``.wrap()``
+
+* maybe list.contains() with type= arg that checks provided value
+  while also checking containment
