@@ -539,8 +539,6 @@ class list(SaneCollection, collections.abc.MutableSequence):
     """
     list-like container with support for nested lookups and type checking.
     """
-    # todo: implement
-
     def __init__(self, *args):
         self._data = []
         if args:
