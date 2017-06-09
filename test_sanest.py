@@ -684,7 +684,7 @@ def test_dict_popitem():
     assert d.popitem() == ('b', 2)
     with pytest.raises(KeyError) as excinfo:
         assert d.popitem()
-    assert str(excinfo.value) == "'dictionary is empty'"
+    assert str(excinfo.value) == "dictionary is empty"
     assert excinfo.value.__cause__ is None
     assert excinfo.value.__suppress_context__
 
@@ -698,7 +698,7 @@ def test_dict_popitem_with_type():
     assert d.popitem(type=int) == ('a', 1)
     with pytest.raises(KeyError) as excinfo:
         assert d.popitem(type=str)
-    assert str(excinfo.value) == "'dictionary is empty'"
+    assert str(excinfo.value) == "dictionary is empty"
     assert excinfo.value.__cause__ is None
     assert excinfo.value.__suppress_context__
 

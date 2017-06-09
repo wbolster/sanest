@@ -33,6 +33,18 @@ class Missing:
 MISSING = Missing()
 
 
+class reprstr(str):
+    """
+    String with a repr() identical to str().
+
+    This is a hack to "undo" an unwanted repr() made by code that
+    cannot be changed. Practically, this prevents quote characters
+    around the string.
+    """
+    def __repr__(self):
+        return self
+
+
 class InvalidPathError(TypeError):
     """
     Exception raised when a path is invalid.
@@ -511,7 +523,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         try:
             key = next(iter(self._data))
         except StopIteration:
-            raise KeyError("dictionary is empty") from None
+            raise KeyError(reprstr("dictionary is empty")) from None
         value = self.pop(key, type=type)
         return key, value
 
