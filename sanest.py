@@ -120,6 +120,8 @@ def validate_type(type):
 
 
 def validate_value(value):
+    if value is None:
+        return
     if not isinstance(value, TYPES):
         raise InvalidValueError(
             "invalid value of type {.__name__}: {!r}"
@@ -134,15 +136,13 @@ def validated_items(iterable):
     for key, value in iterable:
         if not isinstance(key, str) or not key:
             raise InvalidPathError("invalid dict key: {!r}".format(key))
-        if value is not None:
-            validate_value(value)
+        validate_value(value)
         yield key, value
 
 
 def validate_list(l):
     for value in l:
-        if value is not None:
-            validate_value(value)
+        validate_value(value)
 
 
 def pairs(*args, **kwargs):
@@ -427,7 +427,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             validate_type(type)
         if isinstance(value, SANEST_CONTAINER_TYPES):
             value = value.unwrap()
-        elif value is not None:
+        else:
             validate_value(value)
         if type is not None:
             check_type(value, type=type, path=path)
@@ -464,7 +464,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             validate_type(type)
         if isinstance(value, SANEST_CONTAINER_TYPES):
             value = value.unwrap()
-        elif value is not None:
+        else:
             validate_value(value)
         if type is not None:
             check_type(value, type=type, path=path)
@@ -557,9 +557,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
         if not isinstance(l, builtins.list):
             raise TypeError("not a list")
         if check:
-            for value in l:
-                if value is not None:
-                    validate_value(value)
+            validate_list(l)
         obj = cls.__new__(cls)
         obj._data = l
         return obj
@@ -613,7 +611,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def __contains__(self, value):
         if isinstance(value, SANEST_CONTAINER_TYPES):
             value = value.unwrap()  # gives faster comparisons
-        elif value is not None:
+        else:
             validate_value(value)
         return value in self._data
 
