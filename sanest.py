@@ -276,7 +276,7 @@ def resolve_path(obj, path, *, partial=False, create=False):
                 obj[key_or_index] = obj = {}  # autovivification
             else:
                 raise KeyError(path[:n+1]) from None
-        except IndexError:  # for list
+        except IndexError:  # for lists
             raise IndexError(path[:n+1]) from None
     tail = path[-1]
     if partial:
