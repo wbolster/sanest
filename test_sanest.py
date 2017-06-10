@@ -933,11 +933,12 @@ def test_list_getitem():
 
 
 def test_list_getitem_with_type():
-    l = sanest.list(['a'])
+    l = sanest.list(['a', {}])
     assert l[0:str] == 'a'
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         assert l[0:bool] == 'a'
     assert str(excinfo.value) == "expected bool, got str at path [0]: 'a'"
+    assert isinstance(l[1], sanest.dict)
 
 
 def test_list_getitem_with_path():
