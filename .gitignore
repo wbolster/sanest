@@ -2,4 +2,5 @@
 /.cache/
 /.coverage
 /*.egg-info/
+/.tox/
 /htmlcov/
