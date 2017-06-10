@@ -307,11 +307,11 @@ class SaneCollection(BaseCollection):
 
     @abc.abstractmethod
     def wrap(cls, data, *, check=True):
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
     def unwrap(self):
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class dict(SaneCollection, collections.abc.MutableMapping):
