@@ -38,6 +38,37 @@ def test_parse_path_like_with_type():
     assert f([path, str], allow_slice=False) == (None, ['a', 'b'], str)
 
 
+def test_pairs():
+    actual = list(sanest.pairs(a=1))
+    expected = [("a", 1)]
+    assert actual == expected
+
+    actual = list(sanest.pairs({'a': 1}, b=2))
+    expected = [("a", 1), ("b", 2)]
+    assert actual == expected
+
+    actual = list(sanest.pairs([("a", 1), ("b", 2)]))
+    expected = [("a", 1), ("b", 2)]
+    assert actual == expected
+
+    class WithKeys:
+        def keys(self):
+            yield "a"
+            yield "b"
+
+        def __getitem__(self, key):
+            return "x"
+
+    actual = list(sanest.pairs(WithKeys()))
+    expected = [("a", "x"), ("b", "x")]
+    assert actual == expected
+
+    with pytest.raises(TypeError) as excinfo:
+        for x in sanest.pairs({}, {}, {}):
+            pass
+    assert str(excinfo.value) == "expected at most 1 argument, got 3"
+
+
 #
 # dicts
 #
