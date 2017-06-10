@@ -655,8 +655,11 @@ class list(SaneCollection, collections.abc.MutableSequence):
         self.insert(len(self), value, type=type)
 
     def extend(self, iterable, *, type=None):
-        for value in iterable:
-            self.append(value, type=type)
+        if isinstance(iterable, sanest_list):
+            self._data.extend(iterable.unwrap())
+        else:
+            for value in iterable:
+                self.append(value, type=type)
 
     def pop(self, index=-1, *, type=None):
         raise NotImplementedError
