@@ -449,16 +449,17 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             raise InvalidValueError("setdefault() requires a default value")
         value = self.get(path_like, MISSING, type=type)
         if value is MISSING:
-            # the set() method will validate the default
+            # default value validation is done by set()
             self.set(path_like, default, type=type)
-            if isinstance(default, CONTAINER_TYPES):
-                return wrap(default, check=False)
-            return default
-        # check default value even if an existing value was found,
-        # so that this method is strict regardless of dict contents.
-        validate_value(default)
-        if type is not None:
-            check_type(default, type=type)
+            value = default
+            if isinstance(value, CONTAINER_TYPES):
+                value = wrap(value, check=False)
+        else:
+            # check default value even if an existing value was found,
+            # so that this method is strict regardless of dict contents.
+            validate_value(default)
+            if type is not None:
+                check_type(default, type=type)
         return value
 
     def __setitem__(self, path_like, value):
