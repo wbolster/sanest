@@ -673,6 +673,11 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def __radd__(self, other):
         return other + self.unwrap()
 
+    def __mul__(self, n):
+        return type(self).wrap(self.unwrap() * n, check=False)
+
+    __rmul__ = __mul__
+
     def pop(self, index=-1, *, type=None):
         raise NotImplementedError
 

@@ -1089,6 +1089,17 @@ def test_list_concat():
     assert xy == ['a', 'b', 'c', 'd']
 
 
+def test_list_repeat():
+    l = sanest.list([1, 2])
+    assert l * 2 == [1, 2, 1, 2]
+    assert 2 * l == [1, 2, 1, 2]
+    assert l == [1, 2]
+    assert isinstance(l, sanest.list)
+    l *= 2
+    assert l == [1, 2, 1, 2]
+    assert isinstance(l, sanest.list)
+
+
 #
 # mixed dicts and lists
 #
