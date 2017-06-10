@@ -1018,12 +1018,14 @@ def test_list_iteration_wrapping():
     l = sanest.list([
         {'a': 1},
         [2, 3],
+        'x',
     ])
-    first, second = l
+    first, second, third = l
     assert isinstance(first, sanest.dict)
     assert first == {'a': 1}
     assert isinstance(second, sanest.list)
     assert second == [2, 3]
+    assert third == 'x'
 
 
 def test_list_index():
