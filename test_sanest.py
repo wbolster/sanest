@@ -1153,6 +1153,12 @@ def test_list_reverse():
     assert l == ['c', 'b', 'a']
 
 
+def test_list_clear():
+    l = sanest.list([1, 2, 3])
+    l.clear()
+    assert l == []
+
+
 def test_list_pop():
     l = sanest.list(['a', [], 'b', 'c'])
     assert l.pop() == 'c'
