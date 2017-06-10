@@ -1100,6 +1100,14 @@ def test_list_repeat():
     assert isinstance(l, sanest.list)
 
 
+def test_list_reverse():
+    l = sanest.list(['a', 'b', 'c'])
+    assert list(reversed(l)) == ['c', 'b', 'a']
+    assert l == ['a', 'b', 'c']
+    l.reverse()
+    assert l == ['c', 'b', 'a']
+
+
 #
 # mixed dicts and lists
 #
