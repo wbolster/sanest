@@ -43,6 +43,8 @@ be good ideas after all and may never make it into this library.
   * d['a', 'b'::list] same as d['a', 'b':list].to_list()
   * d['a', 'b'::dict] same as d['a', 'b':dict].to_dict()
 
+* somehow combine regular list slicing with the added type filtering
+
 * nested walk helpers dict.walk() and list.walk()
 
 * json helpers
