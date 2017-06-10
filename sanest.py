@@ -640,15 +640,16 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def __setitem__(self, index, value):
         raise NotImplementedError
 
-    def insert(self, index_or_path, value, *, type=None):
+    def insert(self, index, value, *, type=None):
         if type is not None:
             validate_type(type)
         if isinstance(value, SANEST_CONTAINER_TYPES):
             value = value.unwrap()
-        if isinstance(index_or_path, int) and type is None:  # fast path
-            self._data.insert(index_or_path, value)
-            return
-        raise NotImplementedError
+        else:
+            validate_value(value)
+        if type is not None:
+            check_type(value, type=type)
+        self._data.insert(index, value)
 
     def append(self, value, *, type=None):
         self.insert(len(self), value, type=type)

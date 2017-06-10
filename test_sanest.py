@@ -1023,6 +1023,49 @@ def test_list_index():
     assert str(excinfo.value) == "expected str, got int: 2"
 
 
+def list_insert():
+    l = sanest.list(range(5))
+    assert l == [0, 1, 2, 3, 4]
+    l.insert(0, 'a')
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l.insert(0, 'a', type=int)
+    assert str(excinfo.value) == "expected int, got str: 'a'"
+    assert l == ['a', 0, 1, 2, 3, 4]
+    l.insert(2, 'b')
+    assert l == ['a', 0, 'b', 1, 2, 3, 4]
+    l.insert(20, 'c')
+    assert l == ['a', 0, 'b', 1, 2, 3, 4, 'c']
+    l.insert(-3, 'd')
+    assert l == ['a', 0, 'b', 1, 2, 'd', 3, 4, 'c']
+
+
+def test_list_append():
+    l = sanest.list()
+    l.append(1)
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l.append('a', type=int)
+    assert str(excinfo.value) == "expected int, got str: 'a'"
+    assert l == [1]
+    l.append(2)
+    l.append([3, 4])
+    l.append(sanest.list([5, 6]))
+    assert len(l) == 4
+    assert l == [1, 2, [3, 4], [5, 6]]
+
+
+def test_list_extend():
+    l = sanest.list([1, 2])
+    l.extend(sanest.list([3, 4]))
+    l.extend([5, 6], type=int)
+    assert l == [1, 2, 3, 4, 5, 6]
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l.extend(['a', 'b'], type=int)
+    assert str(excinfo.value) == "expected int, got str: 'a'"
+    assert l == [1, 2, 3, 4, 5, 6]
+    l.extend(n for n in [7, 8])
+    assert l == [1, 2, 3, 4, 5, 6, 7, 8]
+
+
 #
 # mixed dicts and lists
 #
