@@ -628,7 +628,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return reversed(self._data)
 
     def __setitem__(self, index, value):
-        raise NotImplementedError
+        raise NotImplementedError  # todo
 
     def insert(self, index, value, *, type=None):
         if type is not None:
@@ -687,7 +687,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
         if isinstance(index, int):  # fast path
             del self._data[index]
         # todo: path support
-        raise NotImplementedError
+        raise NotImplementedError  # todo
 
     def remove(self, value, *, type=None):
         del self[self.index(value, type=type)]
