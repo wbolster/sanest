@@ -630,9 +630,13 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return self._data.index(value, start, stop)
 
     def count(self, value, *, type=None):
+        if isinstance(value, SANEST_CONTAINER_TYPES):
+            value = value.unwrap()  # gives faster comparisons
+        else:
+            validate_value(value)
         if type is not None:
-            return self._data.count(value)
-        raise NotImplementedError
+            check_type(value, type=type)
+        return self._data.count(value)
 
     def __reversed__(self):
         return reversed(self._data)

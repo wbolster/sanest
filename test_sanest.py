@@ -1056,6 +1056,17 @@ def test_list_index():
     assert str(excinfo.value) == "expected str, got int: 2"
 
 
+def test_list_count():
+    l = sanest.list([1, 2, 3, 1, 1, 2, 3, {'a': 'b'}])
+    assert l.count(1) == 3
+    assert l.count(1, type=int) == 3
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l.count(1, type=str)
+    assert str(excinfo.value) == "expected str, got int: 1"
+    assert l.count({'a': 'b'}) == 1
+    assert l.count(sanest.dict({'a': 'b'})) == 1
+
+
 def list_insert():
     l = sanest.list(range(5))
     assert l == [0, 1, 2, 3, 4]
