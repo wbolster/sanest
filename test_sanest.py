@@ -1108,6 +1108,14 @@ def test_list_reverse():
     assert l == ['c', 'b', 'a']
 
 
+def test_list_sort():
+    l = sanest.list(['a', 'c', 'b'])
+    l.sort()
+    assert l == ['a', 'b', 'c']
+    l.sort(reverse=True)
+    assert l == ['c', 'b', 'a']
+
+
 #
 # mixed dicts and lists
 #
