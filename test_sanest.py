@@ -2,6 +2,7 @@
 tests for sanest
 """
 
+import builtins
 import copy
 import pickle
 
@@ -1064,6 +1065,28 @@ def test_list_extend():
     assert l == [1, 2, 3, 4, 5, 6]
     l.extend(n for n in [7, 8])
     assert l == [1, 2, 3, 4, 5, 6, 7, 8]
+
+
+def test_list_concat():
+    x = sanest.list(['a', 'b'])
+    y = sanest.list(['c'])
+    z = ['d']
+    xy = x + y
+    assert xy == ['a', 'b', 'c']
+    assert isinstance(xy, sanest.list)
+    xz = x + z
+    assert xz == ['a', 'b', 'd']
+    assert isinstance(xz, sanest.list)
+    assert x == ['a', 'b']
+    zx = z + x
+    assert zx == ['d', 'a', 'b']
+    assert isinstance(zx, builtins.list)
+    x += z
+    assert isinstance(x, sanest.list)
+    assert x == xz
+    xy += z
+    assert isinstance(xy, sanest.list)
+    assert xy == ['a', 'b', 'c', 'd']
 
 
 #

@@ -661,6 +661,18 @@ class list(SaneCollection, collections.abc.MutableSequence):
             for value in iterable:
                 self.append(value, type=type)
 
+    def __add__(self, other):
+        result = self.copy()
+        result.extend(other)
+        return result
+
+    def __iadd__(self, other):
+        self.extend(other)
+        return self
+
+    def __radd__(self, other):
+        return other + self.unwrap()
+
     def pop(self, index=-1, *, type=None):
         raise NotImplementedError
 
