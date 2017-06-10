@@ -461,24 +461,9 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             check_type(default, type=type)
         return value
 
-    def __setitem__(self, x, value):
-        key, path, type = parse_path_like_with_type(x)
-        if type is not None:
-            validate_type(type)
-        if isinstance(value, SANEST_CONTAINER_TYPES):
-            value = value.unwrap()
-        else:
-            validate_value(value)
-        if type is not None:
-            check_type(value, type=type, path=path)
-        if isinstance(key, str):
-            d = self._data
-        else:
-            d, key = resolve_path(self._data, path, partial=True, create=True)
-        if value is None:
-            d.pop(key, None)
-        else:
-            d[key] = value
+    def __setitem__(self, path_like, value):
+        key, path, type = parse_path_like_with_type(path_like)
+        self.set(path, value, type=type)
 
     def update(self, *args, **kwargs):
         for key, value in validated_items(pairs(*args, **kwargs)):
