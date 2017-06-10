@@ -1151,6 +1151,27 @@ def test_list_reverse():
     assert l == ['c', 'b', 'a']
 
 
+def test_list_pop():
+    l = sanest.list(['a', [], 'b', 'c'])
+    assert l.pop() == 'c'
+    assert l.pop(-1) == 'b'
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l.pop(0, type=int)
+    assert str(excinfo.value) == "expected int, got str at path [0]: 'a'"
+    assert l.pop(0, type=str) == 'a'
+    with pytest.raises(IndexError) as excinfo:
+        l.pop(123)
+    assert str(excinfo.value) == "123"
+    assert excinfo.value.__cause__ is None
+    assert excinfo.value.__suppress_context__
+    value = l.pop(type=list)
+    assert isinstance(value, sanest.list)
+    assert len(l) == 0
+    with pytest.raises(IndexError) as excinfo:
+        l.pop(0, type=int)
+    assert str(excinfo.value) == "pop from empty list"
+
+
 def test_list_sort():
     l = sanest.list(['a', 'c', 'b'])
     l.sort()

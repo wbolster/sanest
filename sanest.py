@@ -683,7 +683,19 @@ class list(SaneCollection, collections.abc.MutableSequence):
     __rmul__ = __mul__
 
     def pop(self, index=-1, *, type=None):
-        raise NotImplementedError
+        # todo: nested path pop() like dict.pop?
+        if not self._data:
+            raise IndexError("pop from empty list")
+        try:
+            value = self._data[index]
+        except IndexError:
+            raise IndexError(index) from None
+        if type is not None:
+            check_type(value, type=type, path=[index])
+        del self._data[index]
+        if isinstance(value, CONTAINER_TYPES):
+            value = wrap(value, check=False)
+        return value
 
     def __delitem__(self, index):
         if isinstance(index, int):  # fast path
