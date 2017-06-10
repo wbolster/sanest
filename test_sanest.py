@@ -1118,8 +1118,19 @@ def test_list_sort():
 
 
 #
-# mixed dicts and lists
+# dicts and lists
 #
+
+
+def test_wrap():
+    l = sanest.wrap([1, 2])
+    assert isinstance(l, sanest.list)
+    d = sanest.wrap({'a': 1})
+    assert isinstance(d, sanest.dict)
+    with pytest.raises(TypeError) as excinfo:
+        sanest.wrap(MyClass())
+    assert str(excinfo.value) == "not a dict or list: <MyClass>"
+
 
 def test_dict_list_mixed_nested_lookup():
     d = sanest.dict({
