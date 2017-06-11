@@ -86,3 +86,5 @@ be good ideas after all and may never make it into this library.
 
 * maybe list.contains() with type= arg that checks provided value
   while also checking containment
+
+* maybe dict.__setitem() and and list.__setitem__() can share code
