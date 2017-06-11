@@ -627,8 +627,22 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def __reversed__(self):
         return reversed(self._data)
 
-    def __setitem__(self, index, value):
-        raise NotImplementedError  # todo
+    def __setitem__(self, path_like, value):
+        index, path, type = parse_path_like_with_type(path_like)
+        if isinstance(value, SANEST_CONTAINER_TYPES):
+            value = value.unwrap()
+        else:
+            validate_value(value)
+        if type is not None:
+            check_type(value, type=type, path=path)
+        if isinstance(index, int):
+            obj = self._data
+        else:
+            obj, index = resolve_path(self._data, path, partial=True)
+        try:
+            obj[index] = value
+        except LookupError as exc:
+            raise builtins.type(exc)(path) from None
 
     def insert(self, index, value, *, type=None):
         if type is not None:

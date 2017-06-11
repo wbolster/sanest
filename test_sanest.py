@@ -994,6 +994,51 @@ def test_list_getitem_with_path_and_type():
     assert str(excinfo.value) == "expected bool, got str at path [1, 1]: 'b2'"
 
 
+def test_list_setitem():
+    l = sanest.list(['a', 'b'])
+    l[0] = 'b'
+    l[1] = sanest.list()
+    assert l == ['b', []]
+    with pytest.raises(IndexError) as excinfo:
+        l[5] = 'a'
+    assert str(excinfo.value) == "[5]"
+    assert l == ['b', []]
+
+
+def test_list_setitem_with_type():
+    l = sanest.list(['a'])
+    assert l[0:str] == 'a'
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l[0:bool] = 'a'
+    assert str(excinfo.value) == "expected bool, got str at path [0]: 'a'"
+
+
+def test_list_setitem_with_path():
+    l = sanest.list(['a', ['b', 'c', 'd']])
+    l[1, 0] = 'e'
+    path = (1, 1)
+    l[path] = 'f'
+    path = [1, 2]
+    l[path] = 'g'
+    assert l == ['a', ['e', 'f', 'g']]
+    with pytest.raises(IndexError) as excinfo:
+        l[5, 4, 3] = 'h'
+    assert str(excinfo.value) == "[5]"
+    assert l == ['a', ['e', 'f', 'g']]
+
+
+def test_list_setitem_with_path_and_type():
+    l = sanest.list(['a', ['b', 'c']])
+    l[1, 0:str] = "d"
+    path = [1, 1]
+    l[path:str] = "e"
+    assert l == ['a', ['d', 'e']]
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l[1, 1:bool] = 'x'
+    assert str(excinfo.value) == "expected bool, got str at path [1, 1]: 'x'"
+    assert l == ['a', ['d', 'e']]
+
+
 def test_list_contains():
     l = sanest.list([
         1,
