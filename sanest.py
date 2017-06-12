@@ -313,6 +313,15 @@ class SaneCollection(BaseCollection):
     def unwrap(self):
         raise NotImplementedError  # pragma: no cover
 
+    def __getitem__(self, path_like):
+        key_or_index, path, type = parse_path_like_with_type(path_like)
+        value = resolve_path(self._data, path)
+        if type is not None:
+            check_type(value, type=type, path=path)
+        if isinstance(value, CONTAINER_TYPES):
+            value = wrap(value, check=False)
+        return value
+
 
 class dict(SaneCollection, collections.abc.MutableMapping):
     """
@@ -368,21 +377,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         if isinstance(other, builtins.dict):
             return self._data == other
         return NotImplemented
-
-    def __getitem__(self, path_and_type_slice):
-        key, path, type = parse_path_like_with_type(path_and_type_slice)
-        if isinstance(key, str):
-            try:
-                value = self._data[key]
-            except KeyError:
-                raise KeyError(path) from None
-        else:
-            value = resolve_path(self._data, path)
-        if type is not None:
-            check_type(value, type=type, path=path)
-        if isinstance(value, CONTAINER_TYPES):
-            value = wrap(value, check=False)
-        return value
 
     def get(self, path_like, default=None, *, type=None):
         if type is not None:
@@ -581,21 +575,6 @@ class list(SaneCollection, collections.abc.MutableSequence):
         if isinstance(other, builtins.list):
             return self._data == other
         return NotImplemented
-
-    def __getitem__(self, path_and_type_slice):
-        index, path, type = parse_path_like_with_type(path_and_type_slice)
-        if isinstance(index, int):
-            try:
-                value = self._data[index]
-            except IndexError:
-                raise IndexError(path) from None
-        else:
-            value = resolve_path(self._data, path)
-        if type is not None:
-            check_type(value, type=type, path=path)
-        if isinstance(value, CONTAINER_TYPES):
-            value = wrap(value, check=False)
-        return value
 
     def __contains__(self, value):
         if isinstance(value, SANEST_CONTAINER_TYPES):
