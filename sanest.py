@@ -322,6 +322,32 @@ class SaneCollection(BaseCollection):
             value = wrap(value, check=False)
         return value
 
+    def __setitem__(self, path_like, value):
+        key_or_index, path, type = parse_path_like_with_type(path_like)
+        self._setitem(path, value, type=type)
+
+    def _setitem(self, path, value, *, type=None):
+        if isinstance(value, SANEST_CONTAINER_TYPES):
+            value = value.unwrap()
+        else:
+            validate_value(value)
+        if type is not None:
+            check_type(value, type=type, path=path)
+        obj, key_or_index = resolve_path(
+            self._data, path, partial=True, create=True)
+        if isinstance(key_or_index, str):  # dict
+            if value is None:
+                # fixme: resolve_path creates leading paths even when
+                # value is None which is supposed to remove values only.
+                obj.pop(key_or_index, None)
+            else:
+                obj[key_or_index] = value
+        elif isinstance(key_or_index, int):  # list
+            try:
+                obj[key_or_index] = value
+            except IndexError as exc:
+                raise IndexError(path) from None
+
 
 class dict(SaneCollection, collections.abc.MutableMapping):
     """
@@ -419,24 +445,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def set(self, path_like, value, *, type=None):
         key, path = parse_path_like(path_like)
-        if type is not None:
-            validate_type(type)
-        if isinstance(value, SANEST_CONTAINER_TYPES):
-            value = value.unwrap()
-        else:
-            validate_value(value)
-        if type is not None:
-            check_type(value, type=type, path=path)
-        if isinstance(key, str):
-            d = self._data
-        else:
-            d, key = resolve_path(self._data, path, partial=True, create=True)
-        if value is None:
-            # fixme: resolve_path creates leading paths even when
-            # value is None which is supposed to remove values only.
-            d.pop(key, None)
-        else:
-            d[key] = value
+        self._setitem(path, value, type=type)
 
     def setdefault(self, path_like, default=None, *, type=None):
         if default is None:
@@ -455,10 +464,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             if type is not None:
                 check_type(default, type=type)
         return value
-
-    def __setitem__(self, path_like, value):
-        key, path, type = parse_path_like_with_type(path_like)
-        self.set(path, value, type=type)
 
     def update(self, *args, **kwargs):
         for key, value in validated_items(pairs(*args, **kwargs)):
@@ -605,23 +610,6 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def __reversed__(self):
         return reversed(self._data)
-
-    def __setitem__(self, path_like, value):
-        index, path, type = parse_path_like_with_type(path_like)
-        if isinstance(value, SANEST_CONTAINER_TYPES):
-            value = value.unwrap()
-        else:
-            validate_value(value)
-        if type is not None:
-            check_type(value, type=type, path=path)
-        if isinstance(index, int):
-            obj = self._data
-        else:
-            obj, index = resolve_path(self._data, path, partial=True)
-        try:
-            obj[index] = value
-        except LookupError as exc:
-            raise builtins.type(exc)(path) from None
 
     def insert(self, index, value, *, type=None):
         if type is not None:
