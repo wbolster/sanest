@@ -324,9 +324,6 @@ class SaneCollection(BaseCollection):
 
     def __setitem__(self, path_like, value):
         key_or_index, path, type = parse_path_like_with_type(path_like)
-        self._setitem(path, value, type=type)
-
-    def _setitem(self, path, value, *, type=None):
         if isinstance(value, SANEST_CONTAINER_TYPES):
             value = value.unwrap()
         else:
@@ -443,17 +440,14 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         _, path, type = parse_path_like_with_type(path_like, allow_slice=False)
         return self.contains(path, type=type)
 
-    def set(self, path_like, value, *, type=None):
-        key, path = parse_path_like(path_like)
-        self._setitem(path, value, type=type)
-
     def setdefault(self, path_like, default=None, *, type=None):
         if default is None:
             raise InvalidValueError("setdefault() requires a default value")
         value = self.get(path_like, MISSING, type=type)
         if value is MISSING:
             # default value validation is done by set()
-            self.set(path_like, default, type=type)
+            key, path = parse_path_like(path_like)
+            self[path:type] = default
             value = default
             if isinstance(value, CONTAINER_TYPES):
                 value = wrap(value, check=False)
