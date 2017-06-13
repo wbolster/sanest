@@ -493,7 +493,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         else:
             _, path = parse_path_like(path_like)
             if not isinstance(path[-1], str):
-                raise InvalidPathError("path must point to a dict key")
+                raise InvalidPathError("path must lead to dict key")
             try:
                 d, key = resolve_path(self._data, path, partial=True)
             except LookupError:

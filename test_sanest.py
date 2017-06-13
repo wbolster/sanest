@@ -686,6 +686,13 @@ def test_dict_pop_with_path():
     assert excinfo.value.__suppress_context__
 
 
+def test_dict_pop_with_wrong_path():
+    d = sanest.dict({'a': [{}, {}]})
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        d.pop(['a', 0])
+    assert str(excinfo.value) == "path must lead to dict key"
+
+
 def test_dict_pop_with_path_and_type():
     d = sanest.dict({'a': {'b': 2}})
     with pytest.raises(sanest.InvalidValueError) as excinfo:
