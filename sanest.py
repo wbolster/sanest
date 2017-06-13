@@ -103,14 +103,14 @@ def validate_path(path):
         raise InvalidPathError(
             "path must contain only str or int: {!r}".format(path))
     if not path:
-        raise InvalidPathError("invalid path: {!r}".format(path))
+        raise InvalidPathError("empty path: {!r}".format(path))
     for k in path:
         # explicitly check for booleans, since bool is a subclass of int.
         if isinstance(k, bool) or not isinstance(k, (int, str)):
             raise InvalidPathError(
                 "path must contain only str or int: {!r}".format(path))
         if k == '':
-            raise InvalidPathError("invalid path: {!r}".format(path))
+            raise InvalidPathError("empty path component: {!r}".format(path))
 
 
 def validate_type(type):
@@ -203,12 +203,10 @@ def parse_path_like_with_type(x, *, allow_slice=True):
             key_or_index = None
             path = sl.start
             validate_path(path)
-            type = sl.stop
         else:
             # e.g. d['a':str] and d[2:str]
             key_or_index = sl.start
             path = [key_or_index]
-            type = sl.stop
     elif isinstance(x, PATH_SYNTAX_TYPES):
         # e.g. d['a', 'b'] and d[path] and d['a', 'b':str]
         key_or_index = None
@@ -222,7 +220,6 @@ def parse_path_like_with_type(x, *, allow_slice=True):
                     raise InvalidPathError(
                         "mixed path syntaxes: {!r}".format(x))
                 path.append(sl.start)
-                type = sl.stop
             elif not allow_slice and path[-1] in TYPES:
                 # e.g. ['a', 'b', str]
                 type = path.pop()
@@ -232,9 +229,14 @@ def parse_path_like_with_type(x, *, allow_slice=True):
         validate_path(path)
     else:
         raise InvalidPathError("invalid path: {!r}".format(x))
-    if sl is not None and sl.step is not None:
-        raise InvalidPathError(
-            "step value not allowed for slice syntax: {!r}".format(sl))
+    if sl is not None:
+        if sl.stop is None:
+            raise InvalidPathError(
+                "type is required for slice syntax: {!r}".format(x))
+        type = sl.stop
+        if sl.step is not None:
+            raise InvalidPathError(
+                "step value not allowed for slice syntax: {!r}".format(x))
     if type is not None:
         validate_type(type)
     return key_or_index, path, type
@@ -447,7 +449,10 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         if value is MISSING:
             # default value validation is done by set()
             key, path = parse_path_like(path_like)
-            self[path:type] = default
+            if type is None:
+                self[path] = default
+            else:
+                self[path:type] = default
             value = default
             if isinstance(value, CONTAINER_TYPES):
                 value = wrap(value, check=False)

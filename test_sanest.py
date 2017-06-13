@@ -16,10 +16,12 @@ class MyClass:
         return '<MyClass>'
 
 
-def test_parse_path_like_with_type():
-    class WithGetItem:
-        def __getitem__(self, thing):
-            return sanest.parse_path_like_with_type(thing)
+class WithGetItem:
+    def __getitem__(self, thing):
+        return sanest.parse_path_like_with_type(thing)
+
+
+def test_parse_path_like_with_type_as_slice():
     x = WithGetItem()
     path = ['a', 'b']
     assert x['a'] == ('a', ['a'], None)
@@ -30,11 +32,35 @@ def test_parse_path_like_with_type():
     assert x[path:str] == (None, ['a', 'b'], str)
     assert x['a', 'b'] == (None, ['a', 'b'], None)
     assert x['a', 'b':str] == (None, ['a', 'b'], str)
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        empty_path = []
+        x[empty_path]
+    assert str(excinfo.value) == "empty path: []"
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        x[1.23]
+    assert str(excinfo.value) == "invalid path: 1.23"
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        x['x', path:int]
+    assert str(excinfo.value).startswith("mixed path syntaxes: ")
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        x[path, 'a':int]
+    assert str(excinfo.value).startswith("path must contain only str or int: ")
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        x['a':int:str]
+    assert str(excinfo.value).startswith(
+        "step value not allowed for slice syntax: ")
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        x['a':None]
+    assert str(excinfo.value).startswith("type is required for slice syntax: ")
+
+
+def test_parse_path_like_with_type_in_list():
     f = sanest.parse_path_like_with_type
     assert f('a', allow_slice=False) == ('a', ['a'], None)
     assert f(['a', str], allow_slice=False) == (None, ['a'], str)
     assert f(['a', 'b'], allow_slice=False) == (None, ['a', 'b'], None)
     assert f(['a', 'b', str], allow_slice=False) == (None, ['a', 'b'], str)
+    path = ['a', 'b']
     assert f([path, str], allow_slice=False) == (None, ['a', 'b'], str)
 
 
@@ -307,16 +333,6 @@ def test_dict_getitem_with_path_and_type():
         d['x', 'y']
     assert str(excinfo.value) == "['x']"
 
-    path = ['b', 'c']
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        d['a', path:int]
-    assert str(excinfo.value).startswith("mixed path syntaxes: ")
-
-    path = ['b', 'c']
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        d[path, 'a':int]
-    assert str(excinfo.value).startswith("path must contain only str or int: ")
-
 
 def test_dict_contains_with_type():
     d = sanest.dict()
@@ -377,10 +393,6 @@ def test_dict_get_with_path():
     assert d.get(('a', 'b')) == 123
     assert d.get(['a', 'c']) is None
     assert d.get(['b', 'c'], 456) == 456
-
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        d.get([])
-    assert str(excinfo.value) == "invalid path: []"
 
 
 def test_dict_iteration():
@@ -446,35 +458,35 @@ def test_dict_empty_path():
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = []
         d[path]
-    assert str(excinfo.value) == "invalid path: []"
+    assert str(excinfo.value) == "empty path: []"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = []
         d[path:str]
-    assert str(excinfo.value) == "invalid path: []"
+    assert str(excinfo.value) == "empty path: []"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         d.get([], type=str)
-    assert str(excinfo.value) == "invalid path: []"
+    assert str(excinfo.value) == "empty path: []"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['']
         d[path]
-    assert str(excinfo.value) == "invalid path: ['']"
+    assert str(excinfo.value) == "empty path component: ['']"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         d.get([''], type=str)
-    assert str(excinfo.value) == "invalid path: ['']"
+    assert str(excinfo.value) == "empty path component: ['']"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['a', 'b', '']
         d[path]
-    assert str(excinfo.value) == "invalid path: ['a', 'b', '']"
+    assert str(excinfo.value) == "empty path component: ['a', 'b', '']"
 
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         path = ['', 'b']
         d[path]
-    assert str(excinfo.value) == "invalid path: ['', 'b']"
+    assert str(excinfo.value) == "empty path component: ['', 'b']"
 
 
 def test_dict_setdefault():
