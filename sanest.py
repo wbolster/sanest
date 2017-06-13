@@ -331,14 +331,14 @@ class SaneCollection(BaseCollection):
             check_type(value, type=type, path=path)
         obj, key_or_index = resolve_path(
             self._data, path, partial=True, create=True)
-        if isinstance(key_or_index, str):  # dict
+        if isinstance(obj, builtins.dict):
             if value is None:
                 # fixme: resolve_path creates leading paths even when
                 # value is None which is supposed to remove values only.
                 obj.pop(key_or_index, None)
             else:
                 obj[key_or_index] = value
-        elif isinstance(key_or_index, int):  # list
+        else:  # obj is a list
             try:
                 obj[key_or_index] = value
             except IndexError as exc:
