@@ -949,6 +949,10 @@ def test_list_getitem_with_path():
     with pytest.raises(IndexError) as excinfo:
         l[1, 2, 3, 4]
     assert str(excinfo.value) == "[1, 2]"
+    with pytest.raises(sanest.InvalidStructureError) as excinfo:
+        l[0, 9]
+    assert str(excinfo.value) == (
+        "expected list, got str at subpath [0] of [0, 9]")
 
 
 def test_list_getitem_with_path_and_type():
