@@ -95,6 +95,10 @@ def test_pairs():
     assert str(excinfo.value) == "expected at most 1 argument, got 3"
 
 
+def test_missing_arg_repr():
+    assert str(sanest.MISSING) == '<missing>'
+
+
 #
 # dicts
 #
