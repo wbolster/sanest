@@ -1266,3 +1266,14 @@ def test_dict_list_mixed_nested_lookup():
     assert d['a', 0] == {'b': [1]}
     assert d['a', 0, 'b'] == [1]
     assert d['a', 1, 'b', 0] == 2
+
+
+def test_wrong_path_for_container_type():
+    d = sanest.dict()
+    l = sanest.list()
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        d[2, 'a']
+    assert str(excinfo.value) == "dict path must start with str: [2, 'a']"
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        l['a', 2]
+    assert str(excinfo.value) == "list path must start with int: ['a', 2]"
