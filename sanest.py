@@ -347,6 +347,9 @@ class SaneCollection(BaseCollection):
             except IndexError as exc:
                 raise IndexError(path) from None
 
+    def clear(self):
+        self._data.clear()
+
 
 class dict(SaneCollection, collections.abc.MutableMapping):
     """
@@ -518,9 +521,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         key, path, type = parse_path_like_with_type(x)
         self.pop(path, type=type)
 
-    def clear(self):
-        self._data.clear()
-
 
 class list(SaneCollection, collections.abc.MutableSequence):
     """
@@ -671,9 +671,6 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def remove(self, value, *, type=None):
         del self[self.index(value, type=type)]
-
-    def clear(self):
-        self._data.clear()
 
     def reverse(self):
         self._data.reverse()
