@@ -700,6 +700,7 @@ def test_dict_pop_with_path():
     with pytest.raises(KeyError) as excinfo:
         d.pop(['d', 'e', 'x', 'y', 'z'])
     assert str(excinfo.value) == "['d', 'e', 'x']"
+    assert d.pop(['d', 'e', 'x', 'y', 'z'], 'hi') == 'hi'
     d.pop(['d', 'e', 'f']) == {'g': 'hello'}
 
 
