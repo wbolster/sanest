@@ -347,6 +347,17 @@ class SaneCollection(BaseCollection):
             except IndexError as exc:
                 raise IndexError(path) from None
 
+    def __delitem__(self, x):
+        key_or_index, path, type = parse_path_like_with_type(x)
+        obj, key_or_index = resolve_path(self._data, path, partial=True)
+        try:
+            if type is not None:
+                value = obj[key_or_index]
+                check_type(value, type=type, path=path)
+            del obj[key_or_index]
+        except LookupError as exc:
+            raise builtins.type(exc)(path) from None
+
     def clear(self):
         self._data.clear()
 
@@ -511,16 +522,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         value = self.pop(key, type=type)
         return key, value
 
-    def __delitem__(self, x):
-        if isinstance(x, str):
-            try:
-                del self._data[x]
-                return
-            except KeyError:
-                raise KeyError([x]) from None
-        key, path, type = parse_path_like_with_type(x)
-        self.pop(path, type=type)
-
 
 class list(SaneCollection, collections.abc.MutableSequence):
     """
@@ -662,12 +663,6 @@ class list(SaneCollection, collections.abc.MutableSequence):
         if isinstance(value, CONTAINER_TYPES):
             value = wrap(value, check=False)
         return value
-
-    def __delitem__(self, index):
-        if isinstance(index, int):  # fast path
-            del self._data[index]
-        # todo: path support
-        raise NotImplementedError  # todo
 
     def remove(self, value, *, type=None):
         del self[self.index(value, type=type)]

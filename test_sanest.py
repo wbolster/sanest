@@ -1167,6 +1167,47 @@ def test_list_clear():
     assert l == []
 
 
+def test_list_delitem():
+    l = sanest.list(['a', 'b', 'c'])
+    del l[1]
+    assert l == ['a', 'c']
+    del l[-1]
+    assert l == ['a']
+    del l[0]
+    assert l == []
+
+
+def test_list_delitem_with_type():
+    l = sanest.list(['a', 'b', 'c'])
+    del l[0:str]
+    assert l == ['b', 'c']
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        del l[-1:int]
+    assert str(excinfo.value) == "expected int, got str at path [-1]: 'c'"
+    assert l == ['b', 'c']
+
+
+def test_list_delitem_with_path():
+    l = sanest.list([['a', 'aa'], ['b', 'bb']])
+    del l[0, 1]
+    assert l == [['a'], ['b', 'bb']]
+    path = [1, 0]
+    del l[path]
+    assert l == [['a'], ['bb']]
+
+
+def test_list_delitem_with_path_and_type():
+    l = sanest.list([['a', 'aa'], ['b', 'bb']])
+    del l[0, 0:str]
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        del l[0, 0:int]
+    assert str(excinfo.value) == "expected int, got str at path [0, 0]: 'aa'"
+    assert l == [['aa'], ['b', 'bb']]
+    path = [1, 1]
+    del l[path:str]
+    assert l == [['aa'], ['b']]
+
+
 def test_list_pop():
     l = sanest.list(['a', [], 'b', 'c'])
     assert l.pop() == 'c'
