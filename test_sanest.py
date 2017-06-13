@@ -1262,6 +1262,22 @@ def test_list_pop():
     assert str(excinfo.value) == "pop from empty list"
 
 
+def test_list_remove():
+    l = sanest.list(['a', 'a', 'b', 'a', {}])
+    l.remove('a')
+    assert l == ['a', 'b', 'a', {}]
+    with pytest.raises(ValueError) as excinfo:
+        l.remove('c')
+    assert str(excinfo.value) == "'c' is not in list"
+    l.remove('a', type=str)
+    l.remove({}, type=dict)
+    assert l == ['b', 'a']
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l.remove('a', type=int)
+    assert str(excinfo.value) == "expected int, got str: 'a'"
+    assert l == ['b', 'a']
+
+
 def test_list_sort():
     l = sanest.list(['a', 'c', 'b'])
     l.sort()
