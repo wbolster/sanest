@@ -674,16 +674,33 @@ def test_dict_pop_default_arg_not_wrapped():
 
 
 def test_dict_pop_with_path():
-    d = sanest.dict({'a': {'b': 2, 'c': 3}})
+    d = sanest.dict({
+        'a': {
+            'b': 2,
+            'c': 3,
+        },
+        'd': {
+            'e': {
+                'f': {
+                    'g': 'hello',
+                },
+            },
+        }})
     assert d.pop(['a', 'b']) == 2
+    assert ['a', 'b'] not in d
     assert d.pop(['a', 'c'], 33) == 3
-    assert d == {'a': {}}
+    assert ['a', 'c'] not in d
+    assert d['a'] == {}
     assert d.pop(['a', 'x'], 99, type=str) == 99
     with pytest.raises(KeyError) as excinfo:
-        d.pop(['a', 'x'], type=str)
+        d.pop(['a', 'x'])
     assert str(excinfo.value) == "['a', 'x']"
     assert excinfo.value.__cause__ is None
     assert excinfo.value.__suppress_context__
+    with pytest.raises(KeyError) as excinfo:
+        d.pop(['d', 'e', 'x', 'y', 'z'])
+    assert str(excinfo.value) == "['d', 'e', 'x']"
+    d.pop(['d', 'e', 'f']) == {'g': 'hello'}
 
 
 def test_dict_pop_with_wrong_path():

@@ -497,6 +497,8 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             try:
                 d, key = resolve_path(self._data, path, partial=True)
             except LookupError:
+                if default is MISSING:
+                    raise   # contains partial path in exception message
                 value = MISSING
             else:
                 value = d.get(key, MISSING)
