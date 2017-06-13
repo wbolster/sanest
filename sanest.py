@@ -99,9 +99,6 @@ class InvalidValueError(DataError):
 
 
 def validate_path(path):
-    if not isinstance(path, PATH_SYNTAX_TYPES):
-        raise InvalidPathError(
-            "path must contain only str or int: {!r}".format(path))
     if not path:
         raise InvalidPathError("empty path: {!r}".format(path))
     for k in path:
