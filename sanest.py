@@ -164,6 +164,14 @@ def pairs(*args, **kwargs):
     yield from kwargs.items()
 
 
+def is_regular_list_slice(sl):
+    # avoid isinstance(..., int) to reject booleans, which subclass int
+    return (
+        (sl.start is None or type(sl.start) is int)
+        and (sl.stop is None or type(sl.stop) is int)
+        and (sl.step is None or type(sl.step) is int))
+
+
 def wrap(value, *, check=True):
     """
     Wrap a container (dict or list) without making a copy.
@@ -570,6 +578,11 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def __len__(self):
         return len(self._data)
+
+    def __getitem__(self, path_like):
+        if isinstance(path_like, slice) and is_regular_list_slice(path_like):
+            return sanest_list.wrap(self._data[path_like], check=False)
+        return super().__getitem__(path_like)
 
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(

@@ -1303,6 +1303,18 @@ def test_list_sort():
     assert l == ['c', 'b', 'a']
 
 
+def test_list_get_slice():
+    l = sanest.list(['a', 'b', 'c'])
+    assert l[0:] == ['a', 'b', 'c']
+    assert l[2:] == ['c']
+    assert l[:0] == []
+    assert l[:-2] == ['a']
+    assert l[0:20] == ['a', 'b', 'c']
+    assert l[:] == ['a', 'b', 'c']
+    assert l[::2] == ['a', 'c']
+    assert isinstance(l[1:2], sanest.list)
+
+
 #
 # dicts and lists
 #
