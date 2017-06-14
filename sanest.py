@@ -127,7 +127,7 @@ def validate_value(value):
     if isinstance(value, builtins.dict):
         collections.deque(validated_items(value.items()), 0)  # fast looping
     elif isinstance(value, builtins.list):
-        validate_list(value)
+        collections.deque(validated_values(value), 0)  # fast looping
 
 
 def validated_items(iterable):
@@ -138,9 +138,10 @@ def validated_items(iterable):
         yield key, value
 
 
-def validate_list(l):
-    for value in l:
+def validated_values(iterable):
+    for value in iterable:
         validate_value(value)
+        yield value
 
 
 def pairs(*args, **kwargs):
@@ -556,7 +557,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
         if not isinstance(l, builtins.list):
             raise TypeError("not a list")
         if check:
-            validate_list(l)
+            collections.deque(validated_values(l), 0)  # fast looping
         obj = cls.__new__(cls)
         obj._data = l
         return obj
