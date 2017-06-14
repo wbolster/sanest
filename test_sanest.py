@@ -721,10 +721,21 @@ def test_dict_pop_with_path():
     d.pop(['d', 'e', 'f']) == {'g': 'hello'}
 
 
-def test_dict_pop_with_wrong_path():
+def test_dict_methods_with_path_pointing_to_list_item():
+    """
+    dict specific methods that take a path to work on a nested structure
+    should enforce that the path actually leads to a nested dict, and
+    not to a list.
+    """
     d = sanest.dict({'a': [{}, {}]})
     with pytest.raises(sanest.InvalidPathError) as excinfo:
+        d.get(['a', 0])
+    assert str(excinfo.value) == "path must lead to dict key"
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
         d.pop(['a', 0])
+    assert str(excinfo.value) == "path must lead to dict key"
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        d.setdefault(['a', 0], 'x')
     assert str(excinfo.value) == "path must lead to dict key"
 
 

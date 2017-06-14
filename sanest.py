@@ -446,7 +446,8 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         key, path = parse_path_like(path_like, allow_empty_string=True)
         if key == '':
             return default
-        assert isinstance(path[-1], str)
+        if not isinstance(path[-1], str):
+            raise InvalidPathError("path must lead to dict key")
         try:
             if isinstance(key, str):
                 value = self._data[key]
