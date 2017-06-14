@@ -1315,6 +1315,16 @@ def test_list_get_slice():
     assert isinstance(l[1:2], sanest.list)
 
 
+def test_list_del_slice():
+    l = sanest.list(['a', 'b', 'c', 'd', 'e'])
+    del l[:2]
+    assert l == ['c', 'd', 'e']
+    del l[-1:]
+    assert l == ['c', 'd']
+    del l[:]
+    assert l == []
+
+
 #
 # dicts and lists
 #
