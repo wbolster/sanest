@@ -1166,6 +1166,9 @@ def test_list_extend():
         l.extend(['a', 'b'], type=int)
     assert str(excinfo.value) == "expected int, got str: 'a'"
     assert l == [1, 2, 3, 4, 5, 6]
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l.extend([MyClass()])
+    assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
     l.extend(n for n in [7, 8])
     assert l == [1, 2, 3, 4, 5, 6, 7, 8]
 
