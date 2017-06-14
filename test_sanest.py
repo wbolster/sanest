@@ -89,9 +89,9 @@ def test_pairs():
     expected = [("a", "x"), ("b", "x")]
     assert actual == expected
 
+    g = sanest.pairs({}, {}, {})
     with pytest.raises(TypeError) as excinfo:
-        for x in sanest.pairs({}, {}, {}):
-            pass
+        next(g)
     assert str(excinfo.value) == "expected at most 1 argument, got 3"
 
 
