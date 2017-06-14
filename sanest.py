@@ -259,6 +259,24 @@ def check_type(value, *, type, path=None):
             .format(type, builtins.type(value), at_path, value))
 
 
+def clean_value(value, *, type=None, path=None):
+    """
+    Obtain a clean value by checking types and unwrapping containers.
+
+    This function performs basic input validation for container methods
+    accepting a value argument from their caller.
+    """
+    if type is not None:
+        validate_type(type)
+    if isinstance(value, SANEST_CONTAINER_TYPES):
+        value = value.unwrap()
+    elif value is not None:
+        validate_value(value)
+    if type is not None:
+        check_type(value, type=type, path=path)
+    return value
+
+
 def resolve_path(obj, path, *, partial=False, create=False):
     assert isinstance(obj, CONTAINER_TYPES)
     if isinstance(path[0], int) and isinstance(obj, builtins.dict):
@@ -336,12 +354,7 @@ class SaneCollection(BaseCollection):
 
     def __setitem__(self, path_like, value):
         key_or_index, path, type = parse_path_like_with_type(path_like)
-        if isinstance(value, SANEST_CONTAINER_TYPES):
-            value = value.unwrap()
-        else:
-            validate_value(value)
-        if type is not None:
-            check_type(value, type=type, path=path)
+        value = clean_value(value, type=type, path=path)
         obj, key_or_index = resolve_path(
             self._data, path, partial=True, create=True)
         if isinstance(obj, builtins.dict):
@@ -614,48 +627,25 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return NotImplemented
 
     def __contains__(self, value):
-        if isinstance(value, SANEST_CONTAINER_TYPES):
-            value = value.unwrap()  # gives faster comparisons
-        else:
-            validate_value(value)
-        return value in self._data
+        return clean_value(value) in self._data
 
     def index(self, value, start=0, stop=None, *, type=None):
-        if stop is None:
-            stop = sys.maxsize
-        if isinstance(value, SANEST_CONTAINER_TYPES):
-            value = value.unwrap()  # gives faster comparisons
-        else:
-            validate_value(value)
-        if type is not None:
-            check_type(value, type=type)
-        return self._data.index(value, start, stop)
+        return self._data.index(
+            clean_value(value, type=type),
+            start,
+            stop if stop is not None else sys.maxsize)
 
     def count(self, value, *, type=None):
-        if isinstance(value, SANEST_CONTAINER_TYPES):
-            value = value.unwrap()  # gives faster comparisons
-        else:
-            validate_value(value)
-        if type is not None:
-            check_type(value, type=type)
-        return self._data.count(value)
+        return self._data.count(clean_value(value, type=type))
 
     def __reversed__(self):
         return reversed(self._data)
 
     def insert(self, index, value, *, type=None):
-        if type is not None:
-            validate_type(type)
-        if isinstance(value, SANEST_CONTAINER_TYPES):
-            value = value.unwrap()
-        else:
-            validate_value(value)
-        if type is not None:
-            check_type(value, type=type)
-        self._data.insert(index, value)
+        self._data.insert(index, clean_value(value, type=type))
 
     def append(self, value, *, type=None):
-        self.insert(len(self), value, type=type)
+        self._data.append(clean_value(value, type=type))
 
     def extend(self, iterable, *, type=None):
         if isinstance(iterable, sanest_list):
@@ -697,7 +687,11 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return value
 
     def remove(self, value, *, type=None):
-        del self[self.index(value, type=type)]
+        value = clean_value(value, type=type)
+        try:
+            self._data.remove(value)
+        except ValueError:
+            raise ValueError("{!r} is not in list".format(value)) from None
 
     def reverse(self):
         self._data.reverse()
