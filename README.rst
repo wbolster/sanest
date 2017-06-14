@@ -19,11 +19,6 @@ be good ideas after all and may never make it into this library.
 
 * write docs and docstrings
 
-* sensible sanest.list support
-
-* should some_dict[2] raise some other exception because integers are
-  not valid keys? (similiar for str indexes and lists)
-
 * extend slicing and type checking logic to peek into container values
 
   * slice syntax ideas for lists:
@@ -42,8 +37,6 @@ be good ideas after all and may never make it into this library.
 
   * d['a', 'b'::list] same as d['a', 'b':list].to_list()
   * d['a', 'b'::dict] same as d['a', 'b':dict].to_dict()
-
-* somehow combine regular list slicing with the added type filtering
 
 * nested walk helpers dict.walk() and list.walk()
 
@@ -86,7 +79,5 @@ be good ideas after all and may never make it into this library.
 
 * maybe list.contains() with type= arg that checks provided value
   while also checking containment
-
-* maybe dict.__setitem() and and list.__setitem__() can share code
 
 * typed list.__contains__
