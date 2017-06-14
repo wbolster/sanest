@@ -1127,7 +1127,7 @@ def test_list_count():
     assert l.count(sanest.dict({'a': 'b'})) == 1
 
 
-def list_insert():
+def test_list_insert():
     l = sanest.list(range(5))
     assert l == [0, 1, 2, 3, 4]
     l.insert(0, 'a')
