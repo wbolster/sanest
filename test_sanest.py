@@ -1184,6 +1184,23 @@ def test_list_extend():
     assert l == [1, 2, 3, 4, 5, 6, 7, 8]
 
 
+def test_list_extend_nested_unwrapping():
+    l = sanest.list([
+        [
+            [1, 2],
+            [3, 4]
+        ],
+        sanest.list([
+            sanest.list([5, 6]),
+            sanest.list([7, 8]),
+        ]),
+    ])
+    assert l == [
+        [[1, 2], [3, 4]],
+        [[5, 6], [7, 8]],
+    ]
+
+
 def test_list_concat():
     x = sanest.list(['a', 'b'])
     y = sanest.list(['c'])
