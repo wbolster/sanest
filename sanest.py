@@ -496,9 +496,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         else:
             # check default value even if an existing value was found,
             # so that this method is strict regardless of dict contents.
-            validate_value(default)
-            if type is not None:
-                check_type(default, type=type)
+            clean_value(default, type=type)
         return value
 
     def update(self, *args, **kwargs):
