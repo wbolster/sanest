@@ -145,7 +145,7 @@ def validate_list(l):
 
 def pairs(*args, **kwargs):
     """
-    Yield key/value pairs, handling args like the ``dict()`` does.
+    Yield key/value pairs, handling args like the ``dict()`` built-in does.
 
     Checks that keys are sane.
     """
