@@ -278,7 +278,6 @@ def clean_value(value, *, type=None, path=None):
 
 
 def resolve_path(obj, path, *, partial=False, create=False):
-    assert isinstance(obj, CONTAINER_TYPES)
     if isinstance(path[0], int) and isinstance(obj, builtins.dict):
         raise InvalidPathError(
             "dict path must start with str: {!r}".format(path))
