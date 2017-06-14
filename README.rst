@@ -88,3 +88,5 @@ be good ideas after all and may never make it into this library.
   while also checking containment
 
 * maybe dict.__setitem() and and list.__setitem__() can share code
+
+* typed list.__contains__
