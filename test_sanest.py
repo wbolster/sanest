@@ -1315,6 +1315,24 @@ def test_list_get_slice():
     assert isinstance(l[1:2], sanest.list)
 
 
+def test_list_set_slice():
+    l = sanest.list(['a', 'b', 'c', 'd', 'e'])
+    l[::2] = ['x', 'y', 'z']
+    assert l == ['x', 'b', 'y', 'd', 'z']
+    l[:] = ['p', 'q', 'r']
+    assert l == ['p', 'q', 'r']
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        sanest.wrap([MyClass()])
+    assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
+    assert l == ['p', 'q', 'r']
+    l[:2] = sanest.list([{}, []])
+    assert l == [{}, [], 'r']
+    with pytest.raises(ValueError) as excinfo:
+        l[0::2] = ['this', 'one', 'is', 'too', 'long']
+    assert str(excinfo.value) == (
+        "attempt to assign sequence of size 5 to extended slice of size 2")
+
+
 def test_list_del_slice():
     l = sanest.list(['a', 'b', 'c', 'd', 'e'])
     del l[:2]

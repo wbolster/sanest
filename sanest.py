@@ -585,6 +585,15 @@ class list(SaneCollection, collections.abc.MutableSequence):
             return sanest_list.wrap(self._data[path_like], check=False)
         return super().__getitem__(path_like)
 
+    def __setitem__(self, path_like, value):
+        if isinstance(path_like, slice) and is_regular_list_slice(path_like):
+            if isinstance(value, SANEST_CONTAINER_TYPES):
+                self._data[path_like] = value.unwrap()
+            else:
+                self._data[path_like] = validated_values(value)
+        else:
+            return super().__setitem__(path_like, value)
+
     def __delitem__(self, path_like):
         if isinstance(path_like, slice) and is_regular_list_slice(path_like):
             del self._data[path_like]
