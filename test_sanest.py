@@ -426,12 +426,18 @@ def test_dict_setitem():
     d = sanest.dict()
     d['a'] = 'b'
     assert d['a'] == 'b'
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        d[''] = 123
+    assert str(excinfo.value) == "empty path component: ['']"
 
 
 def test_dict_setitem_with_type():
     d = sanest.dict()
     d['a':int] = 123
     assert d['a'] == 123
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        d['':int] = 123
+    assert str(excinfo.value) == "empty path component: ['']"
 
 
 def test_dict_setitem_with_path():
@@ -441,6 +447,10 @@ def test_dict_setitem_with_path():
     path = ['a', 'b']
     d[path] = 456
     assert d[path] == 456
+    path = ['']
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        d[path] = 123
+    assert str(excinfo.value) == "empty path component: ['']"
 
 
 def test_dict_setitem_with_path_and_type():
@@ -448,12 +458,15 @@ def test_dict_setitem_with_path_and_type():
     d['a', 'b':int] = 123
     assert d == {'a': {'b': 123}}
     assert d['a', 'b':int] == 123
-
     path = ['a', 'b', 'c']
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d[path:int] = 'not an int'
     assert str(excinfo.value) == (
         "expected int, got str at path ['a', 'b', 'c']: 'not an int'")
+    path = ['']
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        d[path:int] = 123
+    assert str(excinfo.value) == "empty path component: ['']"
 
 
 def test_dict_empty_path():
@@ -500,6 +513,10 @@ def test_dict_setdefault():
     assert d.setdefault(['b', 'c'], 'foo', type=str) == 'foo'
     assert d['a'] == 1
     assert d['b', 'c'] == 'foo'
+
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        d.setdefault('', 123)
+    assert str(excinfo.value) == "empty path component: ['']"
 
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d.setdefault(['b', 'c'], 'not an int', type=int)

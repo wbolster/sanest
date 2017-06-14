@@ -178,7 +178,7 @@ def wrap(value, *, check=True):
 def parse_path_like(path, allow_empty_string=False):
     if type(path) in (str, int):
         if path == '' and not allow_empty_string:
-            raise InvalidPathError("invalid path: {!r}".format(['']))
+            raise InvalidPathError("empty path component: {!r}".format(['']))
         return path, [path]
     if isinstance(path, PATH_SYNTAX_TYPES):
         validate_path(path)
@@ -186,7 +186,8 @@ def parse_path_like(path, allow_empty_string=False):
     raise InvalidPathError("invalid path: {!r}".format(path))
 
 
-def parse_path_like_with_type(x, *, allow_slice=True):
+def parse_path_like_with_type(
+        x, *, allow_empty_string=False, allow_slice=True):
     sl = None
     if isinstance(x, (int, str)) and not isinstance(x, bool):
         # e.g. d['a'] and d[2]
@@ -226,6 +227,8 @@ def parse_path_like_with_type(x, *, allow_slice=True):
         validate_path(path)
     else:
         raise InvalidPathError("invalid path: {!r}".format(x))
+    if key_or_index == '' and not allow_empty_string:
+        raise InvalidPathError("empty path component: {!r}".format(['']))
     if sl is not None:
         if sl.stop is None:
             raise InvalidPathError(
@@ -313,7 +316,8 @@ class SaneCollection(BaseCollection):
         raise NotImplementedError  # pragma: no cover
 
     def __getitem__(self, path_like):
-        key_or_index, path, type = parse_path_like_with_type(path_like)
+        key_or_index, path, type = parse_path_like_with_type(
+            path_like, allow_empty_string=True)
         value = resolve_path(self._data, path)
         if type is not None:
             check_type(value, type=type, path=path)
