@@ -1223,6 +1223,13 @@ def test_list_concat():
     assert xy == ['a', 'b', 'c', 'd']
 
 
+def test_list_concat_only_accepts_lists():
+    l = sanest.list()
+    with pytest.raises(TypeError) as excinfo:
+        l + 'abc'
+    assert str(excinfo.value) == "expected list, got str"
+
+
 def test_list_repeat():
     l = sanest.list([1, 2])
     assert l * 2 == [1, 2, 1, 2]

@@ -653,6 +653,9 @@ class list(SaneCollection, collections.abc.MutableSequence):
                 self.append(value, type=type)
 
     def __add__(self, other):
+        if not isinstance(other, (builtins.list, sanest_list)):
+            raise TypeError(
+                "expected list, got {.__name__}".format(type(other)))
         result = self.copy()
         result.extend(other)
         return result
