@@ -1184,6 +1184,29 @@ def test_list_extend():
     assert l == [1, 2, 3, 4, 5, 6, 7, 8]
 
 
+@pytest.mark.parametrize(
+    ('value', 'type_name'),
+    [
+        ('foo', 'str'),
+        (b'foo', 'bytes'),
+        (bytearray(b'foo'), 'bytearray'),
+    ])
+def test_list_guard_against_implicit_string_splitting(value, type_name):
+    l = sanest.list()
+    expected_message = (
+        "expected iterable that is not string-like, got {}"
+        .format(type_name))
+    with pytest.raises(TypeError) as excinfo:
+        l.extend(value)
+    assert str(excinfo.value) == expected_message
+    with pytest.raises(TypeError) as excinfo:
+        l += value
+    assert str(excinfo.value) == expected_message
+    with pytest.raises(TypeError) as excinfo:
+        l[:] = value
+    assert str(excinfo.value) == expected_message
+
+
 def test_list_extend_nested_unwrapping():
     l = sanest.list([
         [

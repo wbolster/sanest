@@ -600,6 +600,10 @@ class list(SaneCollection, collections.abc.MutableSequence):
         if isinstance(path_like, slice) and is_regular_list_slice(path_like):
             if isinstance(value, SANEST_CONTAINER_TYPES):
                 self._data[path_like] = value.unwrap()
+            elif isinstance(value, (str, bytes, bytearray)):
+                raise TypeError(
+                    "expected iterable that is not string-like, "
+                    "got {.__name__}".format(type(value)))
             else:
                 self._data[path_like] = validated_values(value)
         else:
@@ -648,6 +652,10 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def extend(self, iterable, *, type=None):
         if isinstance(iterable, sanest_list):
             self._data.extend(iterable.unwrap())
+        elif isinstance(iterable, (str, bytes, bytearray)):
+            raise TypeError(
+                "expected iterable that is not string-like, got {.__name__}"
+                .format(builtins.type(iterable)))
         else:
             for value in iterable:
                 self.append(value, type=type)
