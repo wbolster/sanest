@@ -246,16 +246,18 @@ def test_dict_get_with_default_and_type():
     d['a'] = value
     assert d.get('a', type=int) is value
 
-    # the 'default' argument is not type checked
-    assert d.get('b', type=int) is None
-    assert d.get('b', 234, type=int) == 234
-    assert d.get('b', 'not an int', type=int) == 'not an int'
-
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         # here the default is identical to the actual value. type
         # checking should prevent a non-string return value.
         d.get('a', value, type=str)
     assert str(excinfo.value) == "expected str, got int at path ['a']: 123"
+
+
+def test_dict_get_default_arg_is_not_type_checked():
+    d = sanest.dict()
+    assert d.get('b', type=int) is None
+    assert d.get('b', 234, type=int) == 234
+    assert d.get('b', 'not an int', type=int) == 'not an int'
 
 
 def test_dict_getitem_with_invalid_type():
