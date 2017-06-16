@@ -641,6 +641,17 @@ class list(SaneCollection, collections.abc.MutableSequence):
                 value = wrap(value, check=False)
             yield value
 
+    def iter(self, *, type=None):
+        if type is None:
+            yield from iter(self)
+            return
+        validate_type(type)
+        for index, value in enumerate(self._data):
+            check_type(value, type=type, path=[index])
+            if isinstance(value, CONTAINER_TYPES):
+                value = wrap(value, check=False)
+            yield value
+
     def __len__(self):
         return len(self._data)
 

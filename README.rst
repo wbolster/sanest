@@ -28,8 +28,6 @@ be good ideas after all and may never make it into this library.
 
 * json helpers
 
-* iteration helpers? e.g. dict.iter(type=…) or something like that?
-
 * sanity checks that prevent creating circular references
 
   * possible at all? no complicated parent(s) tracking please

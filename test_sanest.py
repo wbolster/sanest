@@ -1155,7 +1155,7 @@ def test_list_contains():
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
 
 
-def test_list_iteration_wrapping():
+def test_list_iteration():
     l = sanest.list([
         {'a': 1},
         [2, 3],
@@ -1167,6 +1167,21 @@ def test_list_iteration_wrapping():
     assert isinstance(second, sanest.list)
     assert second == [2, 3]
     assert third == 'x'
+
+
+def test_list_iteration_with_type():
+    l = sanest.list(['a', 'a'])
+    assert list(l.iter()) == ['a', 'a']
+    assert list(l.iter(type=str)) == ['a', 'a']
+    l = sanest.list([1, 2, 'oops'])
+    it = l.iter(type=int)
+    assert next(it) == 1
+    assert next(it) == 2
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        next(it)
+    assert str(excinfo.value) == "expected int, got str at path [2]: 'oops'"
+    l = sanest.list([{}])
+    assert isinstance(next(l.iter(type=dict)), sanest.dict)
 
 
 def test_list_index():
