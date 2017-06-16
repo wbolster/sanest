@@ -12,10 +12,10 @@ import sys
 
 try:
     # Python 3.6+
-    from collections.abc import Collection as BaseCollection
+    from collections.abc import Collection
 except ImportError:  # pragma: no cover
     # Python 3.5 and earlier
-    class BaseCollection(
+    class Collection(
             collections.abc.Sized,
             collections.abc.Iterable,
             collections.abc.Container):
@@ -366,7 +366,7 @@ def resolve_path(obj, path, *, partial=False, create=False):
         return obj
 
 
-class SaneCollection(BaseCollection):
+class SaneCollection(Collection):
     """
     Base class for ``sanest.dict`` and ``sanest.list``.
     """
