@@ -114,10 +114,22 @@ def validate_path(path):
 
 
 def validate_type(type):
-    if type not in TYPES:
-        raise InvalidTypeError(
-            "type must be one of {}: {!r}"
-            .format(', '.join(t.__name__ for t in TYPES), type))
+    """
+    Validate that ``type`` is a valid argument for type checking purposes.
+    """
+    if type in TYPES:
+        return
+    if isinstance(type, builtins.list) and len(type) == 1 and type[0] in TYPES:
+        # e.g. [str], [dict]
+        return
+    if isinstance(type, builtins.dict) and len(type) == 1:
+        # e.g. {str: int}, {str: [list]}
+        key, value = next(iter(type.items()))
+        if key is str and value in TYPES:
+            return
+    raise InvalidTypeError(
+        "expected {}, [...] (for lists) or {{str: ...}} (for dicts), got {}"
+        .format(', '.join(t.__name__ for t in TYPES), reprlib.repr(type)))
 
 
 def validate_value(value):
@@ -254,12 +266,50 @@ def parse_path_like_with_type(
     return key_or_index, path, type
 
 
+def repr_for_type(type):
+    """
+    Return a friendly repr() for a type checking argument.
+    """
+    if type in TYPES:
+        # e.g. str
+        return type.__name__
+    if isinstance(type, builtins.list):
+        # e.g. [int]
+        return '[{}]'.format(type[0].__name__)
+    if isinstance(type, builtins.dict):
+        # e.g. {str: bool}
+        return '{{str: {}}}'.format(next(iter(type.values())).__name__)
+    raise ValueError("invalid type: {!r}".format(type))
+
+
 def check_type(value, *, type, path=None):
-    if not isinstance(value, type):
-        at_path = '' if path is None else ' at path {}'.format(path)
-        raise InvalidValueError(
-            "expected {.__name__}, got {.__name__}{}: {!r}"
-            .format(type, typeof(value), at_path, value))
+    """
+    Check that the type of ``value`` matches what ``type`` prescribes.
+    """
+    # note: type checking is extremely strict: it uses identity checks
+    # note: this does not use isinstance() but uses iden type()
+    if type in TYPES and typeof(value) == type:
+        # e.g. str, int
+        return
+    if typeof(type) == typeof(value) == builtins.list:
+        # e.g. [str], [int]
+        contained_type = type[0]
+        if all(typeof(v) == contained_type for v in value):
+            return
+        actual = "non-conforming list"
+    elif typeof(type) == typeof(value) is builtins.dict:
+        # e.g. {str: bool}
+        contained_type = type[next(iter(type))]  # first dict value
+        if all(typeof(v) == contained_type for v in value.values()):
+            return
+        actual = "non-conforming dict"
+    else:
+        actual = typeof(value).__name__
+    raise InvalidValueError("expected {}, got {}{}: {}".format(
+        repr_for_type(type),
+        actual,
+        '' if path is None else ' at path {}'.format(path),
+        reprlib.repr(value)))
 
 
 def clean_value(value, *, type=None, path=None):

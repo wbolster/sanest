@@ -69,6 +69,94 @@ def test_parse_path_like_with_type_in_list():
 
 
 #
+# type checking
+#
+
+@pytest.mark.parametrize('t', [
+    str,
+    bool,
+    int,
+    float,
+    dict,
+    list,
+    [str],
+    [int],
+    [dict],
+    {str: int},
+    {str: str},
+    {str: list},
+])
+def test_validate_type(t):
+    sanest.validate_type(t)
+
+
+@pytest.mark.parametrize('t', [
+    None,
+    bytes,
+    object,
+    'xyz',
+    [None],
+    [bytes],
+    [object],
+    ['xyz'],
+    {'a': 'b'},
+    {int: str},
+    {str: bytes},
+])
+def test_validate_type_invalid(t):
+    with pytest.raises(sanest.InvalidTypeError) as excinfo:
+        sanest.validate_type(t)
+    assert str(excinfo.value).startswith('expected dict, list, ')
+
+
+def test_type_checking_success():
+    d = {
+        'a': [
+            {'b': 'c'},
+            {'d': 'e'},
+        ]
+    }
+    sanest.check_type(d, type=dict)
+    sanest.check_type(d['a'], type=list)
+    sanest.check_type(d['a'], type=[dict])
+    sanest.check_type(d['a'][0], type=dict)
+    sanest.check_type(d['a'][0], type={str: str})
+
+
+@pytest.mark.parametrize(('value', 'type', 'message'), [
+    ('a', int, "expected int, got str"),
+    (123, str, "expected str, got int"),
+    (True, int, "expected int, got bool"),
+    ([123, 'a', 'b'], [int], "expected [int], got non-conforming list"),
+    ({'a': 123}, {str: str}, "expected {str: str}, got non-conforming dict"),
+])
+def test_type_checking_fails(value, type, message):
+    sanest.validate_type(type)
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        sanest.check_type(value, type=type)
+    assert str(excinfo.value).startswith("{}: ".format(message))
+
+
+@pytest.mark.parametrize(('type', 'expected'), [
+    (int, 'int'),
+    (str, 'str'),
+    ([dict], '[dict]'),
+    ([int], '[int]'),
+    ({str: str}, '{str: str}'),
+    ({str: dict}, '{str: dict}'),
+])
+def test_type_repr(type, expected):
+    actual = sanest.repr_for_type(type)
+    assert actual == expected
+
+
+def test_type_repr_invalid():
+    with pytest.raises(ValueError) as excinfo:
+        sanest.repr_for_type('foobar')
+    assert str(excinfo.value) == "invalid type: 'foobar'"
+
+
+#
 # dicts
 #
 
@@ -258,24 +346,6 @@ def test_dict_get_default_arg_is_not_type_checked():
     assert d.get('b', type=int) is None
     assert d.get('b', 234, type=int) == 234
     assert d.get('b', 'not an int', type=int) == 'not an int'
-
-
-def test_dict_getitem_with_invalid_type():
-    d = sanest.dict()
-    with pytest.raises(sanest.InvalidTypeError) as excinfo:
-        d['nonexistent':bytes]
-    assert str(excinfo.value) == (
-        "type must be one of dict, list, bool, float, int, str: "
-        "<class 'bytes'>")
-
-
-def test_dict_get_with_invalid_type():
-    d = sanest.dict()
-    with pytest.raises(sanest.InvalidTypeError) as excinfo:
-        d.get('nonexistent', type=bytes)
-    assert str(excinfo.value) == (
-        "type must be one of dict, list, bool, float, int, str: "
-        "<class 'bytes'>")
 
 
 def test_dict_typed_getitem_with_invalid_slice():

@@ -19,20 +19,6 @@ be good ideas after all and may never make it into this library.
 
 * write docs and docstrings
 
-* extend slicing and type checking logic to peek into container values
-
-  * slice syntax ideas for lists:
-
-    * d['a', 'b':list:int]
-    * d['a', 'b':list, int]
-    * d['a', 'b':[int]]
-
-  * slice syntax ideas for dicts:
-
-    * d['a', 'b':dict:int]
-    * d['a', 'b':dict, int]
-    * d['a', 'b':{str: int}]
-
 * slice syntax to get containers out as built-in (not sanest counterpart) types
 
   * d['a', 'b'::list] same as d['a', 'b':list].to_list()
