@@ -450,6 +450,10 @@ class SaneCollection(BaseCollection):
             return self._data == other
         return NotImplemented
 
+    def __repr__(self):
+        return '{}.{.__name__}({!r})'.format(
+            __name__, type(self), self._data)
+
 
 class dict(SaneCollection, collections.abc.MutableMapping):
     """
@@ -489,10 +493,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def __iter__(self):
         return iter(self._data)
-
-    def __repr__(self):
-        return '{}.{.__name__}({!r})'.format(
-            __name__, type(self), self._data)
 
     def get(self, path_like, default=None, *, type=None):
         if type is not None:
@@ -677,10 +677,6 @@ class list(SaneCollection, collections.abc.MutableSequence):
             del self._data[path_like]
         else:
             return super().__delitem__(path_like)
-
-    def __repr__(self):
-        return '{}.{.__name__}({!r})'.format(
-            __name__, type(self), self._data)
 
     def __contains__(self, value):
         return clean_value(value) in self._data
