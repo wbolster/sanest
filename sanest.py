@@ -322,7 +322,7 @@ def clean_value(value, *, type=None, path=None):
     if type is not None:
         validate_type(type)
     if isinstance(value, SANEST_CONTAINER_TYPES):
-        value = value.unwrap()
+        value = value._data
     elif value is not None:
         validate_value(value)
     if type is not None:
@@ -665,7 +665,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def __setitem__(self, path_like, value):
         if isinstance(path_like, slice) and is_regular_list_slice(path_like):
             if isinstance(value, SANEST_CONTAINER_TYPES):
-                self._data[path_like] = value.unwrap()
+                self._data[path_like] = value._data
             elif isinstance(value, (str, bytes, bytearray)):
                 raise TypeError(
                     "expected iterable that is not string-like, "
@@ -708,7 +708,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def extend(self, iterable, *, type=None):
         if isinstance(iterable, sanest_list):
-            self._data.extend(iterable.unwrap())
+            self._data.extend(iterable._data)
         elif isinstance(iterable, (str, bytes, bytearray)):
             raise TypeError(
                 "expected iterable that is not string-like, got {.__name__}"
@@ -730,10 +730,10 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return self
 
     def __radd__(self, other):
-        return other + self.unwrap()
+        return other + self._data
 
     def __mul__(self, n):
-        return type(self).wrap(self.unwrap() * n, check=False)
+        return type(self).wrap(self._data * n, check=False)
 
     __rmul__ = __mul__
 
