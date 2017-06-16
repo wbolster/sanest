@@ -394,6 +394,9 @@ class SaneCollection(BaseCollection):
     def unwrap(self):
         raise NotImplementedError  # pragma: no cover
 
+    def __len__(self):
+        return len(self._data)
+
     def __getitem__(self, path_like):
         key_or_index, path, type = parse_path_like_with_type(
             path_like, allow_empty_string=True)
@@ -483,9 +486,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         as the return value is treated as read-only.
         """
         return self._data
-
-    def __len__(self):
-        return len(self._data)
 
     def __iter__(self):
         return iter(self._data)
@@ -653,9 +653,6 @@ class list(SaneCollection, collections.abc.MutableSequence):
             if isinstance(value, CONTAINER_TYPES):
                 value = wrap(value, check=False)
             yield value
-
-    def __len__(self):
-        return len(self._data)
 
     def __getitem__(self, path_like):
         if isinstance(path_like, slice) and is_regular_list_slice(path_like):
