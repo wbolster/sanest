@@ -13,7 +13,7 @@ import sys
 try:
     # Python 3.6+
     from collections.abc import Collection as BaseCollection
-except ImportError:
+except ImportError:  # pragma: no cover
     # Python 3.5 and earlier
     class BaseCollection(
             collections.abc.Sized,
