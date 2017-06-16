@@ -370,22 +370,6 @@ class SaneCollection(Collection):
     """
     Base class for ``sanest.dict`` and ``sanest.list``.
     """
-    def __copy__(self):
-        cls = type(self)
-        obj = cls.__new__(cls)
-        obj._data = self._data.copy()
-        return obj
-
-    def __deepcopy__(self, memo):
-        cls = type(self)
-        obj = cls.__new__(cls)
-        obj._data = copy.deepcopy(self._data, memo)
-        return obj
-
-    def copy(self, *, deep=False):
-        fn = copy.deepcopy if deep else copy.copy
-        return fn(self)
-
     @abc.abstractmethod
     def wrap(cls, data, *, check=True):
         raise NotImplementedError  # pragma: no cover
@@ -453,6 +437,22 @@ class SaneCollection(Collection):
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(
             __name__, type(self), self._data)
+
+    def __copy__(self):
+        cls = type(self)
+        obj = cls.__new__(cls)
+        obj._data = self._data.copy()
+        return obj
+
+    def __deepcopy__(self, memo):
+        cls = type(self)
+        obj = cls.__new__(cls)
+        obj._data = copy.deepcopy(self._data, memo)
+        return obj
+
+    def copy(self, *, deep=False):
+        fn = copy.deepcopy if deep else copy.copy
+        return fn(self)
 
 
 class dict(SaneCollection, collections.abc.MutableMapping):
