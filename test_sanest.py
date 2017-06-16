@@ -16,6 +16,10 @@ class MyClass:
         return '<MyClass>'
 
 
+#
+# path parsing
+#
+
 class WithGetItem:
     def __getitem__(self, thing):
         return sanest.parse_path_like_with_type(thing)
@@ -64,6 +68,10 @@ def test_parse_path_like_with_type_in_list():
     assert f([path, str], allow_slice=False) == (None, ['a', 'b'], str)
 
 
+#
+# dicts
+#
+
 def test_pairs():
     actual = list(sanest.pairs(a=1))
     expected = [("a", 1)]
@@ -94,14 +102,6 @@ def test_pairs():
         next(g)
     assert str(excinfo.value) == "expected at most 1 argument, got 3"
 
-
-def test_missing_arg_repr():
-    assert str(sanest.MISSING) == '<missing>'
-
-
-#
-# dicts
-#
 
 def test_dict_basics():
     d = sanest.dict()
@@ -1442,3 +1442,12 @@ def test_wrong_path_for_container_type():
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         l['a', 2]
     assert str(excinfo.value) == "list path must start with int: ['a', 2]"
+
+
+#
+# misc
+#
+
+def test_missing_arg_repr():
+    assert repr(sanest.MISSING) == '<missing>'
+    assert str(sanest.MISSING) == '<missing>'
