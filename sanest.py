@@ -691,7 +691,10 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return self._data.count(clean_value(value, type=type))
 
     def __reversed__(self):
-        return reversed(self._data)
+        for value in reversed(self._data):
+            if isinstance(value, CONTAINER_TYPES):
+                value = wrap(value, check=False)
+            yield value
 
     def insert(self, index, value, *, type=None):
         self._data.insert(index, clean_value(value, type=type))
