@@ -26,6 +26,8 @@ CONTAINER_TYPES = (builtins.dict, builtins.list)
 TYPES = CONTAINER_TYPES + ATOMIC_TYPES
 PATH_SYNTAX_TYPES = (builtins.tuple, builtins.list)
 
+typeof = builtins.type
+
 
 class Missing:
     def __repr__(self):
@@ -124,7 +126,7 @@ def validate_value(value):
     if not isinstance(value, TYPES):
         raise InvalidValueError(
             "invalid value of type {.__name__}: {}"
-            .format(builtins.type(value), reprlib.repr(value)))
+            .format(typeof(value), reprlib.repr(value)))
     if isinstance(value, builtins.dict):
         collections.deque(validated_items(value.items()), 0)  # fast looping
     elif isinstance(value, builtins.list):
@@ -257,7 +259,7 @@ def check_type(value, *, type, path=None):
         at_path = '' if path is None else ' at path {}'.format(path)
         raise InvalidValueError(
             "expected {.__name__}, got {.__name__}{}: {!r}"
-            .format(type, builtins.type(value), at_path, value))
+            .format(type, typeof(value), at_path, value))
 
 
 def clean_value(value, *, type=None, path=None):
@@ -379,7 +381,7 @@ class SaneCollection(BaseCollection):
                 check_type(value, type=type, path=path)
             del obj[key_or_index]
         except LookupError as exc:
-            raise builtins.type(exc)(path) from None
+            raise typeof(exc)(path) from None
 
     def clear(self):
         self._data.clear()
@@ -656,7 +658,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
         elif isinstance(iterable, (str, bytes, bytearray)):
             raise TypeError(
                 "expected iterable that is not string-like, got {.__name__}"
-                .format(builtins.type(iterable)))
+                .format(typeof(iterable)))
         else:
             for value in iterable:
                 self.append(value, type=type)
