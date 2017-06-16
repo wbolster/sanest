@@ -436,6 +436,15 @@ class SaneCollection(BaseCollection):
     def clear(self):
         self._data.clear()
 
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if isinstance(other, typeof(self)):
+            return self._data == other._data
+        if isinstance(other, CONTAINER_TYPES):
+            return self._data == other
+        return NotImplemented
+
 
 class dict(SaneCollection, collections.abc.MutableMapping):
     """
@@ -482,15 +491,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(
             __name__, type(self), self._data)
-
-    def __eq__(self, other):
-        if self is other:
-            return True
-        if isinstance(other, sanest_dict):
-            return self._data == other._data
-        if isinstance(other, builtins.dict):
-            return self._data == other
-        return NotImplemented
 
     def get(self, path_like, default=None, *, type=None):
         if type is not None:
@@ -682,15 +682,6 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(
             __name__, type(self), self._data)
-
-    def __eq__(self, other):
-        if self is other:
-            return True
-        if isinstance(other, sanest_list):
-            return self._data == other._data
-        if isinstance(other, builtins.list):
-            return self._data == other
-        return NotImplemented
 
     def __contains__(self, value):
         return clean_value(value) in self._data

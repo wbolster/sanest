@@ -919,6 +919,7 @@ def test_dict_wrap():
     d = sanest.dict.wrap(original)
     assert d['a', 'b'] == 12
     assert d.unwrap() is original
+    assert sanest.dict.wrap(original) == sanest.dict.wrap(original)
 
 
 def test_dict_wrap_invalid():
@@ -1022,6 +1023,7 @@ def test_list_wrap():
     l = sanest.list.wrap(original)
     assert l[2, 0] == 'c1'
     assert l.unwrap() is original
+    assert sanest.list.wrap(original) == sanest.list.wrap(original)
 
 
 def test_list_wrap_invalid():
