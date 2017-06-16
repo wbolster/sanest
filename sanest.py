@@ -7,6 +7,7 @@ import builtins
 import collections
 import collections.abc
 import copy
+import reprlib
 import sys
 
 try:
@@ -122,8 +123,8 @@ def validate_value(value):
         return
     if not isinstance(value, TYPES):
         raise InvalidValueError(
-            "invalid value of type {.__name__}: {!r}"
-            .format(builtins.type(value), value))
+            "invalid value of type {.__name__}: {}"
+            .format(builtins.type(value), reprlib.repr(value)))
     if isinstance(value, builtins.dict):
         collections.deque(validated_items(value.items()), 0)  # fast looping
     elif isinstance(value, builtins.list):
