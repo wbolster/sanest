@@ -440,6 +440,8 @@ class SaneCollection(BaseCollection):
         if self is other:
             return True
         if isinstance(other, typeof(self)):
+            if self._data is other._data:
+                return True
             return self._data == other._data
         if isinstance(other, CONTAINER_TYPES):
             return self._data == other

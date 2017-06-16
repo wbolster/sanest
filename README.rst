@@ -50,8 +50,6 @@ be good ideas after all and may never make it into this library.
   * sanest.dict.readonly()
   * what about mixing?
 
-* __eq__() shortcut can compare ._data identity first
-
 * identity checks fail when repeatedly getting the same container
   because of the wrapping. keep cached WeakValuesDict for any wrapped
   structures handed out?
