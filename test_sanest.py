@@ -1153,7 +1153,7 @@ def test_list_contains():
     assert sanest.dict({'c': 'd'}) in l
     assert None in l
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        assert MyClass() in l
+        MyClass() in l
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
 
 
