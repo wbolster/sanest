@@ -520,11 +520,11 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         if key == '':
             return False
         try:
-            value = self.get(path, MISSING, type=type)
-        except DataError:
+            self[path] if type is None else self[path:type]
+        except (LookupError, DataError):
             return False
         else:
-            return value is not MISSING
+            return True
 
     def __contains__(self, path_like):
         if isinstance(path_like, str):  # fast path

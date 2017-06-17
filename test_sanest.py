@@ -1524,6 +1524,17 @@ def test_dict_list_mixed_nested_lookup():
     assert d['a', 1, 'b', 0] == 2
 
 
+def test_dict_list_contains():
+    d = sanest.dict({
+        'a': ['b', 'c'],
+    })
+    assert ['a'] in d
+    assert ['a', 0] in d
+    assert ['a', 0, 'x'] not in d
+    assert ['a', 'x'] not in d
+    assert ['a', 3] not in d
+
+
 def test_wrong_path_for_container_type():
     d = sanest.dict()
     l = sanest.list()
