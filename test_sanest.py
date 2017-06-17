@@ -977,6 +977,84 @@ def test_dict_wrap_skip_validation():
     assert unwrapped is invalid_dict
 
 
+def test_dict_view_repr():
+    d = sanest.dict({'a': 123})
+    assert repr(d.keys()) == "sanest.dict({'a': 123}).keys()"
+    assert repr(d.items()) == "sanest.dict({'a': 123}).items()"
+    assert repr(d.values()) == "sanest.dict({'a': 123}).values()"
+
+
+def test_dict_keys_view():
+    d = sanest.dict({'a': {'b': 123}})
+    keys_view = d.keys()
+    assert len(keys_view) == len(d) == 1
+    assert 'a' in keys_view
+    assert ['a'] in keys_view
+    assert ['a', dict] in keys_view
+    assert ['a', 'b'] in keys_view
+    assert ['a', 'b', int] in keys_view
+    assert ['a', 'x'] not in keys_view
+    assert keys_view & {'a', 'q'} == {'a'}
+    assert list(iter(keys_view)) == ['a']
+
+
+def test_dict_values_view_contains():
+    d = sanest.dict({'a': 1, 'b': 2, 'c': [3, 4, 5]})
+    values_view = d.values()
+    assert len(values_view) == len(d) == 3
+    assert 1 in values_view
+    assert [3, 4, 5] in values_view
+    assert sanest.list([3, 4, 5]) in values_view
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        MyClass() in values_view
+    assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
+
+
+def test_dict_values_view_iteration():
+    d = sanest.dict({'a': 'b'})
+    assert list(d.values()) == ['b']
+    d = sanest.dict({'a': [1, 2]})
+    values_view = d.values(type=[int])
+    values = list(values_view)
+    assert len(values) == 1
+    value = values[0]
+    assert value == [1, 2]
+    assert isinstance(value, sanest.list)
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.values(type=bool)
+    assert str(excinfo.value) == (
+        "expected bool, got list at path ['a']: [1, 2]")
+
+
+def test_dict_items_view_contains():
+    d = sanest.dict({'a': {'b': 2}})
+    items_view = d.items()
+    key = 'a'
+    value = {'b': 2}
+    assert (key, value) in items_view
+    key = 'a'
+    value = sanest.dict({'b': 2})
+    assert (key, value) in items_view
+    key = ['a', 'b']
+    value = 2
+    assert (key, value) in items_view
+    key = ['a', 'x']
+    value = 123
+    assert not (key, value) in items_view
+
+
+def test_dict_items_view_iteration():
+    d = sanest.dict({'a': 1})
+    assert list(d.items()) == [('a', 1)]
+    d = sanest.dict({'a': {'b': 2}})
+    items_view = d.items(type={str: int})
+    assert list(items_view) == [('a', {'b': 2})]
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.values(type=bool)
+    assert str(excinfo.value) == (
+        "expected bool, got dict at path ['a']: {'b': 2}")
+
+
 #
 # lists
 #

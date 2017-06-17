@@ -34,8 +34,6 @@ be good ideas after all and may never make it into this library.
 
 * maybe allow None values (optionally)
 
-* type checking dict keys/values/items views? how?
-
 * dotted path strings or other separator? is this a good idea at all?
 
 * configurability
@@ -53,8 +51,6 @@ be good ideas after all and may never make it into this library.
 * identity checks fail when repeatedly getting the same container
   because of the wrapping. keep cached WeakValuesDict for any wrapped
   structures handed out?
-
-* add wrapping of containers returned by dict.values() and dict.items()
 
 * have a ``check=False`` everywhere values can be set, not just in
   ``.wrap()``

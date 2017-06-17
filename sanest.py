@@ -312,6 +312,14 @@ def check_type(value, *, type, path=None):
         reprlib.repr(value)))
 
 
+def check_type_dict_values(d, *, type):
+    """
+    Check the type of all dict values.
+    """
+    for key, value in d._data.items():
+        check_type(value, type=type, path=[key])
+
+
 def clean_value(value, *, type=None, path=None):
     """
     Obtain a clean value by checking types and unwrapping containers.
@@ -437,6 +445,10 @@ class SaneCollection(Collection):
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(
             __name__, type(self), self._data)
+
+    def _truncated_repr(self):
+        return '{}.{.__name__}({})'.format(
+            __name__, type(self), reprlib.repr(self._data))
 
     def __copy__(self):
         cls = type(self)
@@ -599,6 +611,78 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             raise KeyError(reprstr("dictionary is empty")) from None
         value = self.pop(key, type=type)
         return key, value
+
+    def keys(self):
+        return DictKeysView(self)
+
+    def values(self, *, type=None):
+        return DictValuesView(self, type=type)
+
+    def items(self, *, type=None):
+        return DictItemsView(self, type=type)
+
+
+class DictKeysView(collections.abc.KeysView):
+    __slots__ = ()
+
+    def __repr__(self):
+        return '{}.keys()'.format(self._mapping._truncated_repr())
+
+
+class DictValuesView(collections.abc.ValuesView):
+    __slots__ = ('_sanest_dict')
+
+    def __init__(self, d, *, type):
+        self._sanest_dict = d
+        if type is not None:
+            validate_type(type)
+            check_type_dict_values(d, type=type)
+        super().__init__(d)
+
+    def __repr__(self):
+        return '{}.values()'.format(self._mapping._truncated_repr())
+
+    def __contains__(self, value):
+        value = clean_value(value)
+        return any(  # pragma: no branch
+            v is value or v == value
+            for v in self._sanest_dict._data.values())
+
+    def __iter__(self):
+        for value in self._sanest_dict._data.values():
+            if isinstance(value, CONTAINER_TYPES):
+                value = wrap(value, check=False)
+            yield value
+
+
+class DictItemsView(collections.abc.ItemsView):
+    __slots__ = ('_sanest_dict')
+
+    def __init__(self, d, *, type):
+        self._sanest_dict = d
+        if type is not None:
+            validate_type(type)
+            check_type_dict_values(d, type=type)
+        super().__init__(d)
+
+    def __repr__(self):
+        return '{}.items()'.format(self._mapping._truncated_repr())
+
+    def __contains__(self, item):
+        key, value = item
+        value = clean_value(value)
+        try:
+            v = self._sanest_dict[key]
+        except KeyError:
+            return False
+        else:
+            return v is value or v == value
+
+    def __iter__(self):
+        for key, value in self._sanest_dict._data.items():
+            if isinstance(value, CONTAINER_TYPES):
+                value = wrap(value, check=False)
+            yield key, value
 
 
 class list(SaneCollection, collections.abc.MutableSequence):
