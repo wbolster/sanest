@@ -63,3 +63,5 @@ be good ideas after all and may never make it into this library.
   while also checking containment
 
 * typed list.__contains__
+
+* list comparison ``__lt__`` and friends
