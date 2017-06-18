@@ -312,14 +312,6 @@ def check_type(value, *, type, path=None):
         reprlib.repr(value)))
 
 
-def check_type_dict_values(d, *, type):
-    """
-    Check the type of all dict values.
-    """
-    for key, value in d._data.items():
-        check_type(value, type=type, path=[key])
-
-
 def clean_value(value, *, type=None, path=None):
     """
     Obtain a clean value by checking types and unwrapping containers.
@@ -503,6 +495,14 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         """
         return self._data
 
+    def validate(self, *, type):
+        """
+        Check the type of all values in this dict.
+        """
+        validate_type(type)
+        for key, value in self._data.items():
+            check_type(value, type=type, path=[key])
+
     def __iter__(self):
         return iter(self._data)
 
@@ -616,10 +616,14 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return DictKeysView(self)
 
     def values(self, *, type=None):
-        return DictValuesView(self, type=type)
+        if type is not None:
+            self.validate(type=type)
+        return DictValuesView(self)
 
     def items(self, *, type=None):
-        return DictItemsView(self, type=type)
+        if type is not None:
+            self.validate(type=type)
+        return DictItemsView(self)
 
 
 class DictKeysView(collections.abc.KeysView):
@@ -632,11 +636,8 @@ class DictKeysView(collections.abc.KeysView):
 class DictValuesView(collections.abc.ValuesView):
     __slots__ = ('_sanest_dict')
 
-    def __init__(self, d, *, type):
+    def __init__(self, d):
         self._sanest_dict = d
-        if type is not None:
-            validate_type(type)
-            check_type_dict_values(d, type=type)
         super().__init__(d)
 
     def __repr__(self):
@@ -658,11 +659,8 @@ class DictValuesView(collections.abc.ValuesView):
 class DictItemsView(collections.abc.ItemsView):
     __slots__ = ('_sanest_dict')
 
-    def __init__(self, d, *, type):
+    def __init__(self, d):
         self._sanest_dict = d
-        if type is not None:
-            validate_type(type)
-            check_type_dict_values(d, type=type)
         super().__init__(d)
 
     def __repr__(self):
@@ -721,6 +719,14 @@ class list(SaneCollection, collections.abc.MutableSequence):
         """
         return self._data
 
+    def validate(self, *, type):
+        """
+        Check the type of all values in this list.
+        """
+        validate_type(type)
+        for index, value in enumerate(self._data):
+            check_type(value, type=type, path=[index])
+
     def __iter__(self):
         for value in self._data:
             if isinstance(value, CONTAINER_TYPES):
@@ -728,15 +734,9 @@ class list(SaneCollection, collections.abc.MutableSequence):
             yield value
 
     def iter(self, *, type=None):
-        if type is None:
-            yield from iter(self)
-            return
-        validate_type(type)
-        for index, value in enumerate(self._data):
-            check_type(value, type=type, path=[index])
-            if isinstance(value, CONTAINER_TYPES):
-                value = wrap(value, check=False)
-            yield value
+        if type is not None:
+            self.validate(type=type)
+        return iter(self)
 
     def __getitem__(self, path_like):
         if isinstance(path_like, slice) and is_regular_list_slice(path_like):

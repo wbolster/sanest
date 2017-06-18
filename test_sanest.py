@@ -947,7 +947,7 @@ def test_dict_constructor_validation():
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
 
 
-def test_dict_value_validation():
+def test_dict_validate_assigned_values():
     d = sanest.dict()
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d['a'] = MyClass()
@@ -975,6 +975,16 @@ def test_dict_wrap_skip_validation():
     wrapped = sanest.wrap(invalid_dict, check=False)
     unwrapped = wrapped.unwrap()
     assert unwrapped is invalid_dict
+
+
+def test_dict_validate():
+    d = sanest.dict({'a': 1, 'b': 2})
+    d.validate(type=int)
+    d = sanest.dict({'a': [1, 2]})
+    d.validate(type=[int])
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d.validate(type=str)
+    assert str(excinfo.value) == "expected str, got list at path ['a']: [1, 2]"
 
 
 def test_dict_view_repr():
@@ -1126,6 +1136,16 @@ def test_list_wrap_validation():
     assert len(l) == 2
 
 
+def test_list_validate():
+    l = sanest.list([1, 2, 3])
+    l.validate(type=int)
+    l = sanest.list([{'a': 1}, {'a': 2}, {'a': 3}])
+    l.validate(type={str: int})
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l.validate(type=str)
+    assert str(excinfo.value) == "expected str, got dict at path [0]: {'a': 1}"
+
+
 def test_list_getitem():
     l = sanest.list(['a', 'b'])
     assert l[0] == 'a'
@@ -1254,11 +1274,8 @@ def test_list_iteration_with_type():
     assert list(l.iter()) == ['a', 'a']
     assert list(l.iter(type=str)) == ['a', 'a']
     l = sanest.list([1, 2, 'oops'])
-    it = l.iter(type=int)
-    assert next(it) == 1
-    assert next(it) == 2
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        next(it)
+        l.iter(type=int)  # eager validation, not during yielding
     assert str(excinfo.value) == "expected int, got str at path [2]: 'oops'"
     l = sanest.list([{}])
     assert isinstance(next(l.iter(type=dict)), sanest.dict)
