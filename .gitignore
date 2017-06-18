@@ -3,4 +3,5 @@
 /.coverage
 /*.egg-info/
 /.tox/
+/doc/build/
 /htmlcov/
