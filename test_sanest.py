@@ -1088,7 +1088,7 @@ def test_list_constructor():
     assert str(excinfo.value) == "expected at most 1 argument, got 3"
 
 
-def test_list_comparison():
+def test_list_comparison_equality():
     l1 = sanest.list([1, 2])
     l2 = sanest.list([1, 2])
     normal_list = [1, 2]
@@ -1098,6 +1098,34 @@ def test_list_comparison():
     assert l1 != [2, 1]
     assert l1 != [3]
     assert l1 != object()
+
+
+def test_list_comparison_ordering():
+    l1 = sanest.list([1, 2])
+    l2 = sanest.list([2, 3, 4])
+    normal_list = [1, 2]
+    assert l1 < l2
+    assert l1 <= l2
+    assert l2 > l1
+    assert l2 >= l1
+    assert not l1 < normal_list
+    assert not l1 > normal_list
+    assert l1 <= normal_list
+    assert l1 >= normal_list
+    assert l2 > normal_list
+    assert normal_list < l2
+    with pytest.raises(TypeError) as excinfo:
+        l1 < object()
+    assert str(excinfo.value).startswith("unorderable types: ")
+    with pytest.raises(TypeError) as excinfo:
+        l1 <= object()
+    assert str(excinfo.value).startswith("unorderable types: ")
+    with pytest.raises(TypeError) as excinfo:
+        l1 > object()
+    assert str(excinfo.value).startswith("unorderable types: ")
+    with pytest.raises(TypeError) as excinfo:
+        l1 >= object()
+    assert str(excinfo.value).startswith("unorderable types: ")
 
 
 def test_list_repr():

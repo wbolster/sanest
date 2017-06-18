@@ -762,6 +762,34 @@ class list(SaneCollection, collections.abc.MutableSequence):
         else:
             return super().__delitem__(path_like)
 
+    def __lt__(self, other):
+        if isinstance(other, typeof(self)):
+            return self._data < other._data
+        if isinstance(other, builtins.list):
+            return self._data < other
+        return NotImplemented
+
+    def __le__(self, other):
+        if isinstance(other, typeof(self)):
+            return self._data <= other._data
+        if isinstance(other, builtins.list):
+            return self._data <= other
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, typeof(self)):
+            return self._data > other._data
+        if isinstance(other, builtins.list):
+            return self._data > other
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, typeof(self)):
+            return self._data >= other._data
+        if isinstance(other, builtins.list):
+            return self._data >= other
+        return NotImplemented
+
     def __contains__(self, value):
         return clean_value(value) in self._data
 
