@@ -312,7 +312,7 @@ def check_type(value, *, type, path=None):
         reprlib.repr(value)))
 
 
-def clean_value(value, *, type=None, path=None):
+def clean_value(value, *, type=None):
     """
     Obtain a clean value by checking types and unwrapping containers.
 
@@ -326,7 +326,7 @@ def clean_value(value, *, type=None, path=None):
     elif value is not None:
         validate_value(value)
     if type is not None:
-        check_type(value, type=type, path=path)
+        check_type(value, type=type)
     return value
 
 
@@ -393,7 +393,7 @@ class SaneCollection(Collection):
 
     def __setitem__(self, path_like, value):
         key_or_index, path, type = parse_path_like_with_type(path_like)
-        value = clean_value(value, type=type, path=path)
+        value = clean_value(value, type=type)
         obj, key_or_index = resolve_path(
             self._data, path, partial=True, create=True)
         if isinstance(obj, builtins.dict):

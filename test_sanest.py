@@ -534,7 +534,7 @@ def test_dict_setitem_with_path_and_type():
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d[path:int] = 'not an int'
     assert str(excinfo.value) == (
-        "expected int, got str at path ['a', 'b', 'c']: 'not an int'")
+        "expected int, got str: 'not an int'")
     path = ['']
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         d[path:int] = 123
@@ -598,7 +598,7 @@ def test_dict_setdefault():
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d.setdefault('d', 'not an int', type=int)
     assert str(excinfo.value) == (
-        "expected int, got str at path ['d']: 'not an int'")
+        "expected int, got str: 'not an int'")
 
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d.setdefault('a', 'not an int', type=int)
@@ -1206,7 +1206,7 @@ def test_list_setitem_with_type():
     assert l[0:str] == 'a'
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         l[0:bool] = 'a'
-    assert str(excinfo.value) == "expected bool, got str at path [0]: 'a'"
+    assert str(excinfo.value) == "expected bool, got str: 'a'"
 
 
 def test_list_setitem_with_path():
@@ -1231,7 +1231,7 @@ def test_list_setitem_with_path_and_type():
     assert l == ['a', ['d', 'e']]
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         l[1, 1:bool] = 'x'
-    assert str(excinfo.value) == "expected bool, got str at path [1, 1]: 'x'"
+    assert str(excinfo.value) == "expected bool, got str: 'x'"
     assert l == ['a', ['d', 'e']]
 
 
