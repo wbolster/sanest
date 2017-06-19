@@ -979,11 +979,11 @@ def test_dict_wrap_skip_validation():
 
 def test_dict_validate():
     d = sanest.dict({'a': 1, 'b': 2})
-    d.validate(type=int)
+    d.check_types(type=int)
     d = sanest.dict({'a': [1, 2]})
-    d.validate(type=[int])
+    d.check_types(type=[int])
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        d.validate(type=str)
+        d.check_types(type=str)
     assert str(excinfo.value) == "expected str, got list at path ['a']: [1, 2]"
 
 
@@ -1166,11 +1166,11 @@ def test_list_wrap_validation():
 
 def test_list_validate():
     l = sanest.list([1, 2, 3])
-    l.validate(type=int)
+    l.check_types(type=int)
     l = sanest.list([{'a': 1}, {'a': 2}, {'a': 3}])
-    l.validate(type={str: int})
+    l.check_types(type={str: int})
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.validate(type=str)
+        l.check_types(type=str)
     assert str(excinfo.value) == "expected str, got dict at path [0]: {'a': 1}"
 
 

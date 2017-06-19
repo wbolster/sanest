@@ -495,7 +495,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         """
         return self._data
 
-    def validate(self, *, type):
+    def check_types(self, *, type):
         """
         Check the type of all values in this dict.
         """
@@ -617,12 +617,12 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def values(self, *, type=None):
         if type is not None:
-            self.validate(type=type)
+            self.check_types(type=type)
         return DictValuesView(self)
 
     def items(self, *, type=None):
         if type is not None:
-            self.validate(type=type)
+            self.check_types(type=type)
         return DictItemsView(self)
 
 
@@ -719,7 +719,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
         """
         return self._data
 
-    def validate(self, *, type):
+    def check_types(self, *, type):
         """
         Check the type of all values in this list.
         """
@@ -735,7 +735,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def iter(self, *, type=None):
         if type is not None:
-            self.validate(type=type)
+            self.check_types(type=type)
         return iter(self)
 
     def __getitem__(self, path_like):
