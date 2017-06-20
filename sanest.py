@@ -524,7 +524,10 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         if key == '':
             return False
         try:
-            self[path] if type is None else self[path:type]
+            if type is None:
+                self[path]
+            else:
+                self[path:type]
         except (LookupError, DataError):
             return False
         else:
@@ -782,10 +785,9 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return clean_value(value) in self._data
 
     def index(self, value, start=0, stop=None, *, type=None):
-        return self._data.index(
-            clean_value(value, type=type),
-            start,
-            stop if stop is not None else sys.maxsize)
+        if stop is None:
+            stop = sys.maxsize
+        return self._data.index(clean_value(value, type=type), start, stop)
 
     def count(self, value, *, type=None):
         return self._data.count(clean_value(value, type=type))
