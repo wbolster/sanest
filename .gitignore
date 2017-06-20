@@ -3,5 +3,6 @@
 /.coverage
 /*.egg-info/
 /.tox/
+/dist/
 /doc/build/
 /htmlcov/
