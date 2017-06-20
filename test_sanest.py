@@ -649,14 +649,6 @@ def test_dict_value_container_type():
     assert d2['c1':bool] is True
 
 
-def test_dict_none_value_is_delete():
-    d = sanest.dict()
-    d['a', 'b'] = 1
-    d['a', 'b'] = None
-    assert ['a', 'b'] not in d
-    d['a', 'b'] = None  # idempotent
-
-
 def test_dict_delitem():
     d = sanest.dict()
     with pytest.raises(KeyError) as excinfo:
@@ -909,7 +901,7 @@ def test_dict_pickle():
 def test_dict_fromkeys():
     keys = ['a', 'b']
     d = sanest.dict.fromkeys(keys)
-    assert d == {}  # empty because of None values
+    assert d == {'a': None, 'b': None}
     d = sanest.dict.fromkeys(keys, 123)
     assert d == {'a': 123, 'b': 123}
 

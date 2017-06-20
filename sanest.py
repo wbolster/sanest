@@ -396,18 +396,10 @@ class SaneCollection(Collection):
         value = clean_value(value, type=type)
         obj, key_or_index = resolve_path(
             self._data, path, partial=True, create=True)
-        if isinstance(obj, builtins.dict):
-            if value is None:
-                # fixme: resolve_path creates leading paths even when
-                # value is None which is supposed to remove values only.
-                obj.pop(key_or_index, None)
-            else:
-                obj[key_or_index] = value
-        else:  # obj is a list
-            try:
-                obj[key_or_index] = value
-            except IndexError as exc:
-                raise IndexError(path) from None
+        try:
+            obj[key_or_index] = value
+        except IndexError as exc:  # list assignment can fail
+            raise IndexError(path) from None
 
     def __delitem__(self, x):
         key_or_index, path, type = parse_path_like_with_type(x)
@@ -567,11 +559,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return value
 
     def update(self, *args, **kwargs):
-        for key, value in validated_items(pairs(*args, **kwargs)):
-            if value is None:
-                self._data.pop(key, None)
-            else:
-                self._data[key] = value
+        self._data.update(validated_items(pairs(*args, **kwargs)))
 
     def pop(self, path_like, default=MISSING, *, type=None):
         if type is not None:

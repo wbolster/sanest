@@ -32,8 +32,6 @@ be good ideas after all and may never make it into this library.
 
   * possible at all? no complicated parent(s) tracking please
 
-* maybe allow None values (optionally)
-
 * dotted path strings or other separator? is this a good idea at all?
 
 * configurability
