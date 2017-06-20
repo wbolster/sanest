@@ -1,4 +1,2 @@
-flake8
-pytest
-pytest-cov
+-r requirements-test.txt
 sphinx
