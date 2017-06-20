@@ -5,6 +5,7 @@ tests for sanest
 import builtins
 import copy
 import pickle
+import sys
 
 import pytest
 
@@ -1055,18 +1056,22 @@ def test_list_comparison_ordering():
     assert l1 >= normal_list
     assert l2 > normal_list
     assert normal_list < l2
+    if sys.version_info >= (3, 6):
+        pattern = r" not supported between instances "
+    else:
+        pattern = r"^unorderable types: "
     with pytest.raises(TypeError) as excinfo:
         l1 < object()
-    assert str(excinfo.value).startswith("unorderable types: ")
+    assert excinfo.match(pattern)
     with pytest.raises(TypeError) as excinfo:
         l1 <= object()
-    assert str(excinfo.value).startswith("unorderable types: ")
+    assert excinfo.match(pattern)
     with pytest.raises(TypeError) as excinfo:
         l1 > object()
-    assert str(excinfo.value).startswith("unorderable types: ")
+    assert excinfo.match(pattern)
     with pytest.raises(TypeError) as excinfo:
         l1 >= object()
-    assert str(excinfo.value).startswith("unorderable types: ")
+    assert excinfo.match(pattern)
 
 
 def test_list_repr():
