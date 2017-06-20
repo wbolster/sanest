@@ -2,6 +2,9 @@
 sanest
 ======
 
+.. image:: https://travis-ci.org/wbolster/sanest.svg?branch=master
+    :target: https://travis-ci.org/wbolster/sanest
+
 sane nested dictionaries and lists
 
 *sanest* is a python library that makes it easy to work with nested
