@@ -1,7 +1,3 @@
-"""
-sanest, sane nested dictionaries and lists
-"""
-
 import abc
 import builtins
 import collections
@@ -420,11 +416,11 @@ class SaneCollection(Collection):
 
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(
-            __name__, type(self), self._data)
+            __package__, type(self), self._data)
 
     def _truncated_repr(self):
         return '{}.{.__name__}({})'.format(
-            __name__, type(self), reprlib.repr(self._data))
+            __package__, type(self), reprlib.repr(self._data))
 
     def __copy__(self):
         cls = type(self)

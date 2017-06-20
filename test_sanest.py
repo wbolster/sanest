@@ -9,6 +9,7 @@ import pickle
 import pytest
 
 import sanest
+from sanest import sanest as _sanest  # internal module
 
 
 class MyClass:
@@ -22,7 +23,7 @@ class MyClass:
 
 class WithGetItem:
     def __getitem__(self, thing):
-        return sanest.parse_path_like_with_type(thing)
+        return _sanest.parse_path_like_with_type(thing)
 
 
 def test_parse_path_like_with_type_as_slice():
@@ -59,7 +60,7 @@ def test_parse_path_like_with_type_as_slice():
 
 
 def test_parse_path_like_with_type_in_list():
-    f = sanest.parse_path_like_with_type
+    f = _sanest.parse_path_like_with_type
     assert f('a', allow_slice=False) == ('a', ['a'], None)
     assert f(['a', str], allow_slice=False) == (None, ['a'], str)
     assert f(['a', 'b'], allow_slice=False) == (None, ['a', 'b'], None)
@@ -87,7 +88,7 @@ def test_parse_path_like_with_type_in_list():
     {str: list},
 ])
 def test_validate_type(t):
-    sanest.validate_type(t)
+    _sanest.validate_type(t)
 
 
 @pytest.mark.parametrize('t', [
@@ -105,7 +106,7 @@ def test_validate_type(t):
 ])
 def test_validate_type_invalid(t):
     with pytest.raises(sanest.InvalidTypeError) as excinfo:
-        sanest.validate_type(t)
+        _sanest.validate_type(t)
     assert str(excinfo.value).startswith('expected dict, list, ')
 
 
@@ -116,11 +117,11 @@ def test_type_checking_success():
             {'d': 'e'},
         ]
     }
-    sanest.check_type(d, type=dict)
-    sanest.check_type(d['a'], type=list)
-    sanest.check_type(d['a'], type=[dict])
-    sanest.check_type(d['a'][0], type=dict)
-    sanest.check_type(d['a'][0], type={str: str})
+    _sanest.check_type(d, type=dict)
+    _sanest.check_type(d['a'], type=list)
+    _sanest.check_type(d['a'], type=[dict])
+    _sanest.check_type(d['a'][0], type=dict)
+    _sanest.check_type(d['a'][0], type={str: str})
 
 
 @pytest.mark.parametrize(('value', 'type', 'message'), [
@@ -131,9 +132,9 @@ def test_type_checking_success():
     ({'a': 123}, {str: str}, "expected {str: str}, got non-conforming dict"),
 ])
 def test_type_checking_fails(value, type, message):
-    sanest.validate_type(type)
+    _sanest.validate_type(type)
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        sanest.check_type(value, type=type)
+        _sanest.check_type(value, type=type)
     assert str(excinfo.value).startswith("{}: ".format(message))
 
 
@@ -146,13 +147,13 @@ def test_type_checking_fails(value, type, message):
     ({str: dict}, '{str: dict}'),
 ])
 def test_type_repr(type, expected):
-    actual = sanest.repr_for_type(type)
+    actual = _sanest.repr_for_type(type)
     assert actual == expected
 
 
 def test_type_repr_invalid():
     with pytest.raises(ValueError) as excinfo:
-        sanest.repr_for_type('foobar')
+        _sanest.repr_for_type('foobar')
     assert str(excinfo.value) == "invalid type: 'foobar'"
 
 
@@ -161,15 +162,15 @@ def test_type_repr_invalid():
 #
 
 def test_pairs():
-    actual = list(sanest.pairs(a=1))
+    actual = list(_sanest.pairs(a=1))
     expected = [("a", 1)]
     assert actual == expected
 
-    actual = list(sanest.pairs({'a': 1}, b=2))
+    actual = list(_sanest.pairs({'a': 1}, b=2))
     expected = [("a", 1), ("b", 2)]
     assert actual == expected
 
-    actual = list(sanest.pairs([("a", 1), ("b", 2)]))
+    actual = list(_sanest.pairs([("a", 1), ("b", 2)]))
     expected = [("a", 1), ("b", 2)]
     assert actual == expected
 
@@ -181,11 +182,11 @@ def test_pairs():
         def __getitem__(self, key):
             return "x"
 
-    actual = list(sanest.pairs(WithKeys()))
+    actual = list(_sanest.pairs(WithKeys()))
     expected = [("a", "x"), ("b", "x")]
     assert actual == expected
 
-    g = sanest.pairs({}, {}, {})
+    g = _sanest.pairs({}, {}, {})
     with pytest.raises(TypeError) as excinfo:
         next(g)
     assert str(excinfo.value) == "expected at most 1 argument, got 3"
@@ -1614,5 +1615,5 @@ def test_wrong_path_for_container_type():
 #
 
 def test_missing_arg_repr():
-    assert repr(sanest.MISSING) == '<missing>'
-    assert str(sanest.MISSING) == '<missing>'
+    assert repr(_sanest.MISSING) == '<missing>'
+    assert str(_sanest.MISSING) == '<missing>'
