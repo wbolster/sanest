@@ -57,3 +57,6 @@ be good ideas after all and may never make it into this library.
   while also checking containment
 
 * typed list.__contains__
+
+* add a .clean(deep=True) helper (needs better name) to remove None
+  values from a (nested) dict
