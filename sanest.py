@@ -109,8 +109,6 @@ def validate_path(path):
         if isinstance(k, bool) or not isinstance(k, (int, str)):
             raise InvalidPathError(
                 "path must contain only str or int: {!r}".format(path))
-        if k == '':
-            raise InvalidPathError("empty path component: {!r}".format(path))
 
 
 def validate_type(type):
@@ -199,10 +197,8 @@ def wrap(value, *, check=True):
     raise TypeError("not a dict or list: {!r}".format(value))
 
 
-def parse_path_like(path, allow_empty_string=False):
+def parse_path_like(path):
     if type(path) in (str, int):
-        if path == '' and not allow_empty_string:
-            raise InvalidPathError("empty path component: {!r}".format(['']))
         return path, [path]
     if isinstance(path, PATH_SYNTAX_TYPES):
         validate_path(path)
@@ -210,8 +206,7 @@ def parse_path_like(path, allow_empty_string=False):
     raise InvalidPathError("invalid path: {!r}".format(path))
 
 
-def parse_path_like_with_type(
-        x, *, allow_empty_string=False, allow_slice=True):
+def parse_path_like_with_type(x, *, allow_slice=True):
     sl = None
     if isinstance(x, (int, str)) and not isinstance(x, bool):
         # e.g. d['a'] and d[2]
@@ -251,8 +246,6 @@ def parse_path_like_with_type(
         validate_path(path)
     else:
         raise InvalidPathError("invalid path: {!r}".format(x))
-    if key_or_index == '' and not allow_empty_string:
-        raise InvalidPathError("empty path component: {!r}".format(['']))
     if sl is not None:
         if sl.stop is None:
             raise InvalidPathError(
@@ -382,8 +375,7 @@ class SaneCollection(Collection):
         return len(self._data)
 
     def __getitem__(self, path_like):
-        key_or_index, path, type = parse_path_like_with_type(
-            path_like, allow_empty_string=True)
+        key_or_index, path, type = parse_path_like_with_type(path_like)
         value = resolve_path(self._data, path)
         if type is not None:
             check_type(value, type=type, path=path)
@@ -501,9 +493,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
     def get(self, path_like, default=None, *, type=None):
         if type is not None:
             validate_type(type)
-        key, path = parse_path_like(path_like, allow_empty_string=True)
-        if key == '':
-            return default
+        key, path = parse_path_like(path_like)
         if not isinstance(path[-1], str):
             raise InvalidPathError("path must lead to dict key")
         try:
@@ -520,9 +510,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return value
 
     def contains(self, path_like, *, type=None):
-        key, path = parse_path_like(path_like, allow_empty_string=True)
-        if key == '':
-            return False
+        key, path = parse_path_like(path_like)
         try:
             if type is None:
                 self[path]

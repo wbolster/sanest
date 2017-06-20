@@ -478,38 +478,16 @@ def test_dict_iteration():
     assert list(iter(d)) == ['a']
 
 
-def test_dict_empty_key():
-    # though empty keys are invalid and cannot be set, simple string
-    # lookups and containment checks should not raise surprising
-    # exceptions.
-    d = sanest.dict()
-    with pytest.raises(KeyError) as excinfo:
-        d['']
-    assert str(excinfo.value) == "['']"
-    with pytest.raises(KeyError) as excinfo:
-        d['':int]
-    assert str(excinfo.value) == "['']"
-    assert d.get('', 123) == 123
-    assert '' not in d
-    assert not d.contains('')
-
-
 def test_dict_setitem():
     d = sanest.dict()
     d['a'] = 'b'
     assert d['a'] == 'b'
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        d[''] = 123
-    assert str(excinfo.value) == "empty path component: ['']"
 
 
 def test_dict_setitem_with_type():
     d = sanest.dict()
     d['a':int] = 123
     assert d['a'] == 123
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        d['':int] = 123
-    assert str(excinfo.value) == "empty path component: ['']"
 
 
 def test_dict_setitem_with_path():
@@ -519,10 +497,6 @@ def test_dict_setitem_with_path():
     path = ['a', 'b']
     d[path] = 456
     assert d[path] == 456
-    path = ['']
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        d[path] = 123
-    assert str(excinfo.value) == "empty path component: ['']"
 
 
 def test_dict_setitem_with_path_and_type():
@@ -536,9 +510,6 @@ def test_dict_setitem_with_path_and_type():
     assert str(excinfo.value) == (
         "expected int, got str: 'not an int'")
     path = ['']
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        d[path:int] = 123
-    assert str(excinfo.value) == "empty path component: ['']"
 
 
 def test_dict_empty_path():
@@ -558,25 +529,6 @@ def test_dict_empty_path():
         d.get([], type=str)
     assert str(excinfo.value) == "empty path: []"
 
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        path = ['']
-        d[path]
-    assert str(excinfo.value) == "empty path component: ['']"
-
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        d.get([''], type=str)
-    assert str(excinfo.value) == "empty path component: ['']"
-
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        path = ['a', 'b', '']
-        d[path]
-    assert str(excinfo.value) == "empty path component: ['a', 'b', '']"
-
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        path = ['', 'b']
-        d[path]
-    assert str(excinfo.value) == "empty path component: ['', 'b']"
-
 
 def test_dict_setdefault():
     d = sanest.dict()
@@ -585,10 +537,6 @@ def test_dict_setdefault():
     assert d.setdefault(['b', 'c'], 'foo', type=str) == 'foo'
     assert d['a'] == 1
     assert d['b', 'c'] == 'foo'
-
-    with pytest.raises(sanest.InvalidPathError) as excinfo:
-        d.setdefault('', 123)
-    assert str(excinfo.value) == "empty path component: ['']"
 
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d.setdefault(['b', 'c'], 'not an int', type=int)
