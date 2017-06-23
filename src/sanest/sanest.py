@@ -100,11 +100,9 @@ class InvalidValueError(DataError):
 def validate_path(path):
     if not path:
         raise InvalidPathError("empty path: {!r}".format(path))
-    for k in path:
-        # explicitly check for booleans, since bool is a subclass of int.
-        if isinstance(k, bool) or not isinstance(k, (int, str)):
-            raise InvalidPathError(
-                "path must contain only str or int: {!r}".format(path))
+    if any(type(k) not in (int, str) for k in path):
+        raise InvalidPathError(
+            "path must contain only str or int: {!r}".format(path))
 
 
 def validate_type(type):
@@ -113,10 +111,10 @@ def validate_type(type):
     """
     if type in TYPES:
         return
-    if isinstance(type, builtins.list) and len(type) == 1 and type[0] in TYPES:
+    if typeof(type) is builtins.list and len(type) == 1 and type[0] in TYPES:
         # e.g. [str], [dict]
         return
-    if isinstance(type, builtins.dict) and len(type) == 1:
+    if typeof(type) is builtins.dict and len(type) == 1:
         # e.g. {str: int}, {str: [list]}
         key, value = next(iter(type.items()))
         if key is str and value in TYPES:
@@ -129,19 +127,19 @@ def validate_type(type):
 def validate_value(value):
     if value is None:
         return
-    if not isinstance(value, TYPES):
+    if type(value) not in TYPES:
         raise InvalidValueError(
             "invalid value of type {.__name__}: {}"
-            .format(typeof(value), reprlib.repr(value)))
-    if isinstance(value, builtins.dict):
+            .format(type(value), reprlib.repr(value)))
+    if type(value) is builtins.dict:
         collections.deque(validated_items(value.items()), 0)  # fast looping
-    elif isinstance(value, builtins.list):
+    elif type(value) is builtins.list:
         collections.deque(validated_values(value), 0)  # fast looping
 
 
 def validated_items(iterable):
     for key, value in iterable:
-        if not isinstance(key, str):
+        if type(key) is not str:
             raise InvalidPathError("invalid dict key: {!r}".format(key))
         validate_value(value)
         yield key, value
@@ -175,7 +173,6 @@ def pairs(*args, **kwargs):
 
 
 def is_regular_list_slice(sl):
-    # avoid isinstance(..., int) to reject booleans, which subclass int
     return (
         (sl.start is None or type(sl.start) is int)
         and (sl.stop is None or type(sl.stop) is int)
@@ -186,9 +183,9 @@ def wrap(value, *, check=True):
     """
     Wrap a container (dict or list) without making a copy.
     """
-    if isinstance(value, builtins.dict):
+    if type(value) is builtins.dict:
         return sanest_dict.wrap(value, check=check)
-    if isinstance(value, builtins.list):
+    if type(value) is builtins.list:
         return sanest_list.wrap(value, check=check)
     raise TypeError("not a dict or list: {!r}".format(value))
 
@@ -196,7 +193,7 @@ def wrap(value, *, check=True):
 def parse_path_like(path):
     if type(path) in (str, int):
         return path, [path]
-    if isinstance(path, PATH_SYNTAX_TYPES):
+    if type(path) in PATH_SYNTAX_TYPES:
         validate_path(path)
         return None, path
     raise InvalidPathError("invalid path: {!r}".format(path))
@@ -204,14 +201,14 @@ def parse_path_like(path):
 
 def parse_path_like_with_type(x, *, allow_slice=True):
     sl = None
-    if isinstance(x, (int, str)) and not isinstance(x, bool):
+    if typeof(x) in (int, str):
         # e.g. d['a'] and d[2]
         key_or_index = x
         path = [key_or_index]
         type = None
-    elif allow_slice and isinstance(x, slice):
+    elif allow_slice and typeof(x) is slice:
         sl = x
-        if isinstance(sl.start, PATH_SYNTAX_TYPES):
+        if typeof(sl.start) in PATH_SYNTAX_TYPES:
             # e.g. d[path:str]
             key_or_index = None
             path = sl.start
@@ -220,23 +217,23 @@ def parse_path_like_with_type(x, *, allow_slice=True):
             # e.g. d['a':str] and d[2:str]
             key_or_index = sl.start
             path = [key_or_index]
-    elif isinstance(x, PATH_SYNTAX_TYPES):
+    elif typeof(x) in PATH_SYNTAX_TYPES:
         # e.g. d['a', 'b'] and d[path] and d['a', 'b':str]
         key_or_index = None
         path = builtins.list(x)  # makes a copy
         type = None
         if path:
-            if allow_slice and isinstance(path[-1], slice):
+            if allow_slice and typeof(path[-1]) is slice:
                 # e.g. d['a', 'b':str]
                 sl = path.pop()
-                if isinstance(sl.start, PATH_SYNTAX_TYPES):
+                if typeof(sl.start) in PATH_SYNTAX_TYPES:
                     raise InvalidPathError(
                         "mixed path syntaxes: {!r}".format(x))
                 path.append(sl.start)
             elif not allow_slice and path[-1] in TYPES:
                 # e.g. ['a', 'b', str]
                 type = path.pop()
-                if len(path) == 1 and isinstance(path[0], PATH_SYNTAX_TYPES):
+                if len(path) == 1 and typeof(path[0]) in PATH_SYNTAX_TYPES:
                     # e.g. [path, str]
                     path = path[0]
         validate_path(path)
@@ -262,10 +259,10 @@ def repr_for_type(type):
     if type in TYPES:
         # e.g. str
         return type.__name__
-    if isinstance(type, builtins.list):
+    if typeof(type) is builtins.list:
         # e.g. [int]
         return '[{}]'.format(type[0].__name__)
-    if isinstance(type, builtins.dict):
+    if typeof(type) is builtins.dict:
         # e.g. {str: bool}
         return '{{str: {}}}'.format(next(iter(type.values())).__name__)
     raise ValueError("invalid type: {!r}".format(type))
@@ -275,21 +272,23 @@ def check_type(value, *, type, path=None):
     """
     Check that the type of ``value`` matches what ``type`` prescribes.
     """
-    # note: type checking is extremely strict: it uses identity checks
-    # note: this does not use isinstance() but uses iden type()
-    if type in TYPES and typeof(value) == type:
+    # note: type checking is extremely strict: it avoids isinstance()
+    # to avoid booleans passing as integers, and to avoid subclasses of
+    # built-in types which will likely cause json serialisation errors
+    # anyway.
+    if type in TYPES and typeof(value) is type:
         # e.g. str, int
         return
-    if typeof(type) == typeof(value) == builtins.list:
+    if typeof(type) is typeof(value) is builtins.list:
         # e.g. [str], [int]
         contained_type = type[0]
-        if all(typeof(v) == contained_type for v in value):
+        if all(typeof(v) is contained_type for v in value):
             return
         actual = "non-conforming list"
-    elif typeof(type) == typeof(value) is builtins.dict:
+    elif typeof(type) is typeof(value) is builtins.dict:
         # e.g. {str: bool}
         contained_type = type[next(iter(type))]  # first dict value
-        if all(typeof(v) == contained_type for v in value.values()):
+        if all(typeof(v) is contained_type for v in value.values()):
             return
         actual = "non-conforming dict"
     else:
@@ -310,7 +309,7 @@ def clean_value(value, *, type=None):
     """
     if type is not None:
         validate_type(type)
-    if isinstance(value, SANEST_CONTAINER_TYPES):
+    if typeof(value) in SANEST_CONTAINER_TYPES:
         value = value._data
     elif value is not None:
         validate_value(value)
@@ -320,20 +319,18 @@ def clean_value(value, *, type=None):
 
 
 def resolve_path(obj, path, *, partial=False, create=False):
-    if isinstance(path[0], int) and isinstance(obj, builtins.dict):
+    if type(path[0]) is int and type(obj) is builtins.dict:
         raise InvalidPathError(
             "dict path must start with str: {!r}".format(path))
-    elif isinstance(path[0], str) and isinstance(obj, builtins.list):
+    elif type(path[0]) is str and type(obj) is builtins.list:
         raise InvalidPathError(
             "list path must start with int: {!r}".format(path))
     for n, key_or_index in enumerate(path):
-        if isinstance(key_or_index, str) and not isinstance(
-                obj, builtins.dict):
+        if type(key_or_index) is str and type(obj) is not builtins.dict:
             raise InvalidStructureError(
                 "expected dict, got {.__name__} at subpath {!r} of {!r}"
                 .format(type(obj), path[:n], path))
-        if isinstance(key_or_index, int) and not isinstance(
-                obj, builtins.list):
+        if type(key_or_index) is int and type(obj) is not builtins.list:
             raise InvalidStructureError(
                 "expected list, got {.__name__} at subpath {!r} of {!r}"
                 .format(type(obj), path[:n], path))
@@ -375,7 +372,7 @@ class SaneCollection(Collection):
         value = resolve_path(self._data, path)
         if type is not None:
             check_type(value, type=type, path=path)
-        if isinstance(value, CONTAINER_TYPES):
+        if typeof(value) in CONTAINER_TYPES:
             value = wrap(value, check=False)
         return value
 
@@ -406,11 +403,11 @@ class SaneCollection(Collection):
     def __eq__(self, other):
         if self is other:
             return True
-        if isinstance(other, typeof(self)):
+        if type(other) is type(self):
             if self._data is other._data:
                 return True
             return self._data == other._data
-        if isinstance(other, CONTAINER_TYPES):
+        if type(other) in CONTAINER_TYPES:
             return self._data == other
         return NotImplemented
 
@@ -456,9 +453,9 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     @classmethod
     def wrap(cls, d, *, check=True):
-        if isinstance(d, cls):
+        if type(d) is cls:
             return d  # already wrapped
-        if not isinstance(d, builtins.dict):
+        if type(d) is not builtins.dict:
             raise TypeError("not a dict")
         if check:
             collections.deque(validated_items(d.items()), 0)  # fast looping
@@ -490,10 +487,10 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         if type is not None:
             validate_type(type)
         key, path = parse_path_like(path_like)
-        if not isinstance(path[-1], str):
+        if typeof(path[-1]) is not str:
             raise InvalidPathError("path must lead to dict key")
         try:
-            if isinstance(key, str):
+            if typeof(key) is str:
                 value = self._data[key]
             else:
                 value = resolve_path(self._data, path)
@@ -501,7 +498,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             return default
         if type is not None:
             check_type(value, type=type, path=path)
-        if isinstance(value, CONTAINER_TYPES):
+        if typeof(value) in CONTAINER_TYPES:
             value = wrap(value, check=False)
         return value
 
@@ -518,7 +515,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             return True
 
     def __contains__(self, path_like):
-        if isinstance(path_like, str):  # fast path
+        if typeof(path_like) is str:  # fast path
             # e.g. 'a' in d
             return path_like in self._data
         # e.g. ['a', 'b'] and ['a', 'b', int] (slice syntax not possible)
@@ -537,7 +534,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             else:
                 self[path:type] = default
             value = default
-            if isinstance(value, CONTAINER_TYPES):
+            if typeof(value) in CONTAINER_TYPES:
                 value = wrap(value, check=False)
         else:
             # check default value even if an existing value was found,
@@ -551,14 +548,14 @@ class dict(SaneCollection, collections.abc.MutableMapping):
     def pop(self, path_like, default=MISSING, *, type=None):
         if type is not None:
             validate_type(type)
-        if isinstance(path_like, str):  # fast path
+        if typeof(path_like) is str:  # fast path
             d = self._data
             key = path_like
             path = [key]
             value = d.get(key, MISSING)
         else:
             _, path = parse_path_like(path_like)
-            if not isinstance(path[-1], str):
+            if typeof(path[-1]) is not str:
                 raise InvalidPathError("path must lead to dict key")
             try:
                 d, key = resolve_path(self._data, path, partial=True)
@@ -575,7 +572,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         if type is not None:
             check_type(value, type=type, path=path)
         del d[key]
-        if isinstance(value, CONTAINER_TYPES):
+        if typeof(value) in CONTAINER_TYPES:
             value = wrap(value, check=False)
         return value
 
@@ -626,7 +623,7 @@ class DictValuesView(collections.abc.ValuesView):
 
     def __iter__(self):
         for value in self._sanest_dict._data.values():
-            if isinstance(value, CONTAINER_TYPES):
+            if type(value) in CONTAINER_TYPES:
                 value = wrap(value, check=False)
             yield value
 
@@ -653,7 +650,7 @@ class DictItemsView(collections.abc.ItemsView):
 
     def __iter__(self):
         for key, value in self._sanest_dict._data.items():
-            if isinstance(value, CONTAINER_TYPES):
+            if type(value) in CONTAINER_TYPES:
                 value = wrap(value, check=False)
             yield key, value
 
@@ -675,9 +672,9 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     @classmethod
     def wrap(cls, l, *, check=True):
-        if isinstance(l, cls):
+        if type(l) is cls:
             return l  # already wrapped
-        if not isinstance(l, builtins.list):
+        if type(l) is not builtins.list:
             raise TypeError("not a list")
         if check:
             collections.deque(validated_values(l), 0)  # fast looping
@@ -704,7 +701,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def __iter__(self):
         for value in self._data:
-            if isinstance(value, CONTAINER_TYPES):
+            if type(value) in CONTAINER_TYPES:
                 value = wrap(value, check=False)
             yield value
 
@@ -714,54 +711,56 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return iter(self)
 
     def __getitem__(self, path_like):
-        if isinstance(path_like, slice) and is_regular_list_slice(path_like):
+        if type(path_like) is slice and is_regular_list_slice(path_like):
             return sanest_list.wrap(self._data[path_like], check=False)
         return super().__getitem__(path_like)
 
     def __setitem__(self, path_like, value):
-        if isinstance(path_like, slice) and is_regular_list_slice(path_like):
-            if isinstance(value, SANEST_CONTAINER_TYPES):
-                self._data[path_like] = value._data
-            elif isinstance(value, (str, bytes, bytearray)):
+        if type(path_like) is slice and is_regular_list_slice(path_like):
+            # slice assignment takes any iterable, like .extend()
+            if isinstance(value, (str, bytes, bytearray)):
                 raise TypeError(
                     "expected iterable that is not string-like, "
                     "got {.__name__}".format(type(value)))
+            if type(value) in SANEST_CONTAINER_TYPES:
+                value = value._data
             else:
-                self._data[path_like] = validated_values(value)
+                value = validated_values(value)
+            self._data[path_like] = value
         else:
             return super().__setitem__(path_like, value)
 
     def __delitem__(self, path_like):
-        if isinstance(path_like, slice) and is_regular_list_slice(path_like):
+        if type(path_like) is slice and is_regular_list_slice(path_like):
             del self._data[path_like]
         else:
             return super().__delitem__(path_like)
 
     def __lt__(self, other):
-        if isinstance(other, typeof(self)):
+        if type(other) is type(self):
             return self._data < other._data
-        if isinstance(other, builtins.list):
+        if type(other) is builtins.list:
             return self._data < other
         return NotImplemented
 
     def __le__(self, other):
-        if isinstance(other, typeof(self)):
+        if type(other) is type(self):
             return self._data <= other._data
-        if isinstance(other, builtins.list):
+        if type(other) is builtins.list:
             return self._data <= other
         return NotImplemented
 
     def __gt__(self, other):
-        if isinstance(other, typeof(self)):
+        if type(other) is type(self):
             return self._data > other._data
-        if isinstance(other, builtins.list):
+        if type(other) is builtins.list:
             return self._data > other
         return NotImplemented
 
     def __ge__(self, other):
-        if isinstance(other, typeof(self)):
+        if type(other) is type(self):
             return self._data >= other._data
-        if isinstance(other, builtins.list):
+        if type(other) is builtins.list:
             return self._data >= other
         return NotImplemented
 
@@ -778,7 +777,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def __reversed__(self):
         for value in reversed(self._data):
-            if isinstance(value, CONTAINER_TYPES):
+            if type(value) in CONTAINER_TYPES:
                 value = wrap(value, check=False)
             yield value
 
@@ -789,7 +788,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
         self._data.append(clean_value(value, type=type))
 
     def extend(self, iterable, *, type=None):
-        if isinstance(iterable, sanest_list):
+        if typeof(iterable) is typeof(self):
             self._data.extend(iterable._data)
         elif isinstance(iterable, (str, bytes, bytearray)):
             raise TypeError(
@@ -800,7 +799,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
                 self.append(value, type=type)
 
     def __add__(self, other):
-        if not isinstance(other, (builtins.list, sanest_list)):
+        if type(other) not in (type(self), builtins.list):
             raise TypeError(
                 "expected list, got {.__name__}".format(type(other)))
         result = self.copy()
@@ -830,7 +829,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
         if type is not None:
             check_type(value, type=type, path=[index])
         del self._data[index]
-        if isinstance(value, CONTAINER_TYPES):
+        if typeof(value) in CONTAINER_TYPES:
             value = wrap(value, check=False)
         return value
 
