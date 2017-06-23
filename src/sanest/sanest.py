@@ -141,7 +141,7 @@ def validate_value(value):
 
 def validated_items(iterable):
     for key, value in iterable:
-        if not isinstance(key, str) or not key:
+        if not isinstance(key, str):
             raise InvalidPathError("invalid dict key: {!r}".format(key))
         validate_value(value)
         yield key, value
