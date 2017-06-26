@@ -903,18 +903,18 @@ def test_dict_validate_assigned_values():
 
 def test_dict_wrap_validation():
     with pytest.raises(sanest.InvalidPathError) as excinfo:
-        sanest.wrap({123: True})
+        sanest.dict.wrap({123: True})
     assert str(excinfo.value) == (
         "invalid dict key: 123")
 
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        sanest.wrap({"foo": MyClass()})
+        sanest.dict.wrap({"foo": MyClass()})
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
 
 
 def test_dict_wrap_skip_validation():
     invalid_dict = {True: False}
-    wrapped = sanest.wrap(invalid_dict, check=False)
+    wrapped = sanest.dict.wrap(invalid_dict, check=False)
     unwrapped = wrapped.unwrap()
     assert unwrapped is invalid_dict
 
@@ -1545,7 +1545,7 @@ def test_list_set_slice():
     l[:] = ['p', 'q', 'r']
     assert l == ['p', 'q', 'r']
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        sanest.wrap([MyClass()])
+        l[:3] = [MyClass()]
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
     assert l == ['p', 'q', 'r']
     l[:2] = sanest.list([{}, []])
@@ -1572,12 +1572,12 @@ def test_list_del_slice():
 
 
 def test_wrap():
-    l = sanest.wrap([1, 2])
+    l = _sanest.list.wrap([1, 2])
     assert isinstance(l, sanest.list)
-    d = sanest.wrap({'a': 1})
+    d = _sanest.wrap({'a': 1})
     assert isinstance(d, sanest.dict)
     with pytest.raises(TypeError) as excinfo:
-        sanest.wrap(MyClass())
+        _sanest.wrap(MyClass())
     assert str(excinfo.value) == "not a dict or list: <MyClass>"
 
 
