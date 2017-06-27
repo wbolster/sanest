@@ -767,26 +767,17 @@ and hence should generally not be caught.
 API
 ===
 
-``sanest.dict``
----------------
-
 .. autoclass:: sanest.dict
    :member-order: bysource
    :members:
    :undoc-members:
    :inherited-members:
 
-``sanest.list``
----------------
-
 .. autoclass:: sanest.list
    :member-order: bysource
    :members:
    :undoc-members:
    :inherited-members:
-
-Exceptions
-----------
 
 .. autoexception:: sanest.DataError
    :show-inheritance:
