@@ -523,8 +523,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return self.contains(path, type=type)
 
     def setdefault(self, path_like, default=None, *, type=None):
-        if default is None:
-            raise InvalidValueError("setdefault() requires a default value")
         value = self.get(path_like, MISSING, type=type)
         if value is MISSING:
             # default value validation is done by set()

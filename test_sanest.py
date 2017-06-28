@@ -539,6 +539,10 @@ def test_dict_setdefault():
     assert d.setdefault(['b', 'c'], 'foo', type=str) == 'foo'
     assert d['a'] == 1
     assert d['b', 'c'] == 'foo'
+    d.setdefault('d')
+    assert d['d'] is None
+    d.setdefault('e', None)
+    assert d['e'] is None
 
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d.setdefault(['b', 'c'], 'not an int', type=int)
@@ -546,24 +550,17 @@ def test_dict_setdefault():
         "expected int, got str at path ['b', 'c']: 'foo'")
 
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        d.setdefault('d', 'not an int', type=int)
+        d.setdefault('x', 'not an int', type=int)
     assert str(excinfo.value) == (
         "expected int, got str: 'not an int'")
+    assert 'x' not in d
 
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         d.setdefault('a', 'not an int', type=int)
     assert str(excinfo.value) == (
         "expected int, got str: 'not an int'")
 
-    with pytest.raises(sanest.InvalidValueError) as excinfo:
-        d.setdefault('x')
-    assert str(excinfo.value) == "setdefault() requires a default value"
-
-    with pytest.raises(sanest.InvalidValueError) as excinfo:
-        d.setdefault('x', None)
-    assert str(excinfo.value) == "setdefault() requires a default value"
-
-    d2 = d.setdefault('d', {'x': 'y'})
+    d2 = d.setdefault('xy', {'x': 'y'})
     assert isinstance(d2, sanest.dict)
     assert d2 == {'x': 'y'}
 
