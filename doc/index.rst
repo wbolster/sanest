@@ -710,68 +710,180 @@ being aware of ``sanest`` at all::
 Error handling
 ==============
 
-.. note:: this section needs to be (re)written
+``sanest`` has very strict error handling,
+and raises predictable exceptions with a clear error message
+whenever an operation cannot be completed successfully.
 
-When the data does not match what the code expects,
-``sanest`` raises a sensible exception::
+In general, an operation can fail because
+of three reasons:
 
-  >>> print(d['users', 0, 'name':int])
-  Traceback (most recent call last):
-  ...
-  InvalidValueError: expected int, got str at path ['users', 0, 'name']: 'alice'
+* Missing or incomplete data, e.g. a key does not exist.
+* Problematic data, e.g wrong structure or an unexpected data type.
+* Problematic code, e.g. a malformed path.
 
 **Exceptions for missing data.      **
-to do
+It is normal for applications to deal with missing values,
+for instance by falling back to a default value.
+For missing data, ``sanest`` uses the same exceptions
+as the regular Python dictionaries and lists:
 
-* ``LookupError`` (built-in)
+* Dictionary lookups may raise ``KeyError``.
+* List lookups may raise ``IndexError``.
 
-  to do
+Python also provides the not so widely used ``LookupError``,
+which is a parent class of both.
+The exception hierarchy is:
 
-  * ``KeyError`` (built-in)
+* ``LookupError`` (built-in exception)
 
-    to do
+  * ``KeyError`` (built-in exception)
+  * ``IndexError`` (built-in exception)
 
-  * ``IndexError`` (built-in)
+Below are some examples for the Github issue JSON example.
+Note that the error messages contain the (partial) path
+where the error occurred.
 
-    to do
+::
+
+  >>> issue['labels', 0, 'name']
+  'bug'
+
+  >>> issue['xyz', 'a', 'b', 'c']
+  Traceback (most recent call last):
+  ...
+  KeyError: ['xyz']
+
+::
+
+  >>> issue['labels', 0, 'xyz']
+  Traceback (most recent call last):
+  ...
+  KeyError: ['labels', 0, 'xyz']
+
+::
+
+  >>> issue['labels', 123, 'name']
+  Traceback (most recent call last):
+  ...
+  IndexError: ['labels', 123]
+
+To catch either ``KeyError`` or ``IndexError``,
+use ``LookupError``. Example::
+
+  try:
+      first_label_name = issue['labels', 0, 'name':str]
+  except LookupError:
+      ...
+
+This ``except`` clause handles the following cases:
+
+* The ``labels`` field is missing.
+* The ``labels`` field exists, but is empty.
+* The ``name`` field is missing from the first dictionary in the ``labels`` list.
+
 
 **Exceptions for problematic data.      **
-The following exceptions are raised
-for data that does not match
+``sanest`` can be used for basic input validation.
+When data does not match
 what the code expects,
-and can be caught in the application.
-Instead of catching these exceptions,
-applications can also catch the built-in ``ValueError``,
-in which case no ``sanest`` imports are needed.
+this typically means input data is malformed,
+and applications could for instance
+return an error response from an exception handler.
 
-* ``ValueError`` (built-in)
+Data errors indicate
+either an invalid structure,
+or an invalid value.
+``sanest`` uses two exceptions here:
+:py:exc:`sanest.InvalidStructureError`
+and :py:exc:`sanest.InvalidValueError`.
+Both share a common ancestor,
+:py:exc:`sanest.DataError`,
+which in turns inherits from
+the standard Python ``ValueError``.
+The exception hierarchy is:
+
+* ``ValueError`` (built-in exception)
 
   * :py:exc:`sanest.DataError`
 
-    Indicates problematic data.
-    Never raised directly,
-    but can be caught
-    if the application does not care
-    whether the source of the problem was
-    an invalid structure or aen invalid value.
-
     * :py:exc:`sanest.InvalidStructureError`
-
-      to do
-
     * :py:exc:`sanest.InvalidValueError`
 
-      to do
+Below are some examples for the Github issue JSON sample.
+
+::
+
+  >>> issue['milestone', 'creator', 'login']
+  'octocat'
+
+  >>> issue['milestone', 'creator', 'login':int]
+  Traceback (most recent call last):
+  ...
+  InvalidValueError: expected int, got str at path ['milestone', 'creator', 'login']: 'octocat'
+
+::
+
+  >>> issue['title':str] = ["This", "is", "a", {"malformed": "title"}]
+  Traceback (most recent call last):
+    ...
+  InvalidValueError: expected str, got list: ['This', 'is', 'a', {'malformed': 'title'}]
+
+::
+
+  >>> issue['labels']
+  sanest.list([{'name': 'bug', 'id': 208045946}])
+
+  >>> issue['labels', 'xyz']
+  Traceback (most recent call last):
+  ...
+  InvalidStructureError: expected dict, got list at subpath ['labels'] of ['labels', 'xyz']
+
+The generic :py:exc:`sanest.DataError`
+is never raised directly,
+but can be caught
+if the application does not care
+whether the source of the problem was
+an invalid structure or an invalid value::
+
+  try:
+      first_label_name = issue['labels', 0, 'name':str]
+  except sanest.DataError:  # or just ValueError
+      ...
+
+Since :py:exc:`sanest.DataError` inherits from the
+built-in ``ValueError``,
+applications can also catch ``ValueError``
+instead of exceptions specific to ``sanest``,
+which, depending on how the application code is organised,
+means that some modules may not require any ``sanest`` imports at all.
 
 **Exceptions for problematic code.      **
 The following exceptions are typically
 the result of incorrect code,
 and hence should generally not be caught.
+The hierarchy is:
 
 * ``TypeError`` (built-in)
 
   * :py:exc:`sanest.InvalidPathError`
   * :py:exc:`sanest.InvalidTypeError`
+
+Examples:
+
+::
+
+  >>> path = [True, True, True]
+  >>> issue[path]
+  Traceback (most recent call last):
+  ...
+  InvalidPathError: path must contain only str or int: [True, True, True]
+
+::
+
+  >>> issue.get('title', 'This is the default.', type="oops")
+  Traceback (most recent call last):
+  ...
+  InvalidTypeError: expected dict, list, bool, float, int, str, [...] (for lists) or {str: ...} (for dicts), got 'oops'
 
 .. centered:: ❦
 
