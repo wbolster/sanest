@@ -532,7 +532,7 @@ the *type* argument is just the built-in type:
 ``dict``, ``list``.
 This works well for simple types,
 but for containers,
-only specifying that the application ‘expects a list’
+only stating that ‘the application expects a list’
 is often not good enough.
 
 Typically lists are homogeneous,
@@ -574,43 +574,49 @@ which take a *type* argument`::
   l.append(3)
   l.check_types(type=int)
 
-This stand-alone check works for top-level containers,
-and can be used without combining it with another container operation.
-Sometimes, this may be more readable than
-a combined lookup and type check.
-For example::
+Such explicit type checks may also help increasing code clarity,
+since it decouples type checking from container operations.
+For example, this combined lookup and type check::
 
-  >>> labels = issue['labels']
+  >>> labels = issue['labels':[dict]]
+
+…can also be written as:
+
+  >>> labels = issue['labels':list]
   >>> labels.check_types(type=dict)
-
-…may be more readable than::
-
-  >>> issue['labels':[dict]]
 
 **Type-safe iteration.      **
-Iterating over a list is a very common operation,
-and ``sanest`` makes it easy to do this in a type-safe way.
-One option is to check the types explicitly::
+It is very common to iterate over a list of values
+that all have the same type, e.g. a list of strings.
+One way to do this would be::
 
-  >>> labels = issue['labels']
-  >>> labels.check_types(type=dict)
-  >>> for label in labels:
+  >>> l = sanest.list(...)
+  >>> l.check_types(type=str)
+  >>> for value in l:
   ...     pass
 
-Another option is to use the :py:meth:`sanest.list.iter()` method::
+The :py:meth:`sanest.list.iter()` method offers
+a more concise way to do the same::
 
-  >>> labels = issue['labels']
-  >>> for label in labels.iter(type=dict):
-  ...     pass
-
-A less readable but even shorter version would be::
-
-  >>> for label in issue['labels':[dict]]:
+  >>> l = sanest.list(...)
+  >>> for value in l.iter(type=str):
   ...     pass
 
 For dictionaries with homogeneously typed values,
-similar features are available by using
-:py:meth:`sanest.dict.values` or using :py:meth:`sanest.dict.items`::
+:py:meth:`sanest.dict.values` and using :py:meth:`sanest.dict.items`
+offer the same functionality.
+For example,
+
+::
+
+  >>> d = sanest.dict(...)
+  >>> d.check_types(type=int)
+  >>> for value in d.values():
+  ...     pass
+  >>> for key, value in d.items():
+  ...     pass
+
+…can be shortened to the equivalent::
 
   >>> d = sanest.dict(...)
   >>> for value in d.values(type=int):
@@ -624,15 +630,20 @@ Wrapping
 ========
 
 Both :py:class:`sanest.dict` and :py:class:`sanest.list` are
-thin wrappers around a regular ``dict`` or ``list``,
-providing new features,
-but not changing the data structure in any way,
-which in practice means that the overhead of
-using ``sanest`` is relatively small.
-Internally, nested structures are just as they would be in regular Python.
-``sanest`` adds a thin layer on top
-to provide a nice API to applications using it,
-and ‘wraps’ any container values it returns on the way out.
+thin wrappers around a regular ``dict`` or ``list``.
+All container operations (getting, setting, and so on)
+accept both regular and ``sanest`` containers
+when those are passed in by the application,
+and transparently ‘wrap’ any lists or dictionaries
+returned to the application.
+
+or nested structures,
+only the outermost ``dict`` or ``list`` is wrapped:
+the nested structure is not changed in any way.
+In practice this means that the overhead of
+using ``sanest`` is very small,
+since internally all nested structures are
+just as they would be in regular Python.
 
 **Wrapping existing containers.      **
 The :py:class:`sanest.dict` and :py:class:`sanest.list` constructors
@@ -649,15 +660,15 @@ that can be used as alternate constructors::
   d = sanest.dict.wrap(existing_dict)
   l = sanest.list.wrap(existing_list)
 
-By default, this validates
-that the input matches the JSON data model.
+By default, ``wrap()`` recursively validates
+that the data structure matches the JSON data model.
 In some cases,
-for instance for just deserialised JSON data,
 these checks are not necessary,
-and can be skipped for performance reasons::
+and can be skipped for performance reasons.
+A typical example is freshly deserialised JSON data::
 
-  d = sanest.dict.wrap(existing_dict, check=False)
-  l = sanest.list.wrap(existing_list, check=False)
+  d = sanest.dict.wrap(json.loads(...), check=False)
+  l = sanest.list.wrap(json.loads(...), check=False)
 
 **Unwrapping.      **
 The reverse process is *unwrapping*:
@@ -692,7 +703,7 @@ being aware of ``sanest`` at all::
       """
       wrapped = sanest.dict.wrap(some_dict)
       wrapped["foo", "bar":int] = num * 2
-      wrapped.setdefault(["x", "y", type=bool] = flag
+      wrapped.setdefault(["x", "y"], type=bool) = flag
 
 .. centered:: ❦
 
