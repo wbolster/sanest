@@ -21,6 +21,7 @@ ATOMIC_TYPES = (bool, float, int, str)
 CONTAINER_TYPES = (builtins.dict, builtins.list)
 TYPES = CONTAINER_TYPES + ATOMIC_TYPES
 PATH_SYNTAX_TYPES = (builtins.tuple, builtins.list)
+STRING_LIKE_TYPES = (str, bytes, bytearray)
 
 typeof = builtins.type
 
@@ -714,7 +715,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def __setitem__(self, path_like, value):
         if type(path_like) is slice and is_regular_list_slice(path_like):
             # slice assignment takes any iterable, like .extend()
-            if isinstance(value, (str, bytes, bytearray)):
+            if isinstance(value, STRING_LIKE_TYPES):
                 raise TypeError(
                     "expected iterable that is not string-like, "
                     "got {.__name__}".format(type(value)))
@@ -786,7 +787,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
     def extend(self, iterable, *, type=None):
         if typeof(iterable) is typeof(self):
             self._data.extend(iterable._data)
-        elif isinstance(iterable, (str, bytes, bytearray)):
+        elif isinstance(iterable, STRING_LIKE_TYPES):
             raise TypeError(
                 "expected iterable that is not string-like, got {.__name__}"
                 .format(typeof(iterable)))
