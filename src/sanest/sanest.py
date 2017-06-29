@@ -45,22 +45,20 @@ class reprstr(str):
         return self
 
 
-class InvalidPathError(TypeError):
+class InvalidPathError(Exception):
     """
     Exception raised when a path is invalid.
 
-    This is a subclass of the built-in ``TypeError``, since this
-    indicates problematic code that uses an incorrect API.
+    This indicates problematic code that uses an incorrect API.
     """
     pass
 
 
-class InvalidTypeError(TypeError):
+class InvalidTypeError(Exception):
     """
     Exception raised when a specified type is invalid.
 
-    This is a subclass of the built-in ``TypeError``, since this
-    indicates problematic code that uses an incorrect API.
+    This indicates problematic code that uses an incorrect API.
     """
     pass
 

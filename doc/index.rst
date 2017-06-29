@@ -748,10 +748,12 @@ Python also provides the not so widely used ``LookupError``,
 which is a parent class of both.
 The exception hierarchy is:
 
-* ``LookupError`` (built-in exception)
+* ``Exception`` (built-in exception)
 
-  * ``KeyError`` (built-in exception)
-  * ``IndexError`` (built-in exception)
+  * ``LookupError`` (built-in exception)
+
+    * ``KeyError`` (built-in exception)
+    * ``IndexError`` (built-in exception)
 
 Below are some examples for the Github issue JSON example.
 Note that the error messages contain the (partial) path
@@ -816,12 +818,14 @@ which in turns inherits from
 the standard Python ``ValueError``.
 The exception hierarchy is:
 
-* ``ValueError`` (built-in exception)
+* ``Exception`` (built-in exception)
 
-  * :py:exc:`sanest.DataError`
+  * ``ValueError`` (built-in exception)
 
-    * :py:exc:`sanest.InvalidStructureError`
-    * :py:exc:`sanest.InvalidValueError`
+    * :py:exc:`sanest.DataError`
+
+      * :py:exc:`sanest.InvalidStructureError`
+      * :py:exc:`sanest.InvalidValueError`
 
 Below are some examples for the Github issue JSON sample.
 
@@ -877,7 +881,7 @@ the result of incorrect code,
 and hence should generally not be caught.
 The hierarchy is:
 
-* ``TypeError`` (built-in)
+* ``Exception`` (built-in exception)
 
   * :py:exc:`sanest.InvalidPathError`
   * :py:exc:`sanest.InvalidTypeError`
