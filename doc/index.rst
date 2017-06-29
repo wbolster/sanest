@@ -148,8 +148,13 @@ using only lowercase letters::
   bug
 
 **Hidden asssumptions.      **
-This code does work for valid inputs,
-but makes quite a few implicit assumptions about that input:
+The above code is very straight-forward
+and will work fine for valid input documents.
+It can fail in many subtle ways though
+on input data does not have the exact same structure
+as the example document,
+since this code makes
+quite a few implicit assumptions about its input:
 
 * The result of ``json.load()`` is a dictionary.
 * The ``labels`` field exists.
@@ -373,11 +378,9 @@ regular ``dict`` and ``list`` instances,
 as well as
 :py:class:`sanest.dict` and :py:class:`sanest.list` instances::
 
-  >>> normal_dict = {'a': 1, 'b': 2}
-  >>> issue['x'] = normal_dict
-  >>> other = sanest.dict()
-  >>> other['a'] = 1
-  >>> issue['y'] = other
+  >>> d = sanest.dict()
+  >>> d['x'] = {'a': 1, 'b': 2}
+  >>> d['y'] = sanest.dict({'a': 1, 'b': 2})
 
 .. centered:: ❦
 
@@ -566,7 +569,7 @@ are integers::
 **Checking container values.      **
 To explicitly check that all values in a container have the same type,
 use :py:meth:`sanest.list.check_types` or :py:meth:`sanest.dict.check_types`,
-which take a *type* argument`::
+which take a *type* argument::
 
   l = sanest.list()
   l.append(1)
@@ -602,8 +605,19 @@ a more concise way to do the same::
   >>> for value in l.iter(type=str):
   ...     pass
 
+If the list was obtained from a lookup in another container,
+the type check can be combined with the lookup::
+
+  >>> for value in parent['values':list].iter(type=str):
+  ...     pass
+
+…or even shorter:
+
+  >>> for value in parent['values':[str]]:
+  ...     pass
+
 For dictionaries with homogeneously typed values,
-:py:meth:`sanest.dict.values` and using :py:meth:`sanest.dict.items`
+:py:meth:`sanest.dict.values` and :py:meth:`sanest.dict.items`
 offer the same functionality.
 For example,
 
@@ -632,12 +646,12 @@ Wrapping
 Both :py:class:`sanest.dict` and :py:class:`sanest.list` are
 thin wrappers around a regular ``dict`` or ``list``.
 All container operations (getting, setting, and so on)
-accept both regular and ``sanest`` containers
+accept both regular containers and ``sanest`` containers
 when those are passed in by the application,
 and transparently ‘wrap’ any lists or dictionaries
 returned to the application.
 
-or nested structures,
+For nested structures,
 only the outermost ``dict`` or ``list`` is wrapped:
 the nested structure is not changed in any way.
 In practice this means that the overhead of
@@ -873,14 +887,14 @@ Examples:
 ::
 
   >>> path = [True, True, True]
-  >>> issue[path]
+  >>> d[path]
   Traceback (most recent call last):
   ...
   InvalidPathError: path must contain only str or int: [True, True, True]
 
 ::
 
-  >>> issue.get('title', 'This is the default.', type="oops")
+  >>> d.get('title', 'This is the default.', type="oops")
   Traceback (most recent call last):
   ...
   InvalidTypeError: expected dict, list, bool, float, int, str, [...] (for lists) or {str: ...} (for dicts), got 'oops'
