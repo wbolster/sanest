@@ -1630,22 +1630,32 @@ def test_missing_arg_repr():
     assert str(_sanest.MISSING) == '<missing>'
 
 
+def dedent(s):
+    s = s.lstrip('\n')
+    s = textwrap.dedent(s).rstrip()
+    return s
+
+
+PRETTY_PRINT_SAMPLES = [
+    (
+        sanest.dict(a='a' * 30, b='b' * 30),
+        dedent("""\
+            sanest.dict({'a': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                         'b': 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'})
+        """)),
+    (
+        sanest.list(['a' * 30, 'b' * 30]),
+        dedent("""\
+            sanest.list(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                         'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'])
+        """)),
+]
+
+
 @pytest.mark.skipif(
     sys.version_info < (3, 5),
     reason="requires python 3.5+ pprint module")
-def test_pretty_printing_pprint():
-    d = sanest.dict(a='a' * 30, b='b' * 30)
-    expected = textwrap.dedent("""\
-        sanest.dict({'a': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-                     'b': 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'})
-    """).rstrip()
-    actual = pprint.pformat(d)
-    assert actual == expected
-
-    l = sanest.list(['a' * 30, 'b' * 30])
-    expected = textwrap.dedent("""\
-        sanest.list(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-                     'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'])
-    """).rstrip()
-    actual = pprint.pformat(l)
+@pytest.mark.parametrize(('input', 'expected'), PRETTY_PRINT_SAMPLES)
+def test_pretty_printing_pprint(input, expected):
+    actual = pprint.pformat(input)
     assert actual == expected
