@@ -3,6 +3,7 @@ import builtins
 import collections
 import collections.abc
 import copy
+import pprint
 import reprlib
 import sys
 
@@ -433,6 +434,31 @@ class SaneCollection(Collection):
     def copy(self, *, deep=False):
         fn = copy.deepcopy if deep else copy.copy
         return fn(self)
+
+
+def pprint_sanest_collection(
+        self, object, stream, indent, allowance, context, level):
+    """
+    Pretty-printing helper for use by the built-in pprint module.
+    """
+    opening = '{}.{.__name__}('.format(__package__, type(object))
+    stream.write(opening)
+    if type(object._data) is builtins.dict:
+        f = self._pprint_dict
+    else:
+        f = self._pprint_list
+    f(object._data, stream, indent + len(opening), allowance, context, level)
+    stream.write(')')
+
+
+# This is a hack that changes the internals of the pprint module,
+# which has no public API to register custom formatter routines.
+try:
+    dispatch_table = pprint.PrettyPrinter._dispatch
+except Exception:  # pragma: no cover
+    pass  # Python 3.4 and older do not have a dispatch table.
+else:
+    dispatch_table[SaneCollection.__repr__] = pprint_sanest_collection
 
 
 class dict(SaneCollection, collections.abc.MutableMapping):

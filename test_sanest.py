@@ -5,7 +5,9 @@ tests for sanest
 import builtins
 import copy
 import pickle
+import pprint
 import sys
+import textwrap
 
 import pytest
 
@@ -1626,3 +1628,24 @@ def test_wrong_path_for_container_type():
 def test_missing_arg_repr():
     assert repr(_sanest.MISSING) == '<missing>'
     assert str(_sanest.MISSING) == '<missing>'
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 5),
+    reason="requires python 3.5+ pprint module")
+def test_pretty_printing_pprint():
+    d = sanest.dict(a='a' * 30, b='b' * 30)
+    expected = textwrap.dedent("""\
+        sanest.dict({'a': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                     'b': 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'})
+    """).rstrip()
+    actual = pprint.pformat(d)
+    assert actual == expected
+
+    l = sanest.list(['a' * 30, 'b' * 30])
+    expected = textwrap.dedent("""\
+        sanest.list(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                     'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'])
+    """).rstrip()
+    actual = pprint.pformat(l)
+    assert actual == expected
