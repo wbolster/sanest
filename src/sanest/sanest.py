@@ -420,6 +420,15 @@ class SaneCollection(Collection):
         return '{}.{.__name__}({})'.format(
             __package__, type(self), reprlib.repr(self._data))
 
+    def _repr_pretty_(self, p, cycle):
+        """Helper for pretty-printing in IPython."""
+        opening = '{}.{.__name__}('.format(__package__, type(self))
+        if cycle:  # pragma: no cover
+            p.text(opening + '...)')
+        else:
+            with p.group(len(opening), opening, ')'):
+                p.pretty(self._data)
+
     def __copy__(self):
         cls = type(self)
         obj = cls.__new__(cls)

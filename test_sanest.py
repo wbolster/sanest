@@ -9,6 +9,7 @@ import pprint
 import sys
 import textwrap
 
+import IPython.lib.pretty
 import pytest
 
 import sanest
@@ -1658,4 +1659,10 @@ PRETTY_PRINT_SAMPLES = [
 @pytest.mark.parametrize(('input', 'expected'), PRETTY_PRINT_SAMPLES)
 def test_pretty_printing_pprint(input, expected):
     actual = pprint.pformat(input)
+    assert actual == expected
+
+
+@pytest.mark.parametrize(('input', 'expected'), PRETTY_PRINT_SAMPLES)
+def test_pretty_printing_ipython(input, expected):
+    actual = IPython.lib.pretty.pretty(input)
     assert actual == expected
