@@ -1077,6 +1077,13 @@ def test_list_repr():
     assert eval(repr(l)) == l
 
 
+def test_list_pickle():
+    l1 = sanest.list([1, 2, 3])
+    s = pickle.dumps(l1)
+    l2 = pickle.loads(s)
+    assert l1 == l2
+
+
 def test_list_wrap():
     original = ['a', 'b', ['c1', 'c2'], None]
     l = sanest.list.wrap(original)
