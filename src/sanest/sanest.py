@@ -416,6 +416,7 @@ class SaneCollection(Collection):
             __package__, type(self), self._data)
 
     def _truncated_repr(self):
+        """Helper for the repr() of dictionary views."""
         return '{}.{.__name__}({})'.format(
             __package__, type(self), reprlib.repr(self._data))
 
