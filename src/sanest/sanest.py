@@ -98,6 +98,7 @@ class InvalidValueError(DataError):
 
 
 def validate_path(path):
+    """Validate that ``path`` is a valid path."""
     if not path:
         raise InvalidPathError("empty path: {!r}".format(path))
     if any(type(k) not in (int, str) for k in path):
@@ -125,6 +126,9 @@ def validate_type(type):
 
 
 def validate_value(value):
+    """
+    Validate that ``value`` is a valid value.
+    """
     if value is None:
         return
     if type(value) not in TYPES:
@@ -138,6 +142,9 @@ def validate_value(value):
 
 
 def validated_items(iterable):
+    """
+    Validate that the pairs in ``iterable`` are valid dict items.
+    """
     for key, value in iterable:
         if type(key) is not str:
             raise InvalidPathError("invalid dict key: {!r}".format(key))
@@ -146,6 +153,9 @@ def validated_items(iterable):
 
 
 def validated_values(iterable):
+    """
+    Validate the values in ``iterable``.
+    """
     for value in iterable:
         validate_value(value)
         yield value
@@ -173,6 +183,9 @@ def pairs(*args, **kwargs):
 
 
 def is_regular_list_slice(sl):
+    """
+    Tells whether ``sl`` looks like a regular ``list`` slice.
+    """
     return (
         (sl.start is None or type(sl.start) is int)
         and (sl.stop is None or type(sl.stop) is int)
@@ -191,6 +204,9 @@ def wrap(value, *, check=True):
 
 
 def parse_path_like(path):
+    """
+    Parse a "path-like": a key, an index, or a path of these.
+    """
     if type(path) in (str, int):
         return path, [path]
     if type(path) in PATH_SYNTAX_TYPES:
@@ -200,6 +216,10 @@ def parse_path_like(path):
 
 
 def parse_path_like_with_type(x, *, allow_slice=True):
+    """
+    Parse a "path-like": a key, an index, or a path of these,
+    with an optional type.
+    """
     sl = None
     if typeof(x) in (int, str):
         # e.g. d['a'] and d[2]
@@ -319,6 +339,16 @@ def clean_value(value, *, type=None):
 
 
 def resolve_path(obj, path, *, partial=False, create=False):
+    """
+    Resolve a ``path`` into ``obj``.
+
+    When ``partial`` is ``True``, the last path component will not be
+    resolved but returned instead, so that the caller can decide
+    which operation to perform.
+
+    Whecn ``create`` is ``True``, paths into non-existing dictionaries
+    (but not into non-existing lists) are automatically created.
+    """
     if type(path[0]) is int and type(obj) is builtins.dict:
         raise InvalidPathError(
             "dict path must start with str: {!r}".format(path))
@@ -368,6 +398,9 @@ class SaneCollection(Collection):
         return len(self._data)
 
     def __getitem__(self, path_like):
+        """
+        Look up the item that ``path_like`` (with optional type) points to.
+        """
         key_or_index, path, type = parse_path_like_with_type(path_like)
         value = resolve_path(self._data, path)
         if type is not None:
@@ -377,6 +410,9 @@ class SaneCollection(Collection):
         return value
 
     def __setitem__(self, path_like, value):
+        """
+        Set the item that ``path_like`` (with optional type) points to.
+        """
         key_or_index, path, type = parse_path_like_with_type(path_like)
         value = clean_value(value, type=type)
         obj, key_or_index = resolve_path(
@@ -387,6 +423,9 @@ class SaneCollection(Collection):
             raise IndexError(path) from None
 
     def __delitem__(self, path_like):
+        """
+        Delete the item that ``path_like`` (with optional type) points to.
+        """
         key_or_index, path, type = parse_path_like_with_type(path_like)
         obj, key_or_index = resolve_path(self._data, path, partial=True)
         try:
@@ -398,6 +437,9 @@ class SaneCollection(Collection):
             raise typeof(exc)(path) from None
 
     def clear(self):
+        """
+        Clear this container; like ``dict.clear()`` and ``list.clear()``.
+        """
         self._data.clear()
 
     def __eq__(self, other):
@@ -442,6 +484,15 @@ class SaneCollection(Collection):
         return obj
 
     def copy(self, *, deep=False):
+        """
+        Make a copy of this container.
+
+        By default this return a shallow copy.
+        When `deep` is ``True``, this returns a deep copy.
+
+        :param deep bool: whether to make a deep copy
+        :param type: expected type
+        """
         fn = copy.deepcopy if deep else copy.copy
         return fn(self)
 
@@ -484,10 +535,22 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     @classmethod
     def fromkeys(cls, iterable, value=None):
+        """
+        Like ``dict.fromkeys()``.
+
+        :param iterable: iterable of keys
+        :param value: initial value
+        """
         return cls((key, value) for key in iterable)
 
     @classmethod
     def wrap(cls, d, *, check=True):
+        """
+        Wrap an existing dictionary without making a copy.
+
+        :param d: existing dictionary
+        :param check bool: whether to perform basic validation
+        """
         if type(d) is cls:
             return d  # already wrapped
         if type(d) is not builtins.dict:
@@ -503,13 +566,15 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         Return a regular ``dict`` without making a copy.
 
         This ``sanest.dict`` can be safely used afterwards as long
-        as the return value is treated as read-only.
+        as the returned dictionary is not modified in an incompatible way.
         """
         return self._data
 
     def check_types(self, *, type):
         """
         Check the type of all values in this dict.
+
+        :param type: expected type
         """
         validate_type(type)
         for key, value in self._data.items():
@@ -519,6 +584,13 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return iter(self._data)
 
     def get(self, path_like, default=None, *, type=None):
+        """
+        Like ``dict.get()``.
+
+        :param path_like: key or path to look up
+        :param default: default value to return for failed lookups
+        :param type: expected type
+        """
         if type is not None:
             validate_type(type)
         key, path = parse_path_like(path_like)
@@ -538,6 +610,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return value
 
     def contains(self, path_like, *, type=None):
+        # TODO: remove this method
         key, path = parse_path_like(path_like)
         try:
             if type is None:
@@ -558,6 +631,13 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return self.contains(path, type=type)
 
     def setdefault(self, path_like, default=None, *, type=None):
+        """
+        Like ``dict.setdefault()``.
+
+        :param path_like: key or path
+        :param default: default value to return for failed lookups
+        :param type: expected type
+        """
         value = self.get(path_like, MISSING, type=type)
         if value is MISSING:
             # default value validation is done by set()
@@ -576,9 +656,19 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return value
 
     def update(self, *args, **kwargs):
+        """
+        Like ``dict.update()``.
+        """
         self._data.update(validated_items(pairs(*args, **kwargs)))
 
     def pop(self, path_like, default=MISSING, *, type=None):
+        """
+        Like ``dict.pop()``.
+
+        :param path_like: key or path
+        :param default: default value to return for failed lookups
+        :param type: expected type
+        """
         if type is not None:
             validate_type(type)
         if typeof(path_like) is str:  # fast path
@@ -610,6 +700,11 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return value
 
     def popitem(self, *, type=None):
+        """
+        Like ``dict.popitem()``.
+
+        :param type: expected type
+        """
         try:
             key = next(iter(self._data))
         except StopIteration:
@@ -618,14 +713,27 @@ class dict(SaneCollection, collections.abc.MutableMapping):
         return key, value
 
     def keys(self):
+        """
+        Like ``dict.keys()``; returns a dictionary view.
+        """
         return DictKeysView(self)
 
     def values(self, *, type=None):
+        """
+        Like ``dict.values()``; returns a dictionary view.
+
+        :param type: expected type
+        """
         if type is not None:
             self.check_types(type=type)
         return DictValuesView(self)
 
     def items(self, *, type=None):
+        """
+        Like ``dict.items()``; returns a dictionary view.
+
+        :param type: expected type
+        """
         if type is not None:
             self.check_types(type=type)
         return DictItemsView(self)
@@ -705,6 +813,12 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     @classmethod
     def wrap(cls, l, *, check=True):
+        """
+        Wrap an existing list without making a copy.
+
+        :param l: existing list
+        :param check bool: whether to perform basic validation
+        """
         if type(l) is cls:
             return l  # already wrapped
         if type(l) is not builtins.list:
@@ -720,13 +834,15 @@ class list(SaneCollection, collections.abc.MutableSequence):
         Return a regular ``list`` without making a copy.
 
         This ``sanest.list`` can be safely used afterwards as long
-        as the return value is treated as read-only.
+        as the returned list is not modified in an incompatible way.
         """
         return self._data
 
     def check_types(self, *, type):
         """
         Check the type of all values in this list.
+
+        :param type: expected type
         """
         validate_type(type)
         for index, value in enumerate(self._data):
@@ -739,6 +855,13 @@ class list(SaneCollection, collections.abc.MutableSequence):
             yield value
 
     def iter(self, *, type=None):
+        """
+        Iterate over this list after checking the type of its values.
+
+        Without a ``type`` argument this is the same as ``iter(list)``.
+
+        :param type: expected type
+        """
         if type is not None:
             self.check_types(type=type)
         return iter(self)
@@ -801,11 +924,25 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return clean_value(value) in self._data
 
     def index(self, value, start=0, stop=None, *, type=None):
+        """
+        Like ``list.index()``.
+
+        :param value: value to look up
+        :param start: start index
+        :param stop: stop index
+        :param type: expected type
+        """
         if stop is None:
             stop = sys.maxsize
         return self._data.index(clean_value(value, type=type), start, stop)
 
     def count(self, value, *, type=None):
+        """
+        Like ``list.count()``.
+
+        :param value: value to count
+        :param type: expected type
+        """
         return self._data.count(clean_value(value, type=type))
 
     def __reversed__(self):
@@ -815,12 +952,31 @@ class list(SaneCollection, collections.abc.MutableSequence):
             yield value
 
     def insert(self, index, value, *, type=None):
+        """
+        Like ``list.insert()``.
+
+        :param index: position to insert at
+        :param value: value to insert
+        :param type: expected type
+        """
         self._data.insert(index, clean_value(value, type=type))
 
     def append(self, value, *, type=None):
+        """
+        Like ``list.append()``.
+
+        :param value: value to append
+        :param type: expected type
+        """
         self._data.append(clean_value(value, type=type))
 
     def extend(self, iterable, *, type=None):
+        """
+        Like ``list.extend()``.
+
+        :param iterable: iterable of values to append
+        :param type: expected type
+        """
         if typeof(iterable) is typeof(self):
             self._data.extend(iterable._data)
         elif isinstance(iterable, STRING_LIKE_TYPES):
@@ -852,6 +1008,12 @@ class list(SaneCollection, collections.abc.MutableSequence):
     __rmul__ = __mul__
 
     def pop(self, index=-1, *, type=None):
+        """
+        Like ``list.pop()``.
+
+        :param index: position to look up
+        :param type: expected type
+        """
         # todo: nested path pop() like dict.pop?
         if not self._data:
             raise IndexError("pop from empty list")
@@ -867,6 +1029,12 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return value
 
     def remove(self, value, *, type=None):
+        """
+        Like ``list.remove()``.
+
+        :param value: value to remove
+        :param type: expected type
+        """
         value = clean_value(value, type=type)
         try:
             self._data.remove(value)
@@ -874,9 +1042,18 @@ class list(SaneCollection, collections.abc.MutableSequence):
             raise ValueError("{!r} is not in list".format(value)) from None
 
     def reverse(self):
+        """
+        Like ``list.reverse()``.
+        """
         self._data.reverse()
 
     def sort(self, key=None, reverse=False):
+        """
+        Like ``list.sort()``.
+
+        :param key: callable to make a sort key
+        :param reverse: whether to sort in reverse order
+        """
         self._data.sort(key=key, reverse=reverse)
 
 
