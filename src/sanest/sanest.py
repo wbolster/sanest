@@ -386,8 +386,8 @@ class SaneCollection(Collection):
         except IndexError as exc:  # list assignment can fail
             raise IndexError(path) from None
 
-    def __delitem__(self, x):
-        key_or_index, path, type = parse_path_like_with_type(x)
+    def __delitem__(self, path_like):
+        key_or_index, path, type = parse_path_like_with_type(path_like)
         obj, key_or_index = resolve_path(self._data, path, partial=True)
         try:
             if type is not None:
