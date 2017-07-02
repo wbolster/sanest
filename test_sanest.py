@@ -426,8 +426,7 @@ def test_dict_contains_with_type():
 
 def test_dict_contains_with_path():
     d = sanest.dict()
-    d['a'] = sanest.dict()
-    d['a']['b'] = 123
+    d['a', 'b'] = 123
     assert ('a', 'b') in d  # tuple
     assert ['a', 'b'] in d  # list
     assert ['c', 'd'] not in d
@@ -439,8 +438,7 @@ def test_dict_contains_with_path():
 
 def test_dict_contains_with_path_and_type():
     d = sanest.dict()
-    d['a'] = sanest.dict()
-    d['a']['b'] = 123
+    d['a', 'b'] = 123
     assert d.contains(['a', 'b'], type=int)
     assert d.contains(('a', 'b'), type=int)
     assert ['a', 'b', int] in d
