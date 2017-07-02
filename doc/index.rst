@@ -435,7 +435,7 @@ paths must always be passed as a list or tuple::
   >>> d.get(['a', 'b', 'c'], "default value")
 
 **Containment checks.      **
-The ``in`` operator that checks whether a key or index exists,
+The ``in`` operator that checks whether a dictionary key exists,
 also works with paths::
 
   >>> ['milestone', 'creator', 'login'] in issue
