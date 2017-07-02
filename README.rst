@@ -7,7 +7,7 @@ sanest
 .. image:: https://travis-ci.org/wbolster/sanest.svg?branch=master
     :target: https://travis-ci.org/wbolster/sanest
 
-*sanest* is a python library that makes it easy to work with nested
+*sanest* is a python (3+) library that makes it easy to work with nested
 dictionaries and lists, such as those commonly used in json formats,
 without losing your sanity.
 
