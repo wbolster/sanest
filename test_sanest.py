@@ -1501,7 +1501,7 @@ def test_list_pop():
     assert l.pop(0, type=str) == 'a'
     with pytest.raises(IndexError) as excinfo:
         l.pop(123)
-    assert str(excinfo.value) == "123"
+    assert str(excinfo.value) == "[123]"
     assert excinfo.value.__cause__ is None
     assert excinfo.value.__suppress_context__
     value = l.pop(type=list)
@@ -1510,6 +1510,27 @@ def test_list_pop():
     with pytest.raises(IndexError) as excinfo:
         l.pop(0, type=int)
     assert str(excinfo.value) == "pop from empty list"
+
+
+def test_list_pop_with_path():
+    l = sanest.list([
+        {'items': ['a', 'b', 'c']},
+    ])
+    assert l.pop([0, 'items', 0]) == 'a'
+    assert l[0, 'items'] == ['b', 'c']
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        l.pop([0, 'items', 1], type=int)
+    assert str(excinfo.value) == (
+        "expected int, got str at path [0, 'items', 1]: 'c'")
+    assert l.pop([0, 'items', 1], type=str) == 'c'
+    assert l.pop([0, 'items', 0]) == 'b'
+    assert l[0, 'items'] == []
+    with pytest.raises(IndexError) as excinfo:
+        l.pop([0, 'items', 0])
+    assert str(excinfo.value) == "pop from empty list"
+    with pytest.raises(sanest.InvalidPathError) as excinfo:
+        l.pop([0, 'x'])
+    assert str(excinfo.value) == "path must lead to list index"
 
 
 def test_list_remove():

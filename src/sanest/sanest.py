@@ -1078,22 +1078,33 @@ class list(
 
     __rmul__ = __mul__
 
-    def pop(self, index=-1, *, type=None):
+    def pop(self, path_like=-1, *, type=None):
         """
         Remove and return an item; like ``list.pop()``.
 
-        :param index: position to look up
+        :param path_like: position to look up
         :param type: expected type
         """
-        if not self._data:
+        if type is not None:
+            validate_type(type)
+        if typeof(path_like) is int:  # fast path
+            l = self._data
+            index = path_like
+            path = [index]
+        else:
+            index, path = parse_path_like(path_like)
+            if typeof(path[-1]) is not int:
+                raise InvalidPathError("path must lead to list index")
+            l, index = resolve_path(self._data, path, partial=True)
+        if not l:
             raise IndexError("pop from empty list")
         try:
-            value = self._data[index]
+            value = l[index]
         except IndexError:
-            raise IndexError(index) from None
+            raise IndexError(path) from None
         if type is not None:
-            check_type(value, type=type, path=[index])
-        del self._data[index]
+            check_type(value, type=type, path=path)
+        del l[index]
         if typeof(value) in CONTAINER_TYPES:
             value = wrap(value, check=False)
         return value
