@@ -436,12 +436,6 @@ class SaneCollection(Collection):
         except LookupError as exc:
             raise typeof(exc)(path) from None
 
-    def clear(self):
-        """
-        Clear this container; like ``dict.clear()`` and ``list.clear()``.
-        """
-        self._data.clear()
-
     def __eq__(self, other):
         if self is other:
             return True
@@ -711,6 +705,12 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             raise KeyError(reprstr("dictionary is empty")) from None
         value = self.pop(key, type=type)
         return key, value
+
+    def clear(self):
+        """
+        Like ``dict.clear()``.
+        """
+        self._data.clear()
 
     def keys(self):
         """
@@ -1040,6 +1040,12 @@ class list(SaneCollection, collections.abc.MutableSequence):
             self._data.remove(value)
         except ValueError:
             raise ValueError("{!r} is not in list".format(value)) from None
+
+    def clear(self):
+        """
+        Like ``list.clear()``.
+        """
+        self._data.clear()
 
     def reverse(self):
         """
