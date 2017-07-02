@@ -387,6 +387,19 @@ def resolve_path(obj, path, *, partial=False, create=False):
         return obj
 
 
+class FinalABCMeta(abc.ABCMeta):
+    """
+    Meta-class to prevent subclassing.
+    """
+    def __new__(cls, name, bases, classdict):
+        for b in bases:
+            if isinstance(b, FinalABCMeta):
+                raise TypeError(
+                    "type '{}.{}' is not an acceptable base type"
+                    .format(__package__, b.__name__))
+        return super().__new__(cls, name, bases, builtins.dict(classdict))
+
+
 class SaneCollection(Collection):
     """
     Base class for ``sanest.dict`` and ``sanest.list``.
@@ -532,7 +545,10 @@ else:
     dispatch_table[SaneCollection.__repr__] = pprint_sanest_collection
 
 
-class dict(SaneCollection, collections.abc.MutableMapping):
+class dict(
+        SaneCollection,
+        collections.abc.MutableMapping,
+        metaclass=FinalABCMeta):
     """
     dict-like container with support for nested lookups and type checking.
     """
@@ -814,7 +830,10 @@ class DictItemsView(collections.abc.ItemsView):
             yield key, value
 
 
-class list(SaneCollection, collections.abc.MutableSequence):
+class list(
+        SaneCollection,
+        collections.abc.MutableSequence,
+        metaclass=FinalABCMeta):
     """
     list-like container with support for nested lookups and type checking.
     """

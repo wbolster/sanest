@@ -1581,6 +1581,20 @@ def test_list_del_slice():
 #
 
 
+def test_prevent_subclassing():
+    with pytest.raises(TypeError) as excinfo:
+        class X(sanest.dict):
+            pass
+    assert str(excinfo.value) == (
+        "type 'sanest.dict' is not an acceptable base type")
+
+    with pytest.raises(TypeError) as excinfo:
+        class Y(sanest.list):
+            pass
+    assert str(excinfo.value) == (
+        "type 'sanest.list' is not an acceptable base type")
+
+
 def test_wrap():
     l = _sanest.list.wrap([1, 2])
     assert isinstance(l, sanest.list)
