@@ -1039,6 +1039,9 @@ API
 
 .. centered:: ❦
 
+Version history
+===============
+
 Contributing
 ============
 
