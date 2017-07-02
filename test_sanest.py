@@ -418,8 +418,6 @@ def test_dict_getitem_with_path_and_type():
 def test_dict_contains_with_type():
     d = sanest.dict()
     d['a'] = 123
-    assert d.contains('a', type=int)
-    assert not d.contains('a', type=str)
     assert ['a', int] in d
     assert ['a', str] not in d
 
@@ -430,8 +428,6 @@ def test_dict_contains_with_path():
     assert ('a', 'b') in d  # tuple
     assert ['a', 'b'] in d  # list
     assert ['c', 'd'] not in d
-    assert d.contains(['a', 'b'])
-    assert not d.contains(['a', 'c'])
     with pytest.raises(sanest.InvalidPathError):
         ['a', None] in d
 
@@ -439,11 +435,8 @@ def test_dict_contains_with_path():
 def test_dict_contains_with_path_and_type():
     d = sanest.dict()
     d['a', 'b'] = 123
-    assert d.contains(['a', 'b'], type=int)
-    assert d.contains(('a', 'b'), type=int)
     assert ['a', 'b', int] in d
     assert ('a', 'b', int) in d
-    assert not d.contains(('a', 'b'), type=str)
     assert ('a', 'b', str) not in d
     assert ('a', 'b', 'c') not in d
     assert ('a', 'b', 'c', int) not in d
@@ -459,8 +452,6 @@ def test_dict_slice_syntax_limited_use():
         d.get(x)
     with pytest.raises(sanest.InvalidPathError):
         x in d
-    with pytest.raises(sanest.InvalidPathError):
-        d.contains(x)
     with pytest.raises(sanest.InvalidPathError):
         d.setdefault(x, 123)
 

@@ -617,19 +617,6 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             value = wrap(value, check=False)
         return value
 
-    def contains(self, path_like, *, type=None):
-        # TODO: remove this method
-        key, path = parse_path_like(path_like)
-        try:
-            if type is None:
-                self[path]
-            else:
-                self[path:type]
-        except (LookupError, DataError):
-            return False
-        else:
-            return True
-
     def __contains__(self, path_like):
         """
         Check whether ``path_like`` (with optional type) points to an
@@ -640,7 +627,15 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             return path_like in self._data
         # e.g. ['a', 'b'] and ['a', 'b', int] (slice syntax not possible)
         _, path, type = parse_path_like_with_type(path_like, allow_slice=False)
-        return self.contains(path, type=type)
+        try:
+            if type is None:
+                self[path]
+            else:
+                self[path:type]
+        except (LookupError, DataError):
+            return False
+        else:
+            return True
 
     def setdefault(self, path_like, default=None, *, type=None):
         """
