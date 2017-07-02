@@ -990,6 +990,7 @@ API
 
    .. py:method:: path_like in l
    .. automethod:: __contains__
+   .. automethod:: contains
 
    .. py:method:: len(l)
    .. automethod:: __len__

@@ -1225,6 +1225,17 @@ def test_list_contains():
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
 
 
+def test_list_contains_with_type():
+    l = sanest.list([1, 'a', {'c': 'd'}])
+    assert l.contains(1, type=int)
+    assert l.contains('a', type=str)
+    assert l.contains({'c': 'd'}, type=dict)
+    assert not l.contains(1, type=str)
+    assert not l.contains(2, type=str)
+    assert not l.contains({'x': 'y'}, type=dict)
+    assert not l.contains({'x': 'y'}, type=int)
+
+
 def test_list_iteration():
     l = sanest.list([
         {'a': 1},

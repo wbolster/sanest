@@ -948,6 +948,19 @@ class list(SaneCollection, collections.abc.MutableSequence):
         """
         return clean_value(value) in self._data
 
+    def contains(self, value, *, type=None):
+        """
+        Check whether ``value`` is contained in this list.
+
+        This is the same as ``value in l`` but allows for a type check.
+
+        :param type: expected type
+        """
+        try:
+            return clean_value(value, type=type) in self._data
+        except InvalidValueError:
+            return False
+
     def index(self, value, start=0, stop=None, *, type=None):
         """
         Get the index of ``value``; like ``list.index()``.
