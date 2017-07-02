@@ -424,10 +424,16 @@ class SaneCollection(Collection):
         """
         Look up the item that ``path_like`` (with optional type) points to.
         """
-        key_or_index, path, type = parse_path_like_with_type(path_like)
-        value = resolve_path(self._data, path)
-        if type is not None:
-            check_type(value, type=type, path=path)
+        if typeof(path_like) is self._key_or_index_type:  # fast path
+            try:
+                value = self._data[path_like]
+            except LookupError as exc:
+                raise typeof(exc)([path_like]) from None
+        else:
+            key_or_index, path, type = parse_path_like_with_type(path_like)
+            value = resolve_path(self._data, path)
+            if type is not None:
+                check_type(value, type=type, path=path)
         if typeof(value) in CONTAINER_TYPES:
             value = wrap(value, check=False)
         return value
@@ -436,10 +442,16 @@ class SaneCollection(Collection):
         """
         Set the item that ``path_like`` (with optional type) points to.
         """
-        key_or_index, path, type = parse_path_like_with_type(path_like)
-        value = clean_value(value, type=type)
-        obj, key_or_index = resolve_path(
-            self._data, path, partial=True, create=True)
+        if typeof(path_like) is self._key_or_index_type:  # fast path
+            obj = self._data
+            key_or_index = path_like
+            path = [key_or_index]
+            value = clean_value(value)
+        else:
+            key_or_index, path, type = parse_path_like_with_type(path_like)
+            value = clean_value(value, type=type)
+            obj, key_or_index = resolve_path(
+                self._data, path, partial=True, create=True)
         try:
             obj[key_or_index] = value
         except IndexError as exc:  # list assignment can fail
@@ -555,6 +567,8 @@ class dict(
     dict-like container with support for nested lookups and type checking.
     """
     __slots__ = ('_data',)
+
+    _key_or_index_type = str
 
     def __init__(self, *args, **kwargs):
         self._data = {}
@@ -840,6 +854,8 @@ class list(
     list-like container with support for nested lookups and type checking.
     """
     __slots__ = ('_data',)
+
+    _key_or_index_type = int
 
     def __init__(self, *args):
         self._data = []
