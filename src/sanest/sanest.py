@@ -395,6 +395,9 @@ class SaneCollection(Collection):
         raise NotImplementedError  # pragma: no cover
 
     def __len__(self):
+        """
+        Return the number of items in this container.
+        """
         return len(self._data)
 
     def __getitem__(self, path_like):
@@ -437,6 +440,9 @@ class SaneCollection(Collection):
             raise typeof(exc)(path) from None
 
     def __eq__(self, other):
+        """
+        Determine whether this container and ``other`` have the same values.
+        """
         if self is other:
             return True
         if type(other) is type(self):
@@ -446,6 +452,12 @@ class SaneCollection(Collection):
         if type(other) in CONTAINER_TYPES:
             return self._data == other
         return NotImplemented
+
+    def __ne__(self, other):
+        """
+        Determine whether this container and ``other`` have different values.
+        """
+        return not self == other
 
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(
@@ -485,7 +497,6 @@ class SaneCollection(Collection):
         When `deep` is ``True``, this returns a deep copy.
 
         :param deep bool: whether to make a deep copy
-        :param type: expected type
         """
         fn = copy.deepcopy if deep else copy.copy
         return fn(self)
@@ -566,7 +577,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def check_types(self, *, type):
         """
-        Check the type of all values in this dict.
+        Check the type of all values in this dictionary.
 
         :param type: expected type
         """
@@ -575,11 +586,14 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             check_type(value, type=type, path=[key])
 
     def __iter__(self):
+        """
+        Iterate over the keys of this dictionary.
+        """
         return iter(self._data)
 
     def get(self, path_like, default=None, *, type=None):
         """
-        Like ``dict.get()``.
+        Get a value or a default value; like ``dict.get()``.
 
         :param path_like: key or path to look up
         :param default: default value to return for failed lookups
@@ -617,6 +631,10 @@ class dict(SaneCollection, collections.abc.MutableMapping):
             return True
 
     def __contains__(self, path_like):
+        """
+        Check whether ``path_like`` (with optional type) points to an
+        existing value.
+        """
         if typeof(path_like) is str:  # fast path
             # e.g. 'a' in d
             return path_like in self._data
@@ -626,7 +644,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def setdefault(self, path_like, default=None, *, type=None):
         """
-        Like ``dict.setdefault()``.
+        Get a value or set (and return) a default; like ``dict.setdefault()``.
 
         :param path_like: key or path
         :param default: default value to return for failed lookups
@@ -651,13 +669,13 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def update(self, *args, **kwargs):
         """
-        Like ``dict.update()``.
+        Update with new items; like ``dict.update()``.
         """
         self._data.update(validated_items(pairs(*args, **kwargs)))
 
     def pop(self, path_like, default=MISSING, *, type=None):
         """
-        Like ``dict.pop()``.
+        Remove an item and return its value; like ``dict.pop()``.
 
         :param path_like: key or path
         :param default: default value to return for failed lookups
@@ -695,7 +713,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def popitem(self, *, type=None):
         """
-        Like ``dict.popitem()``.
+        Remove and return a random item; like ``dict.popitem()``.
 
         :param type: expected type
         """
@@ -708,19 +726,19 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def clear(self):
         """
-        Like ``dict.clear()``.
+        Remove all items; like ``dict.clear()``.
         """
         self._data.clear()
 
     def keys(self):
         """
-        Like ``dict.keys()``; returns a dictionary view.
+        Return a dictionary view over the keys; like ``dict.keys()``.
         """
         return DictKeysView(self)
 
     def values(self, *, type=None):
         """
-        Like ``dict.values()``; returns a dictionary view.
+        Return a dictionary view over the values; like ``dict.values()``.
 
         :param type: expected type
         """
@@ -730,7 +748,7 @@ class dict(SaneCollection, collections.abc.MutableMapping):
 
     def items(self, *, type=None):
         """
-        Like ``dict.items()``; returns a dictionary view.
+        Return a dictionary view over the items; like ``dict.items()``.
 
         :param type: expected type
         """
@@ -849,6 +867,9 @@ class list(SaneCollection, collections.abc.MutableSequence):
             check_type(value, type=type, path=[index])
 
     def __iter__(self):
+        """
+        Iterate over the values in this list.
+        """
         for value in self._data:
             if type(value) in CONTAINER_TYPES:
                 value = wrap(value, check=False)
@@ -871,6 +892,8 @@ class list(SaneCollection, collections.abc.MutableSequence):
             return sanest_list.wrap(self._data[path_like], check=False)
         return super().__getitem__(path_like)
 
+    __getitem__.__doc__ = SaneCollection.__getitem__.__doc__
+
     def __setitem__(self, path_like, value):
         if type(path_like) is slice and is_regular_list_slice(path_like):
             # slice assignment takes any iterable, like .extend()
@@ -886,11 +909,15 @@ class list(SaneCollection, collections.abc.MutableSequence):
         else:
             return super().__setitem__(path_like, value)
 
+    __setitem__.__doc__ = SaneCollection.__setitem__.__doc__
+
     def __delitem__(self, path_like):
         if type(path_like) is slice and is_regular_list_slice(path_like):
             del self._data[path_like]
         else:
             return super().__delitem__(path_like)
+
+    __delitem__.__doc__ = SaneCollection.__delitem__.__doc__
 
     def __lt__(self, other):
         if type(other) is type(self):
@@ -921,11 +948,14 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return NotImplemented
 
     def __contains__(self, value):
+        """
+        Check whether ``value`` is contained in this list.
+        """
         return clean_value(value) in self._data
 
     def index(self, value, start=0, stop=None, *, type=None):
         """
-        Like ``list.index()``.
+        Get the index of ``value``; like ``list.index()``.
 
         :param value: value to look up
         :param start: start index
@@ -938,7 +968,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def count(self, value, *, type=None):
         """
-        Like ``list.count()``.
+        Count how often ``value`` occurs; like ``list.count()``.
 
         :param value: value to count
         :param type: expected type
@@ -946,6 +976,9 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return self._data.count(clean_value(value, type=type))
 
     def __reversed__(self):
+        """
+        Return an iterator in reversed order.
+        """
         for value in reversed(self._data):
             if type(value) in CONTAINER_TYPES:
                 value = wrap(value, check=False)
@@ -953,7 +986,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def insert(self, index, value, *, type=None):
         """
-        Like ``list.insert()``.
+        Insert a value; like ``list.insert()``.
 
         :param index: position to insert at
         :param value: value to insert
@@ -963,7 +996,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def append(self, value, *, type=None):
         """
-        Like ``list.append()``.
+        Append a value; like ``list.append()``.
 
         :param value: value to append
         :param type: expected type
@@ -972,7 +1005,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def extend(self, iterable, *, type=None):
         """
-        Like ``list.extend()``.
+        Extend with values from ``iterable``; like ``list.extend()``.
 
         :param iterable: iterable of values to append
         :param type: expected type
@@ -988,6 +1021,9 @@ class list(SaneCollection, collections.abc.MutableSequence):
                 self.append(value, type=type)
 
     def __add__(self, other):
+        """
+        Return a new list with the concatenation of this list and ``other``.
+        """
         if type(other) not in (type(self), builtins.list):
             raise TypeError(
                 "expected list, got {.__name__}".format(type(other)))
@@ -1003,13 +1039,16 @@ class list(SaneCollection, collections.abc.MutableSequence):
         return other + self._data
 
     def __mul__(self, n):
+        """
+        Return a new list containing ``n`` copies of this list.
+        """
         return type(self).wrap(self._data * n, check=False)
 
     __rmul__ = __mul__
 
     def pop(self, index=-1, *, type=None):
         """
-        Like ``list.pop()``.
+        Remove and return an item; like ``list.pop()``.
 
         :param index: position to look up
         :param type: expected type
@@ -1030,7 +1069,7 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def remove(self, value, *, type=None):
         """
-        Like ``list.remove()``.
+        Remove an item; like ``list.remove()``.
 
         :param value: value to remove
         :param type: expected type
@@ -1043,19 +1082,19 @@ class list(SaneCollection, collections.abc.MutableSequence):
 
     def clear(self):
         """
-        Like ``list.clear()``.
+        Remove all items; like ``list.clear()``.
         """
         self._data.clear()
 
     def reverse(self):
         """
-        Like ``list.reverse()``.
+        Reverse in-place; like ``list.reverse()``.
         """
         self._data.reverse()
 
     def sort(self, key=None, reverse=False):
         """
-        Like ``list.sort()``.
+        Sort in-place; like ``list.sort()``.
 
         :param key: callable to make a sort key
         :param reverse: whether to sort in reverse order

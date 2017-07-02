@@ -908,37 +908,133 @@ Examples:
 API
 ===
 
+.. currentmodule:: sanest
+
+**Dictionary**
+
 .. autoclass:: sanest.dict
-   :member-order: bysource
-   :members:
-   :undoc-members:
-   :inherited-members:
+   :no-members:
+
+   .. automethod:: wrap
+   .. automethod:: unwrap
+
+   .. automethod:: dict.fromkeys
+
+   .. py:method:: d[path_like]
+   .. automethod:: __getitem__
+   .. automethod:: get
+
+   .. py:method:: d[path_like] = value
+   .. automethod:: __setitem__
+   .. automethod:: setdefault
+   .. automethod:: update
+
+   .. py:method:: del d[path_like]
+   .. automethod:: __delitem__
+   .. automethod:: pop
+   .. automethod:: popitem
+   .. automethod:: clear
+
+   .. py:method:: path_like in d
+   .. automethod:: __contains__
+
+   .. py:method:: len(d)
+   .. automethod:: __len__
+
+   .. py:method:: iter(d)
+   .. automethod:: __iter__
+
+   .. automethod:: keys
+   .. automethod:: values
+   .. automethod:: items
+
+   .. automethod:: copy
+
+   .. automethod:: check_types
+
+   .. py:method:: d == other
+   .. automethod:: __eq__
+
+   .. py:method:: d != other
+   .. automethod:: __ne__
+
+**List**
 
 .. autoclass:: sanest.list
-   :member-order: bysource
-   :members:
-   :undoc-members:
-   :inherited-members:
+   :no-members:
+
+   .. automethod:: wrap
+   .. automethod:: unwrap
+   .. py:method:: l[path_like]
+   .. automethod:: __getitem__
+   .. automethod:: index
+   .. automethod:: count
+
+   .. py:method:: l[path_like] = value
+   .. automethod:: __setitem__
+   .. automethod:: insert
+   .. automethod:: append
+   .. py:method:: l + other
+   .. automethod:: __add__
+   .. py:method:: l += other
+   .. automethod:: __iadd__
+   .. automethod:: extend
+   .. py:method:: l * n
+   .. automethod:: __mul__
+
+   .. py:method:: del l[path_like]
+   .. automethod:: __delitem__
+   .. automethod:: pop
+   .. automethod:: remove
+   .. automethod:: clear
+
+   .. py:method:: path_like in l
+   .. automethod:: __contains__
+
+   .. py:method:: len(l)
+   .. automethod:: __len__
+
+   .. py:method:: iter(l)
+   .. automethod:: __iter__
+
+   .. py:method:: reversed(l)
+   .. automethod:: __reversed__
+
+   .. automethod:: sort
+
+   .. automethod:: copy
+
+   .. automethod:: check_types
+
+   .. py:method:: l == other
+   .. automethod:: __eq__
+
+   .. py:method:: l != other
+   .. automethod:: __ne__
+
+   .. py:method:: l1 < l2
+   .. py:method:: l1 > l2
+   .. py:method:: l1 <= l2
+   .. py:method:: l1 >= l2
+
+      Compare lists.
+
+**Exceptions**
 
 .. autoexception:: sanest.DataError
    :show-inheritance:
-   :members:
 
 .. autoexception:: sanest.InvalidStructureError
    :show-inheritance:
-   :members:
 
 .. autoexception:: sanest.InvalidValueError
    :show-inheritance:
-   :members:
 
 .. autoexception:: sanest.InvalidPathError
    :show-inheritance:
-   :members:
 
 .. autoexception:: sanest.InvalidTypeError
    :show-inheritance:
-   :members:
 
 .. centered:: ❦
 
