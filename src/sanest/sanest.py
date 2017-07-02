@@ -16,7 +16,7 @@ except ImportError:  # pragma: no cover
             collections.abc.Sized,
             collections.abc.Iterable,
             collections.abc.Container):
-        pass
+        __slots__ = ()
 
 ATOMIC_TYPES = (bool, float, int, str)
 CONTAINER_TYPES = (builtins.dict, builtins.list)
@@ -404,6 +404,8 @@ class SaneCollection(Collection):
     """
     Base class for ``sanest.dict`` and ``sanest.list``.
     """
+    __slots__ = ()
+
     @abc.abstractmethod
     def wrap(cls, data, *, check=True):
         raise NotImplementedError  # pragma: no cover

@@ -1669,6 +1669,15 @@ def test_missing_arg_repr():
     assert str(_sanest.MISSING) == '<missing>'
 
 
+def test_slots():
+    d = sanest.dict()
+    with pytest.raises(AttributeError):
+        d.foo = 123
+    l = sanest.list()
+    with pytest.raises(AttributeError):
+        l.foo = 123
+
+
 def dedent(s):
     s = s.lstrip('\n')
     s = textwrap.dedent(s).rstrip()
