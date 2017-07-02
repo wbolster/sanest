@@ -245,13 +245,6 @@ def test_dict_length_and_truthiness():
     assert d
 
 
-def test_dict_contains():
-    d = sanest.dict()
-    d['a'] = 1
-    assert 'a' in d
-    assert 'b' not in d
-
-
 def test_dict_clear():
     d = sanest.dict()
     d['a'] = 1
@@ -413,6 +406,13 @@ def test_dict_getitem_with_path_and_type():
     with pytest.raises(KeyError) as excinfo:
         d['x', 'y']
     assert str(excinfo.value) == "['x']"
+
+
+def test_dict_contains():
+    d = sanest.dict()
+    d['a'] = 1
+    assert 'a' in d
+    assert 'b' not in d
 
 
 def test_dict_contains_with_type():
