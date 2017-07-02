@@ -1048,7 +1048,6 @@ class list(SaneCollection, collections.abc.MutableSequence):
         :param index: position to look up
         :param type: expected type
         """
-        # todo: nested path pop() like dict.pop?
         if not self._data:
             raise IndexError("pop from empty list")
         try:
