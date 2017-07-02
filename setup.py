@@ -1,14 +1,20 @@
+import os.path
+
 from setuptools import find_packages, setup
+
+with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as fp:
+    long_description = fp.read()
 
 setup(
     name='sanest',
-    description="sane nested dictionaries and lists",
     version='0.0.1',
-    packages=find_packages(where='src'),
-    package_dir={"": 'src'},
+    description="sane nested dictionaries and lists",
+    long_description=long_description,
     author="wouter bolsterlee",
     author_email="wouter@bolsterl.ee",
     url='https://github.com/wbolster/sanest',
+    packages=find_packages(where='src'),
+    package_dir={"": 'src'},
     license="BSD",
     classifiers=[
         'Development Status :: 5 - Production/Stable',
