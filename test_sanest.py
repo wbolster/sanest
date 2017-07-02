@@ -418,8 +418,11 @@ def test_dict_contains():
 def test_dict_contains_with_type():
     d = sanest.dict()
     d['a'] = 123
+    d['b'] = [1, 2, 3]
     assert ['a', int] in d
     assert ['a', str] not in d
+    assert ['b', [int]] in d
+    assert not ['b', [str]] in d
 
 
 def test_dict_contains_with_path():

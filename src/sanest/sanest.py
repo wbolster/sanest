@@ -250,12 +250,17 @@ def parse_path_like_with_type(x, *, allow_slice=True):
                     raise InvalidPathError(
                         "mixed path syntaxes: {!r}".format(x))
                 path.append(sl.start)
-            elif not allow_slice and path[-1] in TYPES:
+            elif not allow_slice:
                 # e.g. ['a', 'b', str]
-                type = path.pop()
-                if len(path) == 1 and typeof(path[0]) in PATH_SYNTAX_TYPES:
-                    # e.g. [path, str]
-                    path = path[0]
+                try:
+                    validate_type(path[-1])
+                except InvalidTypeError:
+                    pass
+                else:
+                    type = path.pop()
+                    if len(path) == 1 and typeof(path[0]) in PATH_SYNTAX_TYPES:
+                        # e.g. [path, str]
+                        path = path[0]
         validate_path(path)
     else:
         raise InvalidPathError("invalid path: {!r}".format(x))
