@@ -21,7 +21,7 @@ except ImportError:  # pragma: no cover
 ATOMIC_TYPES = (bool, float, int, str)
 CONTAINER_TYPES = (builtins.dict, builtins.list)
 TYPES = CONTAINER_TYPES + ATOMIC_TYPES
-PATH_SYNTAX_TYPES = (builtins.tuple, builtins.list)
+PATH_TYPES = (builtins.tuple, builtins.list)
 STRING_LIKE_TYPES = (str, bytes, bytearray)
 
 typeof = builtins.type
@@ -209,7 +209,7 @@ def parse_path_like(path):
     """
     if type(path) in (str, int):
         return path, [path]
-    if type(path) in PATH_SYNTAX_TYPES:
+    if type(path) in PATH_TYPES:
         validate_path(path)
         return None, path
     raise InvalidPathError("invalid path: {!r}".format(path))
@@ -228,7 +228,7 @@ def parse_path_like_with_type(x, *, allow_slice=True):
         type = None
     elif allow_slice and typeof(x) is slice:
         sl = x
-        if typeof(sl.start) in PATH_SYNTAX_TYPES:
+        if typeof(sl.start) in PATH_TYPES:
             # e.g. d[path:str]
             key_or_index = None
             path = sl.start
@@ -237,7 +237,7 @@ def parse_path_like_with_type(x, *, allow_slice=True):
             # e.g. d['a':str] and d[2:str]
             key_or_index = sl.start
             path = [key_or_index]
-    elif typeof(x) in PATH_SYNTAX_TYPES:
+    elif typeof(x) in PATH_TYPES:
         # e.g. d['a', 'b'] and d[path] and d['a', 'b':str]
         key_or_index = None
         path = builtins.list(x)  # makes a copy
@@ -246,7 +246,7 @@ def parse_path_like_with_type(x, *, allow_slice=True):
             if allow_slice and typeof(path[-1]) is slice:
                 # e.g. d['a', 'b':str]
                 sl = path.pop()
-                if typeof(sl.start) in PATH_SYNTAX_TYPES:
+                if typeof(sl.start) in PATH_TYPES:
                     raise InvalidPathError(
                         "mixed path syntaxes: {!r}".format(x))
                 path.append(sl.start)
@@ -258,7 +258,7 @@ def parse_path_like_with_type(x, *, allow_slice=True):
                     pass
                 else:
                     type = path.pop()
-                    if len(path) == 1 and typeof(path[0]) in PATH_SYNTAX_TYPES:
+                    if len(path) == 1 and typeof(path[0]) in PATH_TYPES:
                         # e.g. [path, str]
                         path = path[0]
         validate_path(path)
