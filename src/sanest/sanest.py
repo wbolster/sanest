@@ -281,15 +281,15 @@ def repr_for_type(type):
     """
     Return a friendly repr() for a type checking argument.
     """
-    if type in TYPES:
-        # e.g. str
-        return type.__name__
     if typeof(type) is builtins.list:
         # e.g. [int]
         return '[{}]'.format(type[0].__name__)
     if typeof(type) is builtins.dict:
         # e.g. {str: bool}
         return '{{str: {}}}'.format(next(iter(type.values())).__name__)
+    if isinstance(type, builtins.type):
+        # e.g. str
+        return type.__name__
     raise ValueError("invalid type: {!r}".format(type))
 
 
