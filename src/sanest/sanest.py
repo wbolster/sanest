@@ -18,9 +18,6 @@ except ImportError:  # pragma: no cover
             collections.abc.Container):
         __slots__ = ()
 
-ATOMIC_TYPES = (bool, float, int, str)
-CONTAINER_TYPES = (builtins.dict, builtins.list)
-TYPES = CONTAINER_TYPES + ATOMIC_TYPES
 PATH_TYPES = (builtins.tuple, builtins.list)
 STRING_LIKE_TYPES = (str, bytes, bytearray)
 
@@ -97,6 +94,18 @@ class InvalidValueError(DataError):
     pass
 
 
+class Dialect:
+    def __init__(self, *, atomic_types, container_types):
+        self.atomic_types = atomic_types
+        self.container_types = container_types
+        self.types = atomic_types + container_types
+
+
+json_dialect = Dialect(
+    atomic_types=(bool, float, int, str),
+    container_types=(builtins.dict, builtins.list))
+
+
 def validate_path(path):
     """Validate that ``path`` is a valid path."""
     if not path:
@@ -106,58 +115,63 @@ def validate_path(path):
             "path must contain only str or int: {!r}".format(path))
 
 
-def validate_type(type):
+def validate_type(type, *, dialect):
     """
     Validate that ``type`` is a valid argument for type checking purposes.
     """
-    if type in TYPES:
+    if type in dialect.types:
         return
-    if typeof(type) is builtins.list and len(type) == 1 and type[0] in TYPES:
+    if (typeof(type) is builtins.list and len(type) == 1
+            and type[0] in dialect.types):
         # e.g. [str], [dict]
         return
     if typeof(type) is builtins.dict and len(type) == 1:
         # e.g. {str: int}, {str: [list]}
         key, value = next(iter(type.items()))
-        if key is str and value in TYPES:
+        if key is str and value in dialect.types:
             return
     raise InvalidTypeError(
         "expected {}, [...] (for lists) or {{str: ...}} (for dicts), got {}"
-        .format(', '.join(t.__name__ for t in TYPES), reprlib.repr(type)))
+        .format(
+            ', '.join(t.__name__ for t in dialect.types),
+            reprlib.repr(type)))
 
 
-def validate_value(value):
+def validate_value(value, *, dialect):
     """
     Validate that ``value`` is a valid value.
     """
     if value is None:
         return
-    if type(value) not in TYPES:
+    if type(value) not in dialect.types:
         raise InvalidValueError(
             "invalid value of type {.__name__}: {}"
             .format(type(value), reprlib.repr(value)))
     if type(value) is builtins.dict:
-        collections.deque(validated_items(value.items()), 0)  # fast looping
+        it = validated_items(value.items(), dialect=dialect)
+        collections.deque(it, 0)  # fast looping
     elif type(value) is builtins.list:
-        collections.deque(validated_values(value), 0)  # fast looping
+        it = validated_values(value, dialect=dialect)
+        collections.deque(it, 0)  # fast looping
 
 
-def validated_items(iterable):
+def validated_items(iterable, *, dialect):
     """
     Validate that the pairs in ``iterable`` are valid dict items.
     """
     for key, value in iterable:
         if type(key) is not str:
             raise InvalidPathError("invalid dict key: {!r}".format(key))
-        validate_value(value)
+        validate_value(value, dialect=dialect)
         yield key, value
 
 
-def validated_values(iterable):
+def validated_values(iterable, *, dialect):
     """
     Validate the values in ``iterable``.
     """
     for value in iterable:
-        validate_value(value)
+        validate_value(value, dialect=dialect)
         yield value
 
 
@@ -215,7 +229,7 @@ def parse_path_like(path):
     raise InvalidPathError("invalid path: {!r}".format(path))
 
 
-def parse_path_like_with_type(x, *, allow_slice=True):
+def parse_path_like_with_type(x, *, dialect, allow_slice=True):
     """
     Parse a "path-like": a key, an index, or a path of these,
     with an optional type.
@@ -253,7 +267,7 @@ def parse_path_like_with_type(x, *, allow_slice=True):
             elif not allow_slice:
                 # e.g. ['a', 'b', str]
                 try:
-                    validate_type(path[-1])
+                    validate_type(path[-1], dialect=dialect)
                 except InvalidTypeError:
                     pass
                 else:
@@ -273,7 +287,7 @@ def parse_path_like_with_type(x, *, allow_slice=True):
             raise InvalidPathError(
                 "step value not allowed for slice syntax: {!r}".format(x))
     if type is not None:
-        validate_type(type)
+        validate_type(type, dialect=dialect)
     return key_or_index, path, type
 
 
@@ -293,7 +307,7 @@ def repr_for_type(type):
     raise ValueError("invalid type: {!r}".format(type))
 
 
-def check_type(value, *, type, path=None):
+def check_type(value, *, type, dialect, path=None):
     """
     Check that the type of ``value`` matches what ``type`` prescribes.
     """
@@ -301,7 +315,7 @@ def check_type(value, *, type, path=None):
     # to avoid booleans passing as integers, and to avoid subclasses of
     # built-in types which will likely cause json serialisation errors
     # anyway.
-    if type in TYPES and typeof(value) is type:
+    if type in dialect.types and typeof(value) is type:
         # e.g. str, int
         return
     if typeof(type) is typeof(value) is builtins.list:
@@ -325,7 +339,7 @@ def check_type(value, *, type, path=None):
         reprlib.repr(value)))
 
 
-def clean_value(value, *, type=None):
+def clean_value(value, *, type=None, dialect):
     """
     Obtain a clean value by checking types and unwrapping containers.
 
@@ -333,13 +347,13 @@ def clean_value(value, *, type=None):
     accepting a value argument from their caller.
     """
     if type is not None:
-        validate_type(type)
+        validate_type(type, dialect=dialect)
     if typeof(value) in SANEST_CONTAINER_TYPES:
         value = value._data
     elif value is not None:
-        validate_value(value)
+        validate_value(value, dialect=dialect)
     if type is not None:
-        check_type(value, type=type)
+        check_type(value, type=type, dialect=dialect)
     return value
 
 
@@ -430,11 +444,12 @@ class SaneCollection(Collection):
             except LookupError as exc:
                 raise typeof(exc)([path_like]) from None
         else:
-            key_or_index, path, type = parse_path_like_with_type(path_like)
+            key_or_index, path, type = parse_path_like_with_type(
+                path_like, dialect=self._dialect)
             value = resolve_path(self._data, path)
             if type is not None:
-                check_type(value, type=type, path=path)
-        if typeof(value) in CONTAINER_TYPES:
+                check_type(value, type=type, path=path, dialect=self._dialect)
+        if typeof(value) in self._dialect.container_types:
             value = wrap(value, check=False)
         return value
 
@@ -446,10 +461,11 @@ class SaneCollection(Collection):
             obj = self._data
             key_or_index = path_like
             path = [key_or_index]
-            value = clean_value(value)
+            value = clean_value(value, dialect=self._dialect)
         else:
-            key_or_index, path, type = parse_path_like_with_type(path_like)
-            value = clean_value(value, type=type)
+            key_or_index, path, type = parse_path_like_with_type(
+                path_like, dialect=self._dialect)
+            value = clean_value(value, type=type, dialect=self._dialect)
             obj, key_or_index = resolve_path(
                 self._data, path, partial=True, create=True)
         try:
@@ -461,12 +477,13 @@ class SaneCollection(Collection):
         """
         Delete the item that ``path_like`` (with optional type) points to.
         """
-        key_or_index, path, type = parse_path_like_with_type(path_like)
+        key_or_index, path, type = parse_path_like_with_type(
+            path_like, dialect=self._dialect)
         obj, key_or_index = resolve_path(self._data, path, partial=True)
         try:
             if type is not None:
                 value = obj[key_or_index]
-                check_type(value, type=type, path=path)
+                check_type(value, type=type, path=path, dialect=self._dialect)
             del obj[key_or_index]
         except LookupError as exc:
             raise typeof(exc)(path) from None
@@ -481,7 +498,7 @@ class SaneCollection(Collection):
             if self._data is other._data:
                 return True
             return self._data == other._data
-        if type(other) in CONTAINER_TYPES:
+        if type(other) in self._dialect.container_types:
             return self._data == other
         return NotImplemented
 
@@ -569,6 +586,7 @@ class dict(
     __slots__ = ('_data',)
 
     _key_or_index_type = str
+    _dialect = json_dialect
 
     def __init__(self, *args, **kwargs):
         self._data = {}
@@ -598,7 +616,7 @@ class dict(
         if type(d) is not builtins.dict:
             raise TypeError("not a dict")
         if check:
-            collections.deque(validated_items(d.items()), 0)  # fast looping
+            validate_value(d, dialect=cls._dialect)
         obj = cls.__new__(cls)
         obj._data = d
         return obj
@@ -618,9 +636,9 @@ class dict(
 
         :param type: expected type
         """
-        validate_type(type)
+        validate_type(type, dialect=self._dialect)
         for key, value in self._data.items():
-            check_type(value, type=type, path=[key])
+            check_type(value, type=type, path=[key], dialect=self._dialect)
 
     def __iter__(self):
         """
@@ -637,7 +655,7 @@ class dict(
         :param type: expected type
         """
         if type is not None:
-            validate_type(type)
+            validate_type(type, dialect=self._dialect)
         key, path = parse_path_like(path_like)
         if typeof(path[-1]) is not str:
             raise InvalidPathError("path must lead to dict key")
@@ -649,8 +667,8 @@ class dict(
         except LookupError:
             return default
         if type is not None:
-            check_type(value, type=type, path=path)
-        if typeof(value) in CONTAINER_TYPES:
+            check_type(value, type=type, path=path, dialect=self._dialect)
+        if typeof(value) in self._dialect.container_types:
             value = wrap(value, check=False)
         return value
 
@@ -663,7 +681,8 @@ class dict(
             # e.g. 'a' in d
             return path_like in self._data
         # e.g. ['a', 'b'] and ['a', 'b', int] (slice syntax not possible)
-        _, path, type = parse_path_like_with_type(path_like, allow_slice=False)
+        _, path, type = parse_path_like_with_type(
+            path_like, allow_slice=False, dialect=self._dialect)
         try:
             if type is None:
                 self[path]
@@ -691,19 +710,21 @@ class dict(
             else:
                 self[path:type] = default
             value = default
-            if typeof(value) in CONTAINER_TYPES:
+            if typeof(value) in self._dialect.container_types:
                 value = wrap(value, check=False)
         else:
             # check default value even if an existing value was found,
             # so that this method is strict regardless of dict contents.
-            clean_value(default, type=type)
+            clean_value(default, type=type, dialect=self._dialect)
         return value
 
     def update(self, *args, **kwargs):
         """
         Update with new items; like ``dict.update()``.
         """
-        self._data.update(validated_items(pairs(*args, **kwargs)))
+        self._data.update(validated_items(
+            pairs(*args, **kwargs),
+            dialect=self._dialect))
 
     def pop(self, path_like, default=MISSING, *, type=None):
         """
@@ -714,7 +735,7 @@ class dict(
         :param type: expected type
         """
         if type is not None:
-            validate_type(type)
+            validate_type(type, dialect=self._dialect)
         if typeof(path_like) is str:  # fast path
             d = self._data
             key = path_like
@@ -737,9 +758,9 @@ class dict(
                 raise KeyError(path) from None
             return default
         if type is not None:
-            check_type(value, type=type, path=path)
+            check_type(value, type=type, path=path, dialect=self._dialect)
         del d[key]
-        if typeof(value) in CONTAINER_TYPES:
+        if typeof(value) in self._dialect.container_types:
             value = wrap(value, check=False)
         return value
 
@@ -807,14 +828,15 @@ class DictValuesView(collections.abc.ValuesView):
         return '{}.values()'.format(self._mapping._truncated_repr())
 
     def __contains__(self, value):
-        value = clean_value(value)
+        value = clean_value(value, dialect=self._sanest_dict._dialect)
         return any(  # pragma: no branch
             v is value or v == value
             for v in self._sanest_dict._data.values())
 
     def __iter__(self):
+        container_types = self._sanest_dict._dialect.container_types
         for value in self._sanest_dict._data.values():
-            if type(value) in CONTAINER_TYPES:
+            if type(value) in container_types:
                 value = wrap(value, check=False)
             yield value
 
@@ -831,7 +853,7 @@ class DictItemsView(collections.abc.ItemsView):
 
     def __contains__(self, item):
         key, value = item
-        value = clean_value(value)
+        value = clean_value(value, dialect=self._sanest_dict._dialect)
         try:
             v = self._sanest_dict[key]
         except KeyError:
@@ -840,8 +862,9 @@ class DictItemsView(collections.abc.ItemsView):
             return v is value or v == value
 
     def __iter__(self):
+        container_types = self._sanest_dict._dialect.container_types
         for key, value in self._sanest_dict._data.items():
-            if type(value) in CONTAINER_TYPES:
+            if type(value) in container_types:
                 value = wrap(value, check=False)
             yield key, value
 
@@ -856,6 +879,7 @@ class list(
     __slots__ = ('_data',)
 
     _key_or_index_type = int
+    _dialect = json_dialect
 
     def __init__(self, *args):
         self._data = []
@@ -879,7 +903,7 @@ class list(
         if type(l) is not builtins.list:
             raise TypeError("not a list")
         if check:
-            collections.deque(validated_values(l), 0)  # fast looping
+            validate_value(l, dialect=cls._dialect)
         obj = cls.__new__(cls)
         obj._data = l
         return obj
@@ -899,16 +923,16 @@ class list(
 
         :param type: expected type
         """
-        validate_type(type)
+        validate_type(type, dialect=self._dialect)
         for index, value in enumerate(self._data):
-            check_type(value, type=type, path=[index])
+            check_type(value, type=type, path=[index], dialect=self._dialect)
 
     def __iter__(self):
         """
         Iterate over the values in this list.
         """
         for value in self._data:
-            if type(value) in CONTAINER_TYPES:
+            if type(value) in self._dialect.container_types:
                 value = wrap(value, check=False)
             yield value
 
@@ -941,7 +965,7 @@ class list(
             if type(value) in SANEST_CONTAINER_TYPES:
                 value = value._data
             else:
-                value = validated_values(value)
+                value = validated_values(value, dialect=self._dialect)
             self._data[path_like] = value
         else:
             return super().__setitem__(path_like, value)
@@ -988,7 +1012,7 @@ class list(
         """
         Check whether ``value`` is contained in this list.
         """
-        return clean_value(value) in self._data
+        return clean_value(value, dialect=self._dialect) in self._data
 
     def contains(self, value, *, type=None):
         """
@@ -999,7 +1023,8 @@ class list(
         :param type: expected type
         """
         try:
-            return clean_value(value, type=type) in self._data
+            value = clean_value(value, type=type, dialect=self._dialect)
+            return value in self._data
         except InvalidValueError:
             return False
 
@@ -1014,7 +1039,10 @@ class list(
         """
         if stop is None:
             stop = sys.maxsize
-        return self._data.index(clean_value(value, type=type), start, stop)
+        return self._data.index(
+            clean_value(value, type=type, dialect=self._dialect),
+            start,
+            stop)
 
     def count(self, value, *, type=None):
         """
@@ -1023,14 +1051,15 @@ class list(
         :param value: value to count
         :param type: expected type
         """
-        return self._data.count(clean_value(value, type=type))
+        return self._data.count(
+            clean_value(value, type=type, dialect=self._dialect))
 
     def __reversed__(self):
         """
         Return an iterator in reversed order.
         """
         for value in reversed(self._data):
-            if type(value) in CONTAINER_TYPES:
+            if type(value) in self._dialect.container_types:
                 value = wrap(value, check=False)
             yield value
 
@@ -1042,7 +1071,8 @@ class list(
         :param value: value to insert
         :param type: expected type
         """
-        self._data.insert(index, clean_value(value, type=type))
+        self._data.insert(
+            index, clean_value(value, type=type, dialect=self._dialect))
 
     def append(self, value, *, type=None):
         """
@@ -1051,7 +1081,7 @@ class list(
         :param value: value to append
         :param type: expected type
         """
-        self._data.append(clean_value(value, type=type))
+        self._data.append(clean_value(value, type=type, dialect=self._dialect))
 
     def extend(self, iterable, *, type=None):
         """
@@ -1104,7 +1134,7 @@ class list(
         :param type: expected type
         """
         if type is not None:
-            validate_type(type)
+            validate_type(type, dialect=self._dialect)
         if typeof(path_like) is int:  # fast path
             l = self._data
             index = path_like
@@ -1121,9 +1151,9 @@ class list(
         except IndexError:
             raise IndexError(path) from None
         if type is not None:
-            check_type(value, type=type, path=path)
+            check_type(value, type=type, path=path, dialect=self._dialect)
         del l[index]
-        if typeof(value) in CONTAINER_TYPES:
+        if typeof(value) in self._dialect.container_types:
             value = wrap(value, check=False)
         return value
 
@@ -1134,7 +1164,7 @@ class list(
         :param value: value to remove
         :param type: expected type
         """
-        value = clean_value(value, type=type)
+        value = clean_value(value, type=type, dialect=self._dialect)
         try:
             self._data.remove(value)
         except ValueError:
