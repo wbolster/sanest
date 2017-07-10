@@ -6,6 +6,7 @@ import copy
 import pprint
 import reprlib
 import sys
+import types
 
 try:
     # Python 3.6+
@@ -104,10 +105,21 @@ def validate_path(path):
 
 
 class Dialect:
-    def __init__(self, *, atomic_types, container_types):
+    def __init__(
+            self,
+            *,
+            dict_types,
+            dict_key_types=None,
+            list_types,
+            atomic_types,
+            strict_checks):
+        self.dict_types = dict_types
+        self.dict_key_types = dict_key_types
+        self.list_types = list_types
+        self.container_types = self.dict_types + self.list_types
         self.atomic_types = atomic_types
-        self.container_types = container_types
-        self.types = atomic_types + container_types
+        self.types = self.container_types + self.atomic_types
+        self.strict_checks = strict_checks
 
     def validate_type(self, type):
         """
@@ -212,11 +224,6 @@ class Dialect:
         if type is not None:
             self.check_type(value, type=type)
         return value
-
-
-json_dialect = Dialect(
-    atomic_types=(bool, float, int, str),
-    container_types=(builtins.dict, builtins.list))
 
 
 def pairs(*args, **kwargs):
@@ -570,18 +577,13 @@ else:
     dispatch_table[SaneCollection.__repr__] = pprint_sanest_collection
 
 
-class dict(
-        SaneCollection,
-        collections.abc.MutableMapping,
-        # metaclass=FinalABCMeta
-):
+class SaneDict(SaneCollection, collections.abc.MutableMapping):
     """
     dict-like container with support for nested lookups and type checking.
     """
     __slots__ = ('_data',)
 
     _key_or_index_type = str
-    _dialect = json_dialect  # todo
 
     def __init__(self, *args, **kwargs):
         self._data = {}
@@ -863,18 +865,13 @@ class DictItemsView(collections.abc.ItemsView):
             yield key, value
 
 
-class list(
-        SaneCollection,
-        collections.abc.MutableSequence,
-        # metaclass=FinalABCMeta,
-):
+class SaneList(SaneCollection, collections.abc.MutableSequence):
     """
     list-like container with support for nested lookups and type checking.
     """
     __slots__ = ('_data',)
 
     _key_or_index_type = int
-    _dialect = json_dialect  # todo
 
     def __init__(self, *args):
         self._data = []
@@ -1186,23 +1183,33 @@ class list(
         self._data.sort(key=key, reverse=reverse)
 
 
+def make_dialect_containers(name, **dialect_kwargs):
+    dialect = Dialect(**dialect_kwargs)
+    class_body = dict(_dialect=dialect)
+    dict_class = FinalABCMeta(
+        '{}_dict'.format(name),
+        (SaneDict,),
+        dict(_dialect=dialect))
+    list_class = FinalABCMeta(
+        '{}.list'.format(name),
+        (SaneList,),
+        class_body)
+    return types.SimpleNamespace(dict=dict_class, list=list_class)
+
+
+json_containers = make_dialect_containers(
+    'json',
+    dict_types=(builtins.dict,),
+    dict_key_types=(str,),
+    list_types=(builtins.list,),
+    atomic_types=(bool, float, int, str),
+    strict_checks=True)
+
+dict = json_containers.dict
+list = json_containers.list
+
 # internal aliases to make the code above less confusing
 sanest_dict = dict
 sanest_list = list
 
 SANEST_CONTAINER_TYPES = (sanest_dict, sanest_list)
-
-
-def make_dialect_containers(name, dialect):
-    import types
-    class_body = {'_dialect': dialect}
-    ns = types.SimpleNamespace(
-        dict=FinalABCMeta(
-            '{}.dict'.format(name), (sanest_dict,), class_body),
-        list=FinalABCMeta(
-            '{}.list'.format(name), (sanest_list,), class_body))
-    return ns
-
-
-import pdb; pdb.set_trace()  # FIXME
-x = make_dialect_containers('json', json_dialect)
