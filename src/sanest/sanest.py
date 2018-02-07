@@ -396,7 +396,7 @@ class FinalABCMeta(abc.ABCMeta):
             if isinstance(b, FinalABCMeta):
                 raise TypeError(
                     "type '{}.{}' is not an acceptable base type"
-                    .format(__package__, b.__name__))
+                    .format(b.__module__, b.__name__))
         return super().__new__(cls, name, bases, builtins.dict(classdict))
 
 
@@ -493,16 +493,16 @@ class SaneCollection(Collection):
 
     def __repr__(self):
         return '{}.{.__name__}({!r})'.format(
-            __package__, type(self), self._data)
+           self.__module__, type(self), self._data)
 
     def _truncated_repr(self):
         """Helper for the repr() of dictionary views."""
-        return '{}.{.__name__}({})'.format(
-            __package__, type(self), reprlib.repr(self._data))
+        return '{.__module__}.{.__name__}({})'.format(
+            self, type(self), reprlib.repr(self._data))
 
     def _repr_pretty_(self, p, cycle):
         """Helper for pretty-printing in IPython."""
-        opening = '{}.{.__name__}('.format(__package__, type(self))
+        opening = '{.__module__}.{.__name__}('.format(self, type(self))
         if cycle:  # pragma: no cover
             p.text(opening + '...)')
         else:
@@ -539,7 +539,7 @@ def pprint_sanest_collection(
     """
     Pretty-printing helper for use by the built-in pprint module.
     """
-    opening = '{}.{.__name__}('.format(__package__, type(object))
+    opening = '{.__module__}.{.__name__}('.format(object, type(object))
     stream.write(opening)
     if type(object._data) is builtins.dict:
         f = self._pprint_dict
