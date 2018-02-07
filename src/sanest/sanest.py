@@ -1106,23 +1106,23 @@ class list(
         if type is not None:
             validate_type(type)
         if typeof(path_like) is int:  # fast path
-            l = self._data
+            ll = self._data
             index = path_like
             path = [index]
         else:
             index, path = parse_path_like(path_like)
             if typeof(path[-1]) is not int:
                 raise InvalidPathError("path must lead to list index")
-            l, index = resolve_path(self._data, path, partial=True)
-        if not l:
+            ll, index = resolve_path(self._data, path, partial=True)
+        if not ll:
             raise IndexError("pop from empty list")
         try:
-            value = l[index]
+            value = ll[index]
         except IndexError:
             raise IndexError(path) from None
         if type is not None:
             check_type(value, type=type, path=path)
-        del l[index]
+        del ll[index]
         if typeof(value) in CONTAINER_TYPES:
             value = wrap(value, check=False)
         return value

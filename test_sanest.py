@@ -1015,8 +1015,8 @@ def test_list_basics():
 
 def test_list_constructor():
     regular_list = ['a', 'b']
-    l = sanest.list(regular_list)
-    assert len(l) == 2
+    ll = sanest.list(regular_list)
+    assert len(ll) == 2
     with pytest.raises(TypeError) as excinfo:
         sanest.list([1, 2, 3], [4, 5], [6, 7])
     assert str(excinfo.value) == "expected at most 1 argument, got 3"
@@ -1067,9 +1067,9 @@ def test_list_comparison_ordering():
 
 
 def test_list_repr():
-    l = sanest.list([1, 2, [3, 4]])
-    assert repr(l) == "sanest.list([1, 2, [3, 4]])"
-    assert eval(repr(l)) == l
+    ll = sanest.list([1, 2, [3, 4]])
+    assert repr(ll) == "sanest.list([1, 2, [3, 4]])"
+    assert eval(repr(ll)) == ll
 
 
 def test_list_pickle():
@@ -1081,9 +1081,9 @@ def test_list_pickle():
 
 def test_list_wrap():
     original = ['a', 'b', ['c1', 'c2'], None]
-    l = sanest.list.wrap(original)
-    assert l[2, 0] == 'c1'
-    assert l.unwrap() is original
+    ll = sanest.list.wrap(original)
+    assert ll[2, 0] == 'c1'
+    assert ll.unwrap() is original
     assert sanest.list.wrap(original) == sanest.list.wrap(original)
 
 
@@ -1105,147 +1105,147 @@ def test_list_wrap_validation():
     with pytest.raises(sanest.InvalidValueError) as excinfo:
         sanest.list.wrap(original)
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
-    l = sanest.list.wrap(original, check=False)
-    assert len(l) == 2
+    ll = sanest.list.wrap(original, check=False)
+    assert len(ll) == 2
 
 
 def test_list_validate():
-    l = sanest.list([1, 2, 3])
-    l.check_types(type=int)
-    l = sanest.list([{'a': 1}, {'a': 2}, {'a': 3}])
-    l.check_types(type={str: int})
+    ll = sanest.list([1, 2, 3])
+    ll.check_types(type=int)
+    ll = sanest.list([{'a': 1}, {'a': 2}, {'a': 3}])
+    ll.check_types(type={str: int})
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.check_types(type=str)
+        ll.check_types(type=str)
     assert str(excinfo.value) == "expected str, got dict at path [0]: {'a': 1}"
 
 
 def test_list_getitem():
-    l = sanest.list(['a', 'b'])
-    assert l[0] == 'a'
-    assert l[1] == 'b'
+    ll = sanest.list(['a', 'b'])
+    assert ll[0] == 'a'
+    assert ll[1] == 'b'
     with pytest.raises(IndexError) as excinfo:
-        l[2]
+        ll[2]
     assert str(excinfo.value) == "[2]"
 
 
 def test_list_getitem_with_type():
-    l = sanest.list(['a', {}])
-    assert l[0:str] == 'a'
+    ll = sanest.list(['a', {}])
+    assert ll[0:str] == 'a'
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        assert l[0:bool] == 'a'
+        assert ll[0:bool] == 'a'
     assert str(excinfo.value) == "expected bool, got str at path [0]: 'a'"
-    assert isinstance(l[1], sanest.dict)
+    assert isinstance(ll[1], sanest.dict)
 
 
 def test_list_getitem_with_path():
-    l = sanest.list(['a', ['b1', 'b2']])
-    assert l[1, 0] == 'b1'
+    ll = sanest.list(['a', ['b1', 'b2']])
+    assert ll[1, 0] == 'b1'
     path = (1, 0)
-    assert l[path] == 'b1'
+    assert ll[path] == 'b1'
     path = [1, 0]
-    assert l[path] == 'b1'
+    assert ll[path] == 'b1'
     with pytest.raises(IndexError) as excinfo:
-        l[1, 2, 3, 4]
+        ll[1, 2, 3, 4]
     assert str(excinfo.value) == "[1, 2]"
     with pytest.raises(sanest.InvalidStructureError) as excinfo:
-        l[0, 9]
+        ll[0, 9]
     assert str(excinfo.value) == (
         "expected list, got str at subpath [0] of [0, 9]")
 
 
 def test_list_getitem_with_path_and_type():
-    l = sanest.list(['a', ['b1', 'b2']])
-    assert l[1, 0:str] == "b1"
+    ll = sanest.list(['a', ['b1', 'b2']])
+    assert ll[1, 0:str] == "b1"
     path = [1, 0]
-    assert l[path:str] == "b1"
+    assert ll[path:str] == "b1"
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l[1, 1:bool]
+        ll[1, 1:bool]
     assert str(excinfo.value) == "expected bool, got str at path [1, 1]: 'b2'"
 
 
 def test_list_setitem():
-    l = sanest.list(['a', 'b'])
-    l[0] = 'b'
-    l[1] = sanest.list()
-    assert l == ['b', []]
+    ll = sanest.list(['a', 'b'])
+    ll[0] = 'b'
+    ll[1] = sanest.list()
+    assert ll == ['b', []]
     with pytest.raises(IndexError) as excinfo:
-        l[5] = 'a'
+        ll[5] = 'a'
     assert str(excinfo.value) == "[5]"
-    assert l == ['b', []]
+    assert ll == ['b', []]
 
 
 def test_list_setitem_with_type():
-    l = sanest.list(['a'])
-    assert l[0:str] == 'a'
+    ll = sanest.list(['a'])
+    assert ll[0:str] == 'a'
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l[0:bool] = 'a'
+        ll[0:bool] = 'a'
     assert str(excinfo.value) == "expected bool, got str: 'a'"
 
 
 def test_list_setitem_with_path():
-    l = sanest.list(['a', ['b', 'c', 'd']])
-    l[1, 0] = 'e'
+    ll = sanest.list(['a', ['b', 'c', 'd']])
+    ll[1, 0] = 'e'
     path = (1, 1)
-    l[path] = 'f'
+    ll[path] = 'f'
     path = [1, 2]
-    l[path] = 'g'
-    assert l == ['a', ['e', 'f', 'g']]
+    ll[path] = 'g'
+    assert ll == ['a', ['e', 'f', 'g']]
     with pytest.raises(IndexError) as excinfo:
-        l[5, 4, 3] = 'h'
+        ll[5, 4, 3] = 'h'
     assert str(excinfo.value) == "[5]"
-    assert l == ['a', ['e', 'f', 'g']]
+    assert ll == ['a', ['e', 'f', 'g']]
 
 
 def test_list_setitem_with_path_and_type():
-    l = sanest.list(['a', ['b', 'c']])
-    l[1, 0:str] = "d"
+    ll = sanest.list(['a', ['b', 'c']])
+    ll[1, 0:str] = "d"
     path = [1, 1]
-    l[path:str] = "e"
-    assert l == ['a', ['d', 'e']]
+    ll[path:str] = "e"
+    assert ll == ['a', ['d', 'e']]
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l[1, 1:bool] = 'x'
+        ll[1, 1:bool] = 'x'
     assert str(excinfo.value) == "expected bool, got str: 'x'"
-    assert l == ['a', ['d', 'e']]
+    assert ll == ['a', ['d', 'e']]
 
 
 def test_list_contains():
-    l = sanest.list([
+    ll = sanest.list([
         1,
         'a',
         [2, 3],
         {'c': 'd'},
         None,
     ])
-    assert 1 in l
-    assert 'a' in l
-    assert [2, 3] in l
-    assert sanest.list([2, 3]) in l
-    assert {'c': 'd'} in l
-    assert sanest.dict({'c': 'd'}) in l
-    assert None in l
+    assert 1 in ll
+    assert 'a' in ll
+    assert [2, 3] in ll
+    assert sanest.list([2, 3]) in ll
+    assert {'c': 'd'} in ll
+    assert sanest.dict({'c': 'd'}) in ll
+    assert None in ll
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        MyClass() in l
+        MyClass() in ll
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
 
 
 def test_list_contains_with_type():
-    l = sanest.list([1, 'a', {'c': 'd'}])
-    assert l.contains(1, type=int)
-    assert l.contains('a', type=str)
-    assert l.contains({'c': 'd'}, type=dict)
-    assert not l.contains(1, type=str)
-    assert not l.contains(2, type=str)
-    assert not l.contains({'x': 'y'}, type=dict)
-    assert not l.contains({'x': 'y'}, type=int)
+    ll = sanest.list([1, 'a', {'c': 'd'}])
+    assert ll.contains(1, type=int)
+    assert ll.contains('a', type=str)
+    assert ll.contains({'c': 'd'}, type=dict)
+    assert not ll.contains(1, type=str)
+    assert not ll.contains(2, type=str)
+    assert not ll.contains({'x': 'y'}, type=dict)
+    assert not ll.contains({'x': 'y'}, type=int)
 
 
 def test_list_iteration():
-    l = sanest.list([
+    ll = sanest.list([
         {'a': 1},
         [2, 3],
         'x',
     ])
-    first, second, third = l
+    first, second, third = ll
     assert isinstance(first, sanest.dict)
     assert first == {'a': 1}
     assert isinstance(second, sanest.list)
@@ -1254,19 +1254,19 @@ def test_list_iteration():
 
 
 def test_list_iteration_with_type():
-    l = sanest.list(['a', 'a'])
-    assert list(l.iter()) == ['a', 'a']
-    assert list(l.iter(type=str)) == ['a', 'a']
-    l = sanest.list([1, 2, 'oops'])
+    ll = sanest.list(['a', 'a'])
+    assert list(ll.iter()) == ['a', 'a']
+    assert list(ll.iter(type=str)) == ['a', 'a']
+    ll = sanest.list([1, 2, 'oops'])
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.iter(type=int)  # eager validation, not during yielding
+        ll.iter(type=int)  # eager validation, not during yielding
     assert str(excinfo.value) == "expected int, got str at path [2]: 'oops'"
-    l = sanest.list([{}])
-    assert isinstance(next(l.iter(type=dict)), sanest.dict)
+    ll = sanest.list([{}])
+    assert isinstance(next(ll.iter(type=dict)), sanest.dict)
 
 
 def test_list_index():
-    l = sanest.list([
+    ll = sanest.list([
         'a',         # 0
         {'b': 'c'},  # 1
         None,        # 2
@@ -1275,81 +1275,81 @@ def test_list_index():
         None,        # 5
         None,        # 6
     ])
-    assert l.index('a') == 0
-    assert l.index('a', type=str) == 0
-    assert l.index('a', 2) == 4
-    assert l.index('a', 2, type=str) == 4
-    assert l.index('a', 2, 6) == 4
-    assert l.index(None, 2) == 2
-    assert l.index(None, 4) == 5
-    assert l.index({'b': 'c'}) == 1
-    assert l.index(sanest.dict({'b': 'c'})) == 1
+    assert ll.index('a') == 0
+    assert ll.index('a', type=str) == 0
+    assert ll.index('a', 2) == 4
+    assert ll.index('a', 2, type=str) == 4
+    assert ll.index('a', 2, 6) == 4
+    assert ll.index(None, 2) == 2
+    assert ll.index(None, 4) == 5
+    assert ll.index({'b': 'c'}) == 1
+    assert ll.index(sanest.dict({'b': 'c'})) == 1
     with pytest.raises(ValueError) as excinfo:
-        l.index('a', 5)
+        ll.index('a', 5)
     assert str(excinfo.value) == "'a' is not in list"
     with pytest.raises(ValueError) as excinfo:
-        l.index('a', 2, 3)
+        ll.index('a', 2, 3)
     assert str(excinfo.value) == "'a' is not in list"
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.index(2, type=str)
+        ll.index(2, type=str)
     assert str(excinfo.value) == "expected str, got int: 2"
 
 
 def test_list_count():
-    l = sanest.list([1, 2, 3, 1, 1, 2, 3, {'a': 'b'}])
-    assert l.count(1) == 3
-    assert l.count(1, type=int) == 3
+    ll = sanest.list([1, 2, 3, 1, 1, 2, 3, {'a': 'b'}])
+    assert ll.count(1) == 3
+    assert ll.count(1, type=int) == 3
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.count(1, type=str)
+        ll.count(1, type=str)
     assert str(excinfo.value) == "expected str, got int: 1"
-    assert l.count({'a': 'b'}) == 1
-    assert l.count(sanest.dict({'a': 'b'})) == 1
+    assert ll.count({'a': 'b'}) == 1
+    assert ll.count(sanest.dict({'a': 'b'})) == 1
 
 
 def test_list_insert():
-    l = sanest.list(range(5))
-    assert l == [0, 1, 2, 3, 4]
-    l.insert(0, 'a')
+    ll = sanest.list(range(5))
+    assert ll == [0, 1, 2, 3, 4]
+    ll.insert(0, 'a')
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.insert(0, 'a', type=int)
+        ll.insert(0, 'a', type=int)
     assert str(excinfo.value) == "expected int, got str: 'a'"
-    assert l == ['a', 0, 1, 2, 3, 4]
-    l.insert(2, 'b')
-    assert l == ['a', 0, 'b', 1, 2, 3, 4]
-    l.insert(20, 'c')
-    assert l == ['a', 0, 'b', 1, 2, 3, 4, 'c']
-    l.insert(-3, 'd')
-    assert l == ['a', 0, 'b', 1, 2, 'd', 3, 4, 'c']
+    assert ll == ['a', 0, 1, 2, 3, 4]
+    ll.insert(2, 'b')
+    assert ll == ['a', 0, 'b', 1, 2, 3, 4]
+    ll.insert(20, 'c')
+    assert ll == ['a', 0, 'b', 1, 2, 3, 4, 'c']
+    ll.insert(-3, 'd')
+    assert ll == ['a', 0, 'b', 1, 2, 'd', 3, 4, 'c']
 
 
 def test_list_append():
-    l = sanest.list()
-    l.append(1)
+    ll = sanest.list()
+    ll.append(1)
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.append('a', type=int)
+        ll.append('a', type=int)
     assert str(excinfo.value) == "expected int, got str: 'a'"
-    assert l == [1]
-    l.append(2)
-    l.append([3, 4])
-    l.append(sanest.list([5, 6]))
-    assert len(l) == 4
-    assert l == [1, 2, [3, 4], [5, 6]]
+    assert ll == [1]
+    ll.append(2)
+    ll.append([3, 4])
+    ll.append(sanest.list([5, 6]))
+    assert len(ll) == 4
+    assert ll == [1, 2, [3, 4], [5, 6]]
 
 
 def test_list_extend():
-    l = sanest.list([1, 2])
-    l.extend(sanest.list([3, 4]))
-    l.extend([5, 6], type=int)
-    assert l == [1, 2, 3, 4, 5, 6]
+    ll = sanest.list([1, 2])
+    ll.extend(sanest.list([3, 4]))
+    ll.extend([5, 6], type=int)
+    assert ll == [1, 2, 3, 4, 5, 6]
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.extend(['a', 'b'], type=int)
+        ll.extend(['a', 'b'], type=int)
     assert str(excinfo.value) == "expected int, got str: 'a'"
-    assert l == [1, 2, 3, 4, 5, 6]
+    assert ll == [1, 2, 3, 4, 5, 6]
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.extend([MyClass()])
+        ll.extend([MyClass()])
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
-    l.extend(n for n in [7, 8])
-    assert l == [1, 2, 3, 4, 5, 6, 7, 8]
+    ll.extend(n for n in [7, 8])
+    assert ll == [1, 2, 3, 4, 5, 6, 7, 8]
 
 
 @pytest.mark.parametrize(
@@ -1360,23 +1360,23 @@ def test_list_extend():
         (bytearray(b'foo'), 'bytearray'),
     ])
 def test_list_guard_against_implicit_string_splitting(value, type_name):
-    l = sanest.list()
+    ll = sanest.list()
     expected_message = (
         "expected iterable that is not string-like, got {}"
         .format(type_name))
     with pytest.raises(TypeError) as excinfo:
-        l.extend(value)
+        ll.extend(value)
     assert str(excinfo.value) == expected_message
     with pytest.raises(TypeError) as excinfo:
-        l += value
+        ll += value
     assert str(excinfo.value) == expected_message
     with pytest.raises(TypeError) as excinfo:
-        l[:] = value
+        ll[:] = value
     assert str(excinfo.value) == expected_message
 
 
 def test_list_extend_nested_unwrapping():
-    l = sanest.list([
+    ll = sanest.list([
         [
             [1, 2],
             [3, 4]
@@ -1386,7 +1386,7 @@ def test_list_extend_nested_unwrapping():
             sanest.list([7, 8]),
         ]),
     ])
-    assert l == [
+    assert ll == [
         [[1, 2], [3, 4]],
         [[5, 6], [7, 8]],
     ]
@@ -1415,186 +1415,186 @@ def test_list_concat():
 
 
 def test_list_concat_only_accepts_lists():
-    l = sanest.list()
+    ll = sanest.list()
     with pytest.raises(TypeError) as excinfo:
-        l + 'abc'
+        ll + 'abc'
     assert str(excinfo.value) == "expected list, got str"
 
 
 def test_list_repeat():
-    l = sanest.list([1, 2])
-    assert l * 2 == [1, 2, 1, 2]
-    assert 2 * l == [1, 2, 1, 2]
-    assert l == [1, 2]
-    assert isinstance(l, sanest.list)
-    l *= 2
-    assert l == [1, 2, 1, 2]
-    assert isinstance(l, sanest.list)
+    ll = sanest.list([1, 2])
+    assert ll * 2 == [1, 2, 1, 2]
+    assert 2 * ll == [1, 2, 1, 2]
+    assert ll == [1, 2]
+    assert isinstance(ll, sanest.list)
+    ll *= 2
+    assert ll == [1, 2, 1, 2]
+    assert isinstance(ll, sanest.list)
 
 
 def test_list_reversing():
-    l = sanest.list(['a', {}])
-    rev = reversed(l)
+    ll = sanest.list(['a', {}])
+    rev = reversed(ll)
     first, second = rev
     assert first == {}
     assert isinstance(first, sanest.dict)
     assert second == 'a'
-    assert l == ['a', {}]
-    l.reverse()
-    assert l == [{}, 'a']
+    assert ll == ['a', {}]
+    ll.reverse()
+    assert ll == [{}, 'a']
 
 
 def test_list_clear():
-    l = sanest.list([1, 2, 3])
-    l.clear()
-    assert l == []
+    ll = sanest.list([1, 2, 3])
+    ll.clear()
+    assert ll == []
 
 
 def test_list_delitem():
-    l = sanest.list(['a', 'b', 'c'])
-    del l[1]
-    assert l == ['a', 'c']
-    del l[-1]
-    assert l == ['a']
-    del l[0]
-    assert l == []
+    ll = sanest.list(['a', 'b', 'c'])
+    del ll[1]
+    assert ll == ['a', 'c']
+    del ll[-1]
+    assert ll == ['a']
+    del ll[0]
+    assert ll == []
 
 
 def test_list_delitem_with_type():
-    l = sanest.list(['a', 'b', 'c'])
-    del l[0:str]
-    assert l == ['b', 'c']
+    ll = sanest.list(['a', 'b', 'c'])
+    del ll[0:str]
+    assert ll == ['b', 'c']
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        del l[-1:int]
+        del ll[-1:int]
     assert str(excinfo.value) == "expected int, got str at path [-1]: 'c'"
-    assert l == ['b', 'c']
+    assert ll == ['b', 'c']
 
 
 def test_list_delitem_with_path():
-    l = sanest.list([['a', 'aa'], ['b', 'bb']])
-    del l[0, 1]
-    assert l == [['a'], ['b', 'bb']]
+    ll = sanest.list([['a', 'aa'], ['b', 'bb']])
+    del ll[0, 1]
+    assert ll == [['a'], ['b', 'bb']]
     path = [1, 0]
-    del l[path]
-    assert l == [['a'], ['bb']]
+    del ll[path]
+    assert ll == [['a'], ['bb']]
 
 
 def test_list_delitem_with_path_and_type():
-    l = sanest.list([['a', 'aa'], ['b', 'bb']])
-    del l[0, 0:str]
+    ll = sanest.list([['a', 'aa'], ['b', 'bb']])
+    del ll[0, 0:str]
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        del l[0, 0:int]
+        del ll[0, 0:int]
     assert str(excinfo.value) == "expected int, got str at path [0, 0]: 'aa'"
-    assert l == [['aa'], ['b', 'bb']]
+    assert ll == [['aa'], ['b', 'bb']]
     path = [1, 1]
-    del l[path:str]
-    assert l == [['aa'], ['b']]
+    del ll[path:str]
+    assert ll == [['aa'], ['b']]
 
 
 def test_list_pop():
-    l = sanest.list(['a', [], 'b', 'c'])
-    assert l.pop() == 'c'
-    assert l.pop(-1) == 'b'
+    ll = sanest.list(['a', [], 'b', 'c'])
+    assert ll.pop() == 'c'
+    assert ll.pop(-1) == 'b'
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.pop(0, type=int)
+        ll.pop(0, type=int)
     assert str(excinfo.value) == "expected int, got str at path [0]: 'a'"
-    assert l.pop(0, type=str) == 'a'
+    assert ll.pop(0, type=str) == 'a'
     with pytest.raises(IndexError) as excinfo:
-        l.pop(123)
+        ll.pop(123)
     assert str(excinfo.value) == "[123]"
     assert excinfo.value.__cause__ is None
     assert excinfo.value.__suppress_context__
-    value = l.pop(type=list)
+    value = ll.pop(type=list)
     assert isinstance(value, sanest.list)
-    assert len(l) == 0
+    assert len(ll) == 0
     with pytest.raises(IndexError) as excinfo:
-        l.pop(0, type=int)
+        ll.pop(0, type=int)
     assert str(excinfo.value) == "pop from empty list"
 
 
 def test_list_pop_with_path():
-    l = sanest.list([
+    ll = sanest.list([
         {'items': ['a', 'b', 'c']},
     ])
-    assert l.pop([0, 'items', 0]) == 'a'
-    assert l[0, 'items'] == ['b', 'c']
+    assert ll.pop([0, 'items', 0]) == 'a'
+    assert ll[0, 'items'] == ['b', 'c']
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.pop([0, 'items', 1], type=int)
+        ll.pop([0, 'items', 1], type=int)
     assert str(excinfo.value) == (
         "expected int, got str at path [0, 'items', 1]: 'c'")
-    assert l.pop([0, 'items', 1], type=str) == 'c'
-    assert l.pop([0, 'items', 0]) == 'b'
-    assert l[0, 'items'] == []
+    assert ll.pop([0, 'items', 1], type=str) == 'c'
+    assert ll.pop([0, 'items', 0]) == 'b'
+    assert ll[0, 'items'] == []
     with pytest.raises(IndexError) as excinfo:
-        l.pop([0, 'items', 0])
+        ll.pop([0, 'items', 0])
     assert str(excinfo.value) == "pop from empty list"
     with pytest.raises(sanest.InvalidPathError) as excinfo:
-        l.pop([0, 'x'])
+        ll.pop([0, 'x'])
     assert str(excinfo.value) == "path must lead to list index"
 
 
 def test_list_remove():
-    l = sanest.list(['a', 'a', 'b', 'a', {}])
-    l.remove('a')
-    assert l == ['a', 'b', 'a', {}]
+    ll = sanest.list(['a', 'a', 'b', 'a', {}])
+    ll.remove('a')
+    assert ll == ['a', 'b', 'a', {}]
     with pytest.raises(ValueError) as excinfo:
-        l.remove('c')
+        ll.remove('c')
     assert str(excinfo.value) == "'c' is not in list"
-    l.remove('a', type=str)
-    l.remove({}, type=dict)
-    assert l == ['b', 'a']
+    ll.remove('a', type=str)
+    ll.remove({}, type=dict)
+    assert ll == ['b', 'a']
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l.remove('a', type=int)
+        ll.remove('a', type=int)
     assert str(excinfo.value) == "expected int, got str: 'a'"
-    assert l == ['b', 'a']
+    assert ll == ['b', 'a']
 
 
 def test_list_sort():
-    l = sanest.list(['a', 'c', 'b'])
-    l.sort()
-    assert l == ['a', 'b', 'c']
-    l.sort(reverse=True)
-    assert l == ['c', 'b', 'a']
+    ll = sanest.list(['a', 'c', 'b'])
+    ll.sort()
+    assert ll == ['a', 'b', 'c']
+    ll.sort(reverse=True)
+    assert ll == ['c', 'b', 'a']
 
 
 def test_list_get_slice():
-    l = sanest.list(['a', 'b', 'c'])
-    assert l[0:] == ['a', 'b', 'c']
-    assert l[2:] == ['c']
-    assert l[:0] == []
-    assert l[:-2] == ['a']
-    assert l[0:20] == ['a', 'b', 'c']
-    assert l[:] == ['a', 'b', 'c']
-    assert l[::2] == ['a', 'c']
-    assert isinstance(l[1:2], sanest.list)
+    ll = sanest.list(['a', 'b', 'c'])
+    assert ll[0:] == ['a', 'b', 'c']
+    assert ll[2:] == ['c']
+    assert ll[:0] == []
+    assert ll[:-2] == ['a']
+    assert ll[0:20] == ['a', 'b', 'c']
+    assert ll[:] == ['a', 'b', 'c']
+    assert ll[::2] == ['a', 'c']
+    assert isinstance(ll[1:2], sanest.list)
 
 
 def test_list_set_slice():
-    l = sanest.list(['a', 'b', 'c', 'd', 'e'])
-    l[::2] = ['x', 'y', 'z']
-    assert l == ['x', 'b', 'y', 'd', 'z']
-    l[:] = ['p', 'q', 'r']
-    assert l == ['p', 'q', 'r']
+    ll = sanest.list(['a', 'b', 'c', 'd', 'e'])
+    ll[::2] = ['x', 'y', 'z']
+    assert ll == ['x', 'b', 'y', 'd', 'z']
+    ll[:] = ['p', 'q', 'r']
+    assert ll == ['p', 'q', 'r']
     with pytest.raises(sanest.InvalidValueError) as excinfo:
-        l[:3] = [MyClass()]
+        ll[:3] = [MyClass()]
     assert str(excinfo.value) == "invalid value of type MyClass: <MyClass>"
-    assert l == ['p', 'q', 'r']
-    l[:2] = sanest.list([{}, []])
-    assert l == [{}, [], 'r']
+    assert ll == ['p', 'q', 'r']
+    ll[:2] = sanest.list([{}, []])
+    assert ll == [{}, [], 'r']
     with pytest.raises(ValueError) as excinfo:
-        l[0::2] = ['this', 'one', 'is', 'too', 'long']
+        ll[0::2] = ['this', 'one', 'is', 'too', 'long']
     assert str(excinfo.value) == (
         "attempt to assign sequence of size 5 to extended slice of size 2")
 
 
 def test_list_del_slice():
-    l = sanest.list(['a', 'b', 'c', 'd', 'e'])
-    del l[:2]
-    assert l == ['c', 'd', 'e']
-    del l[-1:]
-    assert l == ['c', 'd']
-    del l[:]
-    assert l == []
+    ll = sanest.list(['a', 'b', 'c', 'd', 'e'])
+    del ll[:2]
+    assert ll == ['c', 'd', 'e']
+    del ll[-1:]
+    assert ll == ['c', 'd']
+    del ll[:]
+    assert ll == []
 
 
 #
@@ -1617,8 +1617,8 @@ def test_prevent_subclassing():
 
 
 def test_wrap():
-    l = _sanest.list.wrap([1, 2])
-    assert isinstance(l, sanest.list)
+    ll = _sanest.list.wrap([1, 2])
+    assert isinstance(ll, sanest.list)
     d = _sanest.wrap({'a': 1})
     assert isinstance(d, sanest.dict)
     with pytest.raises(TypeError) as excinfo:
@@ -1651,12 +1651,12 @@ def test_dict_list_contains():
 
 def test_wrong_path_for_container_type():
     d = sanest.dict()
-    l = sanest.list()
+    ll = sanest.list()
     with pytest.raises(sanest.InvalidPathError) as excinfo:
         d[2, 'a']
     assert str(excinfo.value) == "dict path must start with str: [2, 'a']"
     with pytest.raises(sanest.InvalidPathError) as excinfo:
-        l['a', 2]
+        ll['a', 2]
     assert str(excinfo.value) == "list path must start with int: ['a', 2]"
 
 
@@ -1673,9 +1673,9 @@ def test_slots():
     d = sanest.dict()
     with pytest.raises(AttributeError):
         d.foo = 123
-    l = sanest.list()
+    ll = sanest.list()
     with pytest.raises(AttributeError):
-        l.foo = 123
+        ll.foo = 123
 
 
 def dedent(s):
