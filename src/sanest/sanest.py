@@ -478,12 +478,14 @@ class Collection(collections_abc_Collection):
 
     def __copy__(self):
         cls = type(self)
+        cls = SANEST_READ_WRITE_MAPPING.get(cls, cls)
         obj = cls.__new__(cls)
         obj._data = self._data.copy()
         return obj
 
     def __deepcopy__(self, memo):
         cls = type(self)
+        cls = SANEST_READ_WRITE_MAPPING.get(cls, cls)
         obj = cls.__new__(cls)
         obj._data = copy.deepcopy(self._data, memo)
         return obj
@@ -497,8 +499,34 @@ class Collection(collections_abc_Collection):
 
         :param deep bool: whether to make a deep copy
         """
-        fn = copy.deepcopy if deep else copy.copy
+        if type(self) in SANEST_READ_ONLY_CONTAINER_TYPES:
+            assert not deep  # fixme: add tests
+            fn = copy.deepcopy
+        else:
+            fn = copy.deepcopy if deep else copy.copy
         return fn(self)
+
+    def read_only(self):
+        """
+        Return a read-only wrapper for the same underlying data structure.
+        """
+        if type(self) in SANEST_READ_ONLY_CONTAINER_TYPES:
+            return self
+        cls = SANEST_READ_ONLY_MAPPING[type(self)]
+        return cls.wrap(self._data)
+
+    def read_write(self):
+        """
+        Return a writable wrapper for the same underlying data structure.
+        """
+        if type(self) in SANEST_CONTAINER_TYPES:
+            return self
+        cls = SANEST_READ_WRITE_MAPPING[type(self)]
+        return cls.wrap(self._data)
+
+    # convenience alias
+    ro = read_only
+    rw = read_write
 
 
 class MutableCollection(Collection):
@@ -511,6 +539,9 @@ class MutableCollection(Collection):
         """
         Set the item that ``path_like`` (with optional type) points to.
         """
+        if typeof(value) in SANEST_READ_ONLY_CONTAINER_TYPES:
+            raise InvalidValueError(
+                "cannot assign a read-only container to a mutable container")
         if typeof(path_like) is self._key_or_index_type:  # fast path
             obj = self._data
             key_or_index = path_like
@@ -737,6 +768,7 @@ class MutableMapping(
         """
         Update with new items; like ``dict.update()``.
         """
+        # todo: disallow read only container values
         self._data.update(validated_items(pairs(*args, **kwargs)))
 
     def pop(self, path_like, default=MISSING, *, type=None):
@@ -1206,3 +1238,12 @@ sanest_list = list
 sanest_rolist = rolist
 
 SANEST_CONTAINER_TYPES = (sanest_dict, sanest_list)
+SANEST_READ_ONLY_CONTAINER_TYPES = (sanest_rodict, sanest_rolist)
+SANEST_READ_ONLY_MAPPING = {
+    sanest_dict: sanest_rodict,
+    sanest_list: sanest_rolist,
+}
+SANEST_READ_WRITE_MAPPING = {
+    sanest_rodict: sanest_dict,
+    sanest_rolist: sanest_list,
+}
