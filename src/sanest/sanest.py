@@ -9,10 +9,10 @@ import sys
 
 try:
     # Python 3.6+
-    from collections.abc import Collection
+    from collections.abc import Collection as collections_abc_Collection
 except ImportError:  # pragma: no cover
     # Python 3.5 and earlier
-    class Collection(
+    class collections_abc_Collection(
             collections.abc.Sized,
             collections.abc.Iterable,
             collections.abc.Container):
@@ -400,11 +400,11 @@ class FinalABCMeta(abc.ABCMeta):
         return super().__new__(cls, name, bases, builtins.dict(classdict))
 
 
-class SaneCollection(Collection):
+class Collection(collections_abc_Collection):
     """
-    Base class for ``sanest.dict`` and ``sanest.list``.
+    Base class for ``sanest.rodict`` and ``sanest.rolist``.
     """
-    __slots__ = ()
+    __slots__ = ('_data',)
 
     @abc.abstractmethod
     def wrap(cls, data, *, check=True):
@@ -437,39 +437,6 @@ class SaneCollection(Collection):
         if typeof(value) in CONTAINER_TYPES:
             value = wrap(value, check=False)
         return value
-
-    def __setitem__(self, path_like, value):
-        """
-        Set the item that ``path_like`` (with optional type) points to.
-        """
-        if typeof(path_like) is self._key_or_index_type:  # fast path
-            obj = self._data
-            key_or_index = path_like
-            path = [key_or_index]
-            value = clean_value(value)
-        else:
-            key_or_index, path, type = parse_path_like_with_type(path_like)
-            value = clean_value(value, type=type)
-            obj, key_or_index = resolve_path(
-                self._data, path, partial=True, create=True)
-        try:
-            obj[key_or_index] = value
-        except IndexError as exc:  # list assignment can fail
-            raise IndexError(path) from None
-
-    def __delitem__(self, path_like):
-        """
-        Delete the item that ``path_like`` (with optional type) points to.
-        """
-        key_or_index, path, type = parse_path_like_with_type(path_like)
-        obj, key_or_index = resolve_path(self._data, path, partial=True)
-        try:
-            if type is not None:
-                value = obj[key_or_index]
-                check_type(value, type=type, path=path)
-            del obj[key_or_index]
-        except LookupError as exc:
-            raise typeof(exc)(path) from None
 
     def __eq__(self, other):
         """
@@ -534,6 +501,46 @@ class SaneCollection(Collection):
         return fn(self)
 
 
+class MutableCollection(Collection):
+    """
+    Base class for ``sanest.dict`` and ``sanest.list``.
+    """
+    __slots__ = ()
+
+    def __setitem__(self, path_like, value):
+        """
+        Set the item that ``path_like`` (with optional type) points to.
+        """
+        if typeof(path_like) is self._key_or_index_type:  # fast path
+            obj = self._data
+            key_or_index = path_like
+            path = [key_or_index]
+            value = clean_value(value)
+        else:
+            key_or_index, path, type = parse_path_like_with_type(path_like)
+            value = clean_value(value, type=type)
+            obj, key_or_index = resolve_path(
+                self._data, path, partial=True, create=True)
+        try:
+            obj[key_or_index] = value
+        except IndexError as exc:  # list assignment can fail
+            raise IndexError(path) from None
+
+    def __delitem__(self, path_like):
+        """
+        Delete the item that ``path_like`` (with optional type) points to.
+        """
+        key_or_index, path, type = parse_path_like_with_type(path_like)
+        obj, key_or_index = resolve_path(self._data, path, partial=True)
+        try:
+            if type is not None:
+                value = obj[key_or_index]
+                check_type(value, type=type, path=path)
+            del obj[key_or_index]
+        except LookupError as exc:
+            raise typeof(exc)(path) from None
+
+
 def pprint_sanest_collection(
         self, object, stream, indent, allowance, context, level):
     """
@@ -556,34 +563,13 @@ try:
 except Exception:  # pragma: no cover
     pass  # Python 3.4 and older do not have a dispatch table.
 else:
-    dispatch_table[SaneCollection.__repr__] = pprint_sanest_collection
+    dispatch_table[Collection.__repr__] = pprint_sanest_collection
 
 
-class dict(
-        SaneCollection,
-        collections.abc.MutableMapping,
-        metaclass=FinalABCMeta):
-    """
-    dict-like container with support for nested lookups and type checking.
-    """
-    __slots__ = ('_data',)
+class Mapping(Collection, collections.abc.Mapping):
+    __slots__ = ()
 
     _key_or_index_type = str
-
-    def __init__(self, *args, **kwargs):
-        self._data = {}
-        if args or kwargs:
-            self.update(*args, **kwargs)
-
-    @classmethod
-    def fromkeys(cls, iterable, value=None):
-        """
-        Like ``dict.fromkeys()``.
-
-        :param iterable: iterable of keys
-        :param value: initial value
-        """
-        return cls((key, value) for key in iterable)
 
     @classmethod
     def wrap(cls, d, *, check=True):
@@ -674,6 +660,54 @@ class dict(
         else:
             return True
 
+    def keys(self):
+        """
+        Return a dictionary view over the keys; like ``dict.keys()``.
+        """
+        return DictKeysView(self)
+
+    def values(self, *, type=None):
+        """
+        Return a dictionary view over the values; like ``dict.values()``.
+
+        :param type: expected type
+        """
+        if type is not None:
+            self.check_types(type=type)
+        return DictValuesView(self)
+
+    def items(self, *, type=None):
+        """
+        Return a dictionary view over the items; like ``dict.items()``.
+
+        :param type: expected type
+        """
+        if type is not None:
+            self.check_types(type=type)
+        return DictItemsView(self)
+
+
+class MutableMapping(
+        Mapping,
+        MutableCollection,
+        collections.abc.MutableMapping):
+    __slots__ = ()
+
+    def __init__(self, *args, **kwargs):
+        self._data = {}
+        if args or kwargs:
+            self.update(*args, **kwargs)
+
+    @classmethod
+    def fromkeys(cls, iterable, value=None):
+        """
+        Like ``dict.fromkeys()``.
+
+        :param iterable: iterable of keys
+        :param value: initial value
+        """
+        return cls((key, value) for key in iterable)
+
     def setdefault(self, path_like, default=None, *, type=None):
         """
         Get a value or set (and return) a default; like ``dict.setdefault()``.
@@ -762,31 +796,19 @@ class dict(
         """
         self._data.clear()
 
-    def keys(self):
-        """
-        Return a dictionary view over the keys; like ``dict.keys()``.
-        """
-        return DictKeysView(self)
 
-    def values(self, *, type=None):
-        """
-        Return a dictionary view over the values; like ``dict.values()``.
+class rodict(Mapping, metaclass=FinalABCMeta):
+    """
+    Read-only dict-like container supporting nested lookups and type checking.
+    """
+    __slots__ = ()
 
-        :param type: expected type
-        """
-        if type is not None:
-            self.check_types(type=type)
-        return DictValuesView(self)
 
-    def items(self, *, type=None):
-        """
-        Return a dictionary view over the items; like ``dict.items()``.
-
-        :param type: expected type
-        """
-        if type is not None:
-            self.check_types(type=type)
-        return DictItemsView(self)
+class dict(MutableMapping, metaclass=FinalABCMeta):
+    """
+    dict-like container supporting nested lookups and type checking.
+    """
+    __slots__ = ()
 
 
 class DictKeysView(collections.abc.KeysView):
@@ -846,25 +868,10 @@ class DictItemsView(collections.abc.ItemsView):
             yield key, value
 
 
-class list(
-        SaneCollection,
-        collections.abc.MutableSequence,
-        metaclass=FinalABCMeta):
-    """
-    list-like container with support for nested lookups and type checking.
-    """
-    __slots__ = ('_data',)
+class Sequence(Collection, collections.abc.Sequence):
+    __slots__ = ()
 
     _key_or_index_type = int
-
-    def __init__(self, *args):
-        self._data = []
-        if args:
-            iterable, *rest = args
-            if rest:
-                raise TypeError(
-                    "expected at most 1 argument, got {0:d}".format(len(args)))
-            self.extend(iterable)
 
     @classmethod
     def wrap(cls, l, *, check=True):
@@ -929,32 +936,7 @@ class list(
             return sanest_list.wrap(self._data[path_like], check=False)
         return super().__getitem__(path_like)
 
-    __getitem__.__doc__ = SaneCollection.__getitem__.__doc__
-
-    def __setitem__(self, path_like, value):
-        if type(path_like) is slice and is_regular_list_slice(path_like):
-            # slice assignment takes any iterable, like .extend()
-            if isinstance(value, STRING_LIKE_TYPES):
-                raise TypeError(
-                    "expected iterable that is not string-like, "
-                    "got {.__name__}".format(type(value)))
-            if type(value) in SANEST_CONTAINER_TYPES:
-                value = value._data
-            else:
-                value = validated_values(value)
-            self._data[path_like] = value
-        else:
-            return super().__setitem__(path_like, value)
-
-    __setitem__.__doc__ = SaneCollection.__setitem__.__doc__
-
-    def __delitem__(self, path_like):
-        if type(path_like) is slice and is_regular_list_slice(path_like):
-            del self._data[path_like]
-        else:
-            return super().__delitem__(path_like)
-
-    __delitem__.__doc__ = SaneCollection.__delitem__.__doc__
+    __getitem__.__doc__ = Collection.__getitem__.__doc__
 
     def __lt__(self, other):
         if type(other) is type(self):
@@ -1034,6 +1016,69 @@ class list(
                 value = wrap(value, check=False)
             yield value
 
+    def __add__(self, other):
+        """
+        Return a new list with the concatenation of this list and ``other``.
+        """
+        if type(other) not in (type(self), builtins.list):
+            raise TypeError(
+                "expected list, got {.__name__}".format(type(other)))
+        result = self.copy()
+        result.extend(other)
+        return result
+
+    def __radd__(self, other):
+        return other + self._data
+
+    def __mul__(self, n):
+        """
+        Return a new list containing ``n`` copies of this list.
+        """
+        return type(self).wrap(self._data * n, check=False)
+
+    __rmul__ = __mul__
+
+
+class MutableSequence(
+        Sequence,
+        MutableCollection,
+        collections.abc.MutableSequence):
+    __slots__ = ()
+
+    def __init__(self, *args):
+        self._data = []
+        if args:
+            iterable, *rest = args
+            if rest:
+                raise TypeError(
+                    "expected at most 1 argument, got {0:d}".format(len(args)))
+            self.extend(iterable)
+
+    def __setitem__(self, path_like, value):
+        if type(path_like) is slice and is_regular_list_slice(path_like):
+            # slice assignment takes any iterable, like .extend()
+            if isinstance(value, STRING_LIKE_TYPES):
+                raise TypeError(
+                    "expected iterable that is not string-like, "
+                    "got {.__name__}".format(type(value)))
+            if type(value) in SANEST_CONTAINER_TYPES:
+                value = value._data
+            else:
+                value = validated_values(value)
+            self._data[path_like] = value
+        else:
+            return super().__setitem__(path_like, value)
+
+    __setitem__.__doc__ = MutableCollection.__setitem__.__doc__
+
+    def __delitem__(self, path_like):
+        if type(path_like) is slice and is_regular_list_slice(path_like):
+            del self._data[path_like]
+        else:
+            return super().__delitem__(path_like)
+
+    __delitem__.__doc__ = MutableCollection.__delitem__.__doc__
+
     def insert(self, index, value, *, type=None):
         """
         Insert a value; like ``list.insert()``.
@@ -1070,31 +1115,9 @@ class list(
             for value in iterable:
                 self.append(value, type=type)
 
-    def __add__(self, other):
-        """
-        Return a new list with the concatenation of this list and ``other``.
-        """
-        if type(other) not in (type(self), builtins.list):
-            raise TypeError(
-                "expected list, got {.__name__}".format(type(other)))
-        result = self.copy()
-        result.extend(other)
-        return result
-
     def __iadd__(self, other):
         self.extend(other)
         return self
-
-    def __radd__(self, other):
-        return other + self._data
-
-    def __mul__(self, n):
-        """
-        Return a new list containing ``n`` copies of this list.
-        """
-        return type(self).wrap(self._data * n, check=False)
-
-    __rmul__ = __mul__
 
     def pop(self, path_like=-1, *, type=None):
         """
@@ -1162,8 +1185,24 @@ class list(
         self._data.sort(key=key, reverse=reverse)
 
 
+class rolist(Sequence, metaclass=FinalABCMeta):
+    """
+    Read-only list-like container supporting nested lookups and type checking.
+    """
+    __slots__ = ()
+
+
+class list(MutableSequence, metaclass=FinalABCMeta):
+    """
+    list-like container supporting nested lookups and type checking.
+    """
+    __slots__ = ()
+
+
 # internal aliases to make the code above less confusing
 sanest_dict = dict
+sanest_rodict = rodict
 sanest_list = list
+sanest_rolist = rolist
 
 SANEST_CONTAINER_TYPES = (sanest_dict, sanest_list)
