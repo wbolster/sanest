@@ -1093,6 +1093,7 @@ class MutableSequence(
                 raise TypeError(
                     "expected iterable that is not string-like, "
                     "got {.__name__}".format(type(value)))
+            # todo: disallow read only container values
             if type(value) in SANEST_CONTAINER_TYPES:
                 value = value._data
             else:
@@ -1119,6 +1120,7 @@ class MutableSequence(
         :param value: value to insert
         :param type: expected type
         """
+        # todo: disallow read only container values
         self._data.insert(index, clean_value(value, type=type))
 
     def append(self, value, *, type=None):
@@ -1128,6 +1130,7 @@ class MutableSequence(
         :param value: value to append
         :param type: expected type
         """
+        # todo: disallow read only container values
         self._data.append(clean_value(value, type=type))
 
     def extend(self, iterable, *, type=None):
@@ -1137,6 +1140,7 @@ class MutableSequence(
         :param iterable: iterable of values to append
         :param type: expected type
         """
+        # todo: disallow read only container values
         if typeof(iterable) is typeof(self):
             self._data.extend(iterable._data)
         elif isinstance(iterable, STRING_LIKE_TYPES):
