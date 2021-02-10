@@ -1660,6 +1660,65 @@ def test_wrong_path_for_container_type():
     assert str(excinfo.value) == "list path must start with int: ['a', 2]"
 
 
+def test_read_only():
+    d = sanest.dict.wrap({'a': ['b1', 'b2']})
+    rd = d.read_only()
+    with pytest.raises(TypeError) as excinfo:
+        rd['c'] = 'd'
+    assert str(excinfo.value).endswith("does not support item assignment")
+    with pytest.raises(TypeError) as excinfo:
+        del rd['a']
+    assert str(excinfo.value).endswith("does not support item deletion")
+    for method in {'setdefault', 'update', 'pop', 'popitem', 'clear'}:
+        assert not hasattr(rd, method)
+
+
+def test_read_only_identity():
+    d = sanest.dict.wrap({'a': ['b1', 'b2']})
+    rd = d.read_only()
+    assert d.unwrap() is rd.unwrap()
+    assert rd.read_only() is rd
+    assert rd.ro() is rd
+
+
+def test_read_only_copy_becomes_read_write():
+    d = sanest.dict()
+    rd = d.ro()
+    d_copy = rd.copy()
+    d_copy['a'] = 1
+    assert d_copy['a'] == 1
+
+
+def test_read_only_copy_is_not_shallow():
+    d = sanest.dict.wrap({'a': {'b': {'c': 'd'}}})
+    rd = d.ro()
+    d_copy = rd.copy()
+    d['a', 'b'].clear()
+    assert len(rd['a', 'b']) == 0
+    assert d_copy['a', 'b'] == {'c': 'd'}
+
+
+def test_read_only_to_read_write():
+    orig = {'a': 'b'}
+    d = sanest.dict.wrap(orig)
+    rd = d.ro()
+    rw = rd.rw()
+    rw['a'] = 'c'
+    assert rw.unwrap() is orig
+    rw.rw().unwrap() is orig
+
+
+def test_read_only_assignment_to_read_write_container():
+    d = sanest.dict()
+    rd = sanest.dict({'b': 1}).ro()
+    with pytest.raises(sanest.InvalidValueError) as excinfo:
+        d['a'] = rd
+    assert str(excinfo.value) == (
+        "cannot assign a read-only container to a mutable container")
+    d['a'] = rd.rw()
+    assert d['a', 'b'] == 1
+
+
 #
 # misc
 #
